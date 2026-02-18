@@ -79,7 +79,7 @@ npm -v
 
 ---
 
-### 3. PHP + Composer (Recommended: Laragon for Windows)
+### 3. OPTIONAL: PHP + Composer (Recommended: Laragon for Windows)
 
 Download Laragon:
 [https://laragon.org/](https://laragon.org/)
