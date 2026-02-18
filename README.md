@@ -118,7 +118,39 @@ Laragon bundles PHP, Composer, and Nginx automatically.
 
 ---
 
-### 4. PostgreSQL (Database)
+### 4. Laravel (Framework)
+
+**Install Laravel Globally (Optional but Recommended)**
+
+Once PHP and Composer are installed, run:
+
+```bash
+composer global require laravel/installer
+```
+
+Verify:
+
+```bash
+laravel --version
+```
+
+**Create New Laravel Project (if needed)**
+
+```bash
+laravel new project-name
+```
+
+Or use Composer:
+
+```bash
+composer create-project laravel/laravel project-name
+```
+
+> **Note:** This project is already a Laravel application, so you don't need to create a new project. Just run `composer install` in STEP 1.
+
+---
+
+### 5. PostgreSQL (Database)
 
 Download:
 [https://www.postgresql.org/download/windows/](https://www.postgresql.org/download/windows/)
@@ -129,7 +161,7 @@ During installation:
 
 ---
 
-### 5. Docker Desktop (For RabbitMQ)
+### 6. Docker Desktop (For RabbitMQ)
 
 Download:
 [https://www.docker.com/products/docker-desktop/](https://www.docker.com/products/docker-desktop/)
