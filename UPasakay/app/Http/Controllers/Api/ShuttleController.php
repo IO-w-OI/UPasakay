@@ -3,47 +3,48 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Shuttle;
 use Illuminate\Http\Request;
 
 class ShuttleController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        return response()->json(Shuttle::all());
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'plate_number' => 'required|string|unique:shuttles,plate_number',
+            'capacity' => 'required|integer|min:1',
+            'is_active' => 'boolean',
+        ]);
+
+        $shuttle = Shuttle::create($validated);
+        return response()->json($shuttle, 201);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function show(Shuttle $shuttle)
     {
-        //
+        return response()->json($shuttle->load('locations'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+    public function update(Request $request, Shuttle $shuttle)
     {
-        //
+        $validated = $request->validate([
+            'plate_number' => 'sometimes|string|unique:shuttles,plate_number,' . $shuttle->id,
+            'capacity' => 'sometimes|integer|min:1',
+            'is_active' => 'boolean',
+        ]);
+
+        $shuttle->update($validated);
+        return response()->json($shuttle);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
+    public function destroy(Shuttle $shuttle)
     {
-        //
+        $shuttle->delete();
+        return response()->json(['message' => 'Shuttle deleted successfully']);
     }
 }
