@@ -392,12 +392,4 @@ Recommended order:
 5. Start queue worker
 6. Connect mobile app
 
----
-
-# 📄 LICENSE
-
-See project root for licensing details.
-
-```
-
 ```
