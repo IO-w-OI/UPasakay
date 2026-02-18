@@ -3,47 +3,48 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\DriverAssignment;
 use Illuminate\Http\Request;
 
 class DriverAssignmentController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        return response()->json(
+            DriverAssignment::with(['driver', 'pickupRequest'])->get()
+        );
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'driver_id' => 'required|exists:drivers,user_id',
+            'pickup_request_id' => 'required|exists:pickup_requests,id',
+            'status' => 'in:active,completed,cancelled',
+        ]);
+
+        $assignment = DriverAssignment::create($validated);
+        return response()->json($assignment, 201);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function show(DriverAssignment $driverAssignment)
     {
-        //
+        return response()->json($driverAssignment->load(['driver', 'pickupRequest']));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+    public function update(Request $request, DriverAssignment $driverAssignment)
     {
-        //
+        $validated = $request->validate([
+            'status' => 'sometimes|in:active,completed,cancelled',
+        ]);
+
+        $driverAssignment->update($validated);
+        return response()->json($driverAssignment);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
+    public function destroy(DriverAssignment $driverAssignment)
     {
-        //
+        $driverAssignment->delete();
+        return response()->json(['message' => 'Assignment deleted successfully']);
     }
 }
