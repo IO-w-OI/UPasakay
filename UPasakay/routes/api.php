@@ -39,3 +39,13 @@ Route::middleware('auth:sanctum')->group(function () {
     // Proximity notifications (RabbitMQ jobs)
     Route::post('/notify-proximity', [RideController::class, 'notifyProximity']);
 });
+
+Route::apiResource('routes', RouteController::class);
+Route::apiResource('stops', StopController::class);
+Route::apiResource('shuttles', ShuttleController::class);
+Route::apiResource('passengers', PassengerController::class);
+Route::apiResource('drivers', DriverController::class);
+Route::apiResource('pickup-requests', PickupRequestController::class);
+Route::apiResource('driver-assignments', DriverAssignmentController::class);
+Route::apiResource('shuttle-locations', ShuttleLocationController::class);
+
