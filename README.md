@@ -79,23 +79,42 @@ npm -v
 
 ---
 
-### 3. OPTIONAL: PHP + Composer (Recommended: Laragon for Windows)
+### 3. PHP 8.4+ & Composer
 
-Download Laragon:
-[https://laragon.org/](https://laragon.org/)
+#### Option A: Direct Installation (Recommended)
 
-This includes:
+**PHP 8.4.16**
 
-- PHP
-- Composer
-- Nginx (optional)
+Download: [https://windows.php.net/download/](https://windows.php.net/download/)
+
+1. Download the **non-thread-safe (NTS)** version for Windows
+2. Extract to a folder (e.g., `C:\php-8.4.16`)
+3. Add to System PATH:
+   - Open **Environment Variables**
+   - Add your PHP folder to `Path`
+4. Verify:
+   ```bash
+   php -v
+   ```
+
+**Composer**
+
+Download: [https://getcomposer.org/download/](https://getcomposer.org/download/)
+
+Run the installer and add to PATH.
 
 Verify:
 
 ```bash
-php -v
 composer -V
 ```
+
+#### Option B: Laragon (Optional)
+
+Download:
+[https://laragon.org/](https://laragon.org/)
+
+Laragon bundles PHP, Composer, and Nginx automatically.
 
 ---
 
@@ -381,6 +400,85 @@ php artisan queue:work
 
 ---
 
+### ❌ PHP command not found
+
+PHP is not in your system PATH. Fix it:
+
+**Windows:**
+
+1. Open **Environment Variables**:
+   - Right-click **This PC** → **Properties** → **Advanced system settings** → **Environment Variables**
+2. Under **System variables**, click **New**:
+   - Variable name: `PHP_HOME`
+   - Variable value: `C:\path\to\php` (your PHP folder)
+3. Edit **Path** variable and add: `%PHP_HOME%`
+4. Restart terminal and verify:
+   ```bash
+   php -v
+   ```
+
+---
+
+### ❌ Composer command not found
+
+Composer is not installed or not in PATH.
+
+**Windows:**
+
+1. Download and run Composer installer from [https://getcomposer.org/download/](https://getcomposer.org/download/)
+2. During installation, it will ask for your PHP path - point to your PHP folder
+3. Verify:
+   ```bash
+   composer -V
+   ```
+
+---
+
+### ❌ `.env` file not found or variables not loading
+
+1. Ensure `.env` file exists in the project root:
+   ```bash
+   cp .env.example .env
+   ```
+2. Clear Laravel config cache:
+   ```bash
+   php artisan config:clear
+   php artisan cache:clear
+   ```
+3. Verify `.env` is in `.gitignore` (should not be committed)
+4. Check `.env` has correct database and queue settings:
+
+   ```env
+   DB_CONNECTION=pgsql
+   DB_HOST=127.0.0.1
+   DB_PORT=5432
+   DB_DATABASE=upasakay
+   DB_USERNAME=upasakay_user
+   DB_PASSWORD=password
+
+   QUEUE_CONNECTION=rabbitmq
+   RABBITMQ_HOST=127.0.0.1
+   RABBITMQ_PORT=5672
+   ```
+
+---
+
+### ❌ `APP_KEY` is not set
+
+Generate it:
+
+```bash
+php artisan key:generate
+```
+
+Verify `.env` has:
+
+```env
+APP_KEY=base64:xxxxxxxxxxxx
+```
+
+---
+
 # 💡 DEVELOPMENT WORKFLOW
 
 Recommended order:
@@ -391,5 +489,24 @@ Recommended order:
 4. Run frontend
 5. Start queue worker
 6. Connect mobile app
+
+---
+
+# 🔧 ENVIRONMENT SETUP CHECKLIST
+
+Before running the project, verify:
+
+- [ ] PHP 8.4+ installed and in PATH
+- [ ] Composer installed and in PATH
+- [ ] Node.js (LTS) installed
+- [ ] PostgreSQL running and accessible
+- [ ] `.env` file created from `.env.example`
+- [ ] `APP_KEY` generated
+- [ ] Database user and permissions created
+- [ ] Database migrations run successfully
+- [ ] Docker running (for RabbitMQ)
+- [ ] Git configured with credentials
+
+```
 
 ```
