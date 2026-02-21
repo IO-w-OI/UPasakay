@@ -70,16 +70,46 @@ git --version
 
 Download: [https://nodejs.org](https://nodejs.org)
 
-Verify:
+1. Download the **LTS** installer for Windows
+2. Run the installer — ensure **"Add to PATH"** is checked during setup
+3. Restart your terminal after installation
+4. Verify:
+   ```bash
+   node -v
+   npm -v
+   ```
 
-```bash
-node -v
-npm -v
-```
+> **Note:** Node.js 18+ is required. The LTS version (20.x or 22.x) is recommended.
+
+**If Node.js is not in PATH after installation (Windows):**
+
+1. Open **Environment Variables**:
+   - Right-click **This PC** → **Properties** → **Advanced system settings** → **Environment Variables**
+2. Under **System variables**, find and edit **Path**
+3. Add the Node.js install directory (default: `C:\Program Files\nodejs`)
+4. Restart terminal and verify:
+   ```bash
+   node -v
+   npm -v
+   ```
 
 ---
 
-### 3. PHP 8.4+ & Composer
+### 3. Vite (Frontend Build Tool)
+
+Vite is the frontend build tool used by this project. It is installed automatically as a project dependency when you run `npm install`, so **no global installation is needed**.
+
+However, you can verify it's available after installing dependencies:
+
+```bash
+npx vite --version
+```
+
+> **Note:** Vite 7.x is used in this project. It requires Node.js 18+.
+
+---
+
+### 4. PHP 8.4+ & Composer
 
 #### Option A: Direct Installation (Recommended)
 
@@ -118,7 +148,7 @@ Laragon bundles PHP, Composer, and Nginx automatically.
 
 ---
 
-### 4. Laravel (Framework)
+### 5. Laravel (Framework)
 
 **Install Laravel Globally (Optional but Recommended)**
 
@@ -150,7 +180,7 @@ composer create-project laravel/laravel project-name
 
 ---
 
-### 5. PostgreSQL (Database)
+### 6. PostgreSQL (Database)
 
 Download:
 [https://www.postgresql.org/download/windows/](https://www.postgresql.org/download/windows/)
@@ -161,7 +191,7 @@ During installation:
 
 ---
 
-### 6. Docker Desktop (For RabbitMQ)
+### 7. Docker Desktop (For RabbitMQ)
 
 Download:
 [https://www.docker.com/products/docker-desktop/](https://www.docker.com/products/docker-desktop/)
@@ -275,7 +305,25 @@ RABBITMQ_VHOST=/
 
 ## STEP 6 — Run the Application
 
-### Start Laravel Backend
+### Option A: Run Everything at Once (Recommended)
+
+The project includes a `composer dev` script that starts the Laravel server, queue worker, and Vite dev server concurrently:
+
+```bash
+composer dev
+```
+
+This runs:
+
+- **Laravel server** at `http://127.0.0.1:8000`
+- **Queue worker** (for notifications via RabbitMQ)
+- **Vite dev server** (for frontend hot-reload)
+
+---
+
+### Option B: Run Each Service Manually
+
+**Start Laravel Backend:**
 
 ```bash
 php artisan serve
@@ -287,21 +335,31 @@ Runs at:
 http://127.0.0.1:8000
 ```
 
----
-
-### Start Frontend (Vue)
+**Start Frontend (Vite + Vue):**
 
 ```bash
 npm run dev
 ```
 
----
+> Vite will start a dev server with hot module replacement (HMR). Changes to Vue/TypeScript files will reflect instantly in the browser.
 
-### Start Queue Worker (Required for notifications)
+**Start Queue Worker (Required for notifications):**
 
 ```bash
 php artisan queue:work
 ```
+
+---
+
+### Building for Production
+
+To create an optimized production build of the frontend:
+
+```bash
+npm run build
+```
+
+The compiled assets will be output to `public/build/`.
 
 ---
 
@@ -311,39 +369,79 @@ Only needed for mobile developers.
 
 ---
 
-## Install Expo CLI
+## Prerequisites
+
+1. Install **Expo Go** app on your phone:
+   - [Android (Google Play)](https://play.google.com/store/apps/details?id=host.exp.exponent)
+   - [iOS (App Store)](https://apps.apple.com/app/expo-go/id982107779)
+
+2. Install Expo CLI globally (optional, `npx` works too):
+
+   ```bash
+   npm install -g expo-cli
+   ```
+
+3. **(Optional) Use an Emulator instead of a physical device:**
+
+   **Android Emulator:**
+   - Install [Android Studio](https://developer.android.com/studio)
+   - Open Android Studio → **More Actions** → **Virtual Device Manager**
+   - Create a virtual device (e.g., Pixel 7, API 34+)
+   - Start the emulator, then run:
+     ```bash
+     npx expo start --android
+     ```
+
+   **iOS Simulator (macOS only):**
+   - Install [Xcode](https://apps.apple.com/app/xcode/id497799835) from the App Store
+   - Open Xcode → **Settings** → **Platforms** → install a simulator runtime
+   - Run:
+     ```bash
+     npx expo start --ios
+     ```
+
+   > **Tip:** You can also press `a` (Android) or `i` (iOS) in the Expo CLI terminal after running `npx expo start` to launch the emulator automatically.
+
+---
+
+## Install Dependencies
+
+The mobile project already exists in the `upasakay-mobile/` folder:
 
 ```bash
-npm install -g expo-cli
+cd upasakay-mobile
+npm install
 ```
 
 ---
 
-## Create Mobile Project
+## Run the Mobile App
 
 ```bash
-npx create-expo-app upasakay-mobile
-cd upasakay-mobile
-npm install axios
+npx expo start
 ```
+
+Scan the QR code with **Expo Go** (Android) or the **Camera app** (iOS).
 
 ---
 
 ## Connect to Backend API
 
-Use your **local IP address**, NOT localhost.
+Use your **local IP address**, NOT `localhost`. Your phone and computer must be on the **same Wi-Fi network**.
 
-Example:
+Update the API base URL in `upasakay-mobile/api/api.ts`:
 
 ```js
 baseURL: "http://192.168.X.X:8000/api";
 ```
 
-Find IP using:
+Find your local IP using:
 
 ```bash
 ipconfig
 ```
+
+Look for the **IPv4 Address** under your Wi-Fi adapter.
 
 ---
 
@@ -370,7 +468,7 @@ composer clear-cache
 composer install
 ```
 
-Ensure PHP version is compatible (8.1+).
+Ensure PHP version is compatible (8.2+, see `composer.json`).
 
 ---
 
@@ -404,6 +502,31 @@ rm -rf node_modules
 npm install
 ```
 
+If you see port conflicts, Vite may already be running. Kill the process or use a different port:
+
+```bash
+npm run dev -- --port 5174
+```
+
+---
+
+### ❌ Vite build fails or assets not loading
+
+1. Ensure Node.js 18+ is installed:
+   ```bash
+   node -v
+   ```
+2. Clear Vite cache:
+   ```bash
+   rm -rf node_modules/.vite
+   npm run dev
+   ```
+3. If production assets are missing, rebuild:
+   ```bash
+   npm run build
+   ```
+4. Check that `public/build/` contains the compiled assets
+
 ---
 
 ### ❌ RabbitMQ not working
@@ -429,6 +552,26 @@ Make sure queue worker is running:
 ```bash
 php artisan queue:work
 ```
+
+---
+
+### ❌ Node.js / npm command not found
+
+Node.js is not in your system PATH.
+
+**Windows:**
+
+1. Open **Environment Variables**:
+   - Right-click **This PC** → **Properties** → **Advanced system settings** → **Environment Variables**
+2. Under **System variables**, find and edit **Path**
+3. Add: `C:\Program Files\nodejs` (or your Node.js install folder)
+4. Restart terminal and verify:
+   ```bash
+   node -v
+   npm -v
+   ```
+
+If still not working, reinstall Node.js from [https://nodejs.org](https://nodejs.org) and ensure **"Add to PATH"** is checked.
 
 ---
 
@@ -511,6 +654,43 @@ APP_KEY=base64:xxxxxxxxxxxx
 
 ---
 
+# 🧩 RECOMMENDED VS CODE EXTENSIONS
+
+Install these extensions for the best development experience:
+
+### Essential
+
+| Extension                     | ID                                    | Purpose                                        |
+| ----------------------------- | ------------------------------------- | ---------------------------------------------- |
+| **Vue - Official**            | `Vue.volar`                           | Vue 3 language support, TypeScript integration |
+| **TypeScript Vue Plugin**     | `Vue.vscode-typescript-vue-plugin`    | TypeScript support inside `.vue` files         |
+| **ESLint**                    | `dbaeumer.vscode-eslint`              | JavaScript/TypeScript linting                  |
+| **Prettier**                  | `esbenp.prettier-vscode`              | Code formatting                                |
+| **Tailwind CSS IntelliSense** | `bradlc.vscode-tailwindcss`           | Tailwind class autocomplete & hover preview    |
+| **PHP Intelephense**          | `bmewburn.vscode-intelephense-client` | PHP language support & autocompletion          |
+| **Laravel Blade Snippets**    | `onecentlin.laravel-blade`            | Blade template syntax highlighting             |
+
+### Mobile Development
+
+| Extension                     | ID                                | Purpose                                   |
+| ----------------------------- | --------------------------------- | ----------------------------------------- |
+| **ES7+ React/Redux Snippets** | `dsznajder.es7-react-js-snippets` | React Native code snippets                |
+| **React Native Tools**        | `msjsdiag.vscode-react-native`    | Debugging & IntelliSense for React Native |
+
+### Recommended
+
+| Extension          | ID                             | Purpose                                 |
+| ------------------ | ------------------------------ | --------------------------------------- |
+| **DotENV**         | `mikestead.dotenv`             | `.env` file syntax highlighting         |
+| **GitLens**        | `eamodio.gitlens`              | Git blame, history & annotations        |
+| **Thunder Client** | `rangav.vscode-thunder-client` | REST API testing (Postman alternative)  |
+| **Docker**         | `ms-azuretools.vscode-docker`  | Docker container management             |
+| **EditorConfig**   | `EditorConfig.EditorConfig`    | Consistent coding styles across editors |
+
+> **Quick Install:** Open VS Code, press `Ctrl+Shift+X`, and search for each extension by its ID.
+
+---
+
 # 💡 DEVELOPMENT WORKFLOW
 
 Recommended order:
@@ -524,20 +704,41 @@ Recommended order:
 
 ---
 
+# � USEFUL COMMANDS REFERENCE
+
+| Command                            | Description                              |
+| ---------------------------------- | ---------------------------------------- |
+| `composer dev`                     | Start server + queue + Vite concurrently |
+| `php artisan serve`                | Start Laravel backend only               |
+| `npm run dev`                      | Start Vite dev server only               |
+| `npm run build`                    | Build frontend for production            |
+| `php artisan queue:work`           | Start queue worker                       |
+| `php artisan migrate --seed`       | Run migrations with seeders              |
+| `php artisan migrate:fresh --seed` | Reset & re-run all migrations            |
+| `php artisan config:clear`         | Clear cached config                      |
+| `php artisan route:list`           | List all registered routes               |
+| `vendor/bin/phpunit`               | Run backend tests                        |
+| `npm run lint`                     | Lint frontend code                       |
+| `npm run format`                   | Format frontend code with Prettier       |
+
+---
+
 # 🔧 ENVIRONMENT SETUP CHECKLIST
 
 Before running the project, verify:
 
-- [ ] PHP 8.4+ installed and in PATH
+- [ ] Git installed and configured
+- [ ] PHP 8.2+ installed and in PATH
 - [ ] Composer installed and in PATH
-- [ ] Node.js (LTS) installed
+- [ ] Node.js 18+ (LTS) installed and in PATH
+- [ ] Vite available (`npx vite --version` works after `npm install`)
 - [ ] PostgreSQL running and accessible
 - [ ] `.env` file created from `.env.example`
 - [ ] `APP_KEY` generated
 - [ ] Database user and permissions created
 - [ ] Database migrations run successfully
 - [ ] Docker running (for RabbitMQ)
-- [ ] Git configured with credentials
+- [ ] RabbitMQ container started and accessible
 
 ```
 
