@@ -482,6 +482,96 @@ Check:
 
 ---
 
+### ❌ `could not find driver (Connection: pgsql)`
+
+This means PHP does not have the PostgreSQL PDO extension (`pdo_pgsql`) enabled. Laravel is working and PostgreSQL is working, but PHP doesn't know how to talk to PostgreSQL yet.
+
+**First, check if the extensions are loaded:**
+
+```bash
+php -m
+```
+
+Look for `pdo_pgsql` and `pgsql` in the output. If both are listed, the driver is fine — check your `.env` credentials instead. If they are **missing**, follow the fix below for your setup.
+
+---
+
+#### Fix for Standard PHP Installation (Windows)
+
+1. **Find your `php.ini`:**
+
+   ```bash
+   php --ini
+   ```
+
+   Look for the `Loaded Configuration File` path and open that file.
+
+2. **Enable PostgreSQL extensions** — search for these lines and remove the semicolon `;`:
+
+   ```ini
+   ;extension=pdo_pgsql    →    extension=pdo_pgsql
+   ;extension=pgsql        →    extension=pgsql
+   ```
+
+3. **Restart your terminal** completely (close and reopen).
+   - If using **XAMPP** → restart Apache
+   - If using **Laragon** → restart Laragon
+   - If using **manual PHP** → just reopen terminal
+
+4. **Verify:**
+
+   ```bash
+   php -m
+   ```
+
+   You should now see `pdo_pgsql` and `pgsql` in the list.
+
+5. **Try migration again:**
+   ```bash
+   php artisan migrate
+   ```
+
+---
+
+#### Fix for Herd / Herd Lite (Windows)
+
+If you're using **Herd Lite**, your `php.ini` (e.g., `C:\Users\<user>\.config\herd-lite\bin\php.ini`) will look minimal:
+
+```ini
+variables_order = "GPCS"
+opcache.enable=1
+opcache.enable_cli=1
+```
+
+This is **normal** — it's just a custom override, not the full PHP config. **Do NOT manually edit this file** to enable extensions.
+
+Herd ships with PostgreSQL extensions enabled by default. If `pdo_pgsql` is missing:
+
+1. **Update Herd** to the latest version
+2. **Switch PHP version** if needed:
+   ```bash
+   herd use php
+   ```
+3. Or **reinstall PHP** through Herd's settings
+
+After updating, verify with `php -m` and run `php artisan migrate`.
+
+---
+
+#### Why This Happens
+
+Laravel uses PHP's PDO drivers to connect to databases. PHP ships with several database drivers, but they may not all be enabled by default:
+
+| Database   | PDO Extension |
+| ---------- | ------------- |
+| MySQL      | `pdo_mysql`   |
+| PostgreSQL | `pdo_pgsql`   |
+| SQLite     | `pdo_sqlite`  |
+
+On fresh Windows PHP installs, only MySQL is typically enabled. Since this project uses PostgreSQL, you must enable `pdo_pgsql` manually (unless using Herd, which enables it automatically).
+
+---
+
 ### ❌ Migrations fail
 
 Run:
