@@ -22,7 +22,7 @@ class DriverController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('full_name', 'like', "%$search%")
-                  ->orWhere('license_number', 'like', "%$search%");
+                    ->orWhere('license_number', 'like', "%$search%");
             });
         }
 
@@ -45,13 +45,13 @@ class DriverController extends Controller
         $drivers->getCollection()->transform(function ($d) use ($shuttleMap) {
             $shuttle = $shuttleMap->get($d->id);
             return [
-                'id'          => $d->id,
+                'id' => $d->id,
                 'employee_id' => 'D-' . str_pad($d->id, 3, '0', STR_PAD_LEFT),
-                'full_name'   => $d->full_name ?? '—',
-                'status'      => $d->is_available ? 'active' : 'inactive',
-                'route'       => $shuttle?->route?->name ?? '—',
-                'shuttle'     => $shuttle?->shuttle_code ?? '—',
-                'last_login'  => $d->user?->updated_at
+                'full_name' => $d->full_name ?? '—',
+                'status' => $d->is_available ? 'active' : 'inactive',
+                'route' => $shuttle?->route?->name ?? '—',
+                'shuttle' => $shuttle?->shuttle_code ?? '—',
+                'last_login' => $d->user?->updated_at
                     ? Carbon::parse($d->user->updated_at)->diffForHumans()
                     : '—',
             ];
@@ -60,9 +60,9 @@ class DriverController extends Controller
         $routes = Route::where('is_active', true)->pluck('name');
 
         return Inertia::render('Drivers/Index', [
-            'drivers'  => $drivers,
-            'routes'   => $routes,
-            'filters'  => $request->only(['search', 'status', 'route']),
+            'drivers' => $drivers,
+            'routes' => $routes,
+            'filters' => $request->only(['search', 'status', 'route']),
         ]);
     }
 
@@ -74,8 +74,8 @@ class DriverController extends Controller
             ->where('driver_id', $driver->id)
             ->first();
 
-        $totalPickups  = $driver->assignments()->count();
-        $totalSessions = max(1, (int)($totalPickups / 6));
+        $totalPickups = $driver->assignments()->count();
+        $totalSessions = max(1, (int) ($totalPickups / 6));
 
         // Build activity log from assignments
         $activityLog = $driver->assignments()
@@ -84,32 +84,32 @@ class DriverController extends Controller
             ->take(20)
             ->get()
             ->map(fn($a) => [
-                'date'  => Carbon::parse($a->created_at)->format('M j'),
+                'date' => Carbon::parse($a->created_at)->format('M j'),
                 'event' => match ($a->pickupRequest?->status ?? 'unknown') {
                     'completed' => 'Pickup completed',
                     'cancelled' => 'Pickup cancelled',
-                    default     => 'Pickup assigned',
+                    default => 'Pickup assigned',
                 },
                 'route' => $a->pickupRequest?->route?->name ?? '—',
-                'time'  => Carbon::parse($a->created_at)->format('h:i A'),
+                'time' => Carbon::parse($a->created_at)->format('h:i A'),
             ]);
 
         return Inertia::render('Drivers/Show', [
             'driver' => [
-                'id'            => $driver->id,
-                'employee_id'   => 'D-' . str_pad($driver->id, 3, '0', STR_PAD_LEFT),
-                'full_name'     => $driver->full_name ?? '—',
-                'license'       => $driver->license_number,
-                'status'        => $driver->is_available ? 'active' : 'inactive',
-                'route'         => $shuttle?->route?->name ?? '—',
-                'shuttle'       => $shuttle?->shuttle_code ?? '—',
-                'email'         => $driver->user?->email ?? '—',
-                'last_login'    => $driver->user?->updated_at
+                'id' => $driver->id,
+                'employee_id' => 'D-' . str_pad($driver->id, 3, '0', STR_PAD_LEFT),
+                'full_name' => $driver->full_name ?? '—',
+                'license' => $driver->license_number,
+                'status' => $driver->is_available ? 'active' : 'inactive',
+                'route' => $shuttle?->route?->name ?? '—',
+                'shuttle' => $shuttle?->shuttle_code ?? '—',
+                'email' => $driver->user?->email ?? '—',
+                'last_login' => $driver->user?->updated_at
                     ? Carbon::parse($driver->user->updated_at)->format('M j, Y h:i A')
                     : '—',
                 'total_sessions' => $totalSessions,
-                'total_pickups'  => $totalPickups,
-                'avg_rating'     => '4.5',
+                'total_pickups' => $totalPickups,
+                'avg_rating' => '4.5',
             ],
             'activityLog' => $activityLog,
         ]);
@@ -118,22 +118,22 @@ class DriverController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'full_name'   => 'required|string|max:255',
+            'full_name' => 'required|string|max:255',
             'license_number' => 'required|string|unique:drivers,license_number',
-            'email'       => 'required|email|unique:users,email',
-            'password'    => 'required|string|min:8',
+            'email' => 'required|email|unique:users,email',
+            'password' => 'required|string|min:8',
         ]);
 
         $user = User::create([
-            'email'         => $request->email,
+            'email' => $request->email,
             'password_hash' => Hash::make($request->password),
         ]);
 
         Driver::create([
-            'user_id'        => $user->id,
-            'full_name'      => $request->full_name,
+            'user_id' => $user->id,
+            'full_name' => $request->full_name,
             'license_number' => $request->license_number,
-            'is_available'   => true,
+            'is_available' => true,
         ]);
 
         return back()->with('success', 'Driver created successfully.');

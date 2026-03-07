@@ -16,8 +16,8 @@ class PickupRequestController extends Controller
         $today = Carbon::today();
 
         // Stats
-        $totalToday     = PickupRequest::whereDate('created_at', $today)->count();
-        $pendingToday   = PickupRequest::whereDate('created_at', $today)->where('status', 'pending')->count();
+        $totalToday = PickupRequest::whereDate('created_at', $today)->count();
+        $pendingToday = PickupRequest::whereDate('created_at', $today)->where('status', 'pending')->count();
         $completedToday = PickupRequest::whereDate('created_at', $today)->where('status', 'completed')->count();
         $cancelledToday = PickupRequest::whereDate('created_at', $today)->where('status', 'cancelled')->count();
 
@@ -45,16 +45,16 @@ class PickupRequestController extends Controller
 
         $requests->getCollection()->transform(function ($r) {
             return [
-                'id'        => $r->id,
+                'id' => $r->id,
                 'passenger' => $r->user?->name ?? $r->user?->email ?? 'Unknown',
-                'location'  => $r->pickupStop?->name ?? '—',
-                'route'     => $r->route?->name ?? '—',
-                'driver'    => $r->assignment?->driver?->full_name ?? 'Unassigned',
-                'status'    => $r->status,
-                'time'      => Carbon::parse($r->created_at)->format('h:i A'),
-                'date'      => Carbon::parse($r->created_at)->format('M j'),
-                'eta'       => '~4 minutes',
-                'latitude'  => null,
+                'location' => $r->pickupStop?->name ?? '—',
+                'route' => $r->route?->name ?? '—',
+                'driver' => $r->assignment?->driver?->full_name ?? 'Unassigned',
+                'status' => $r->status,
+                'time' => Carbon::parse($r->created_at)->format('h:i A'),
+                'date' => Carbon::parse($r->created_at)->format('M j'),
+                'eta' => '~4 minutes',
+                'latitude' => null,
                 'longitude' => null,
             ];
         });
@@ -62,12 +62,12 @@ class PickupRequestController extends Controller
         $routes = Route::where('is_active', true)->pluck('name');
 
         return Inertia::render('PickupRequests/Index', [
-            'requests'      => $requests,
-            'routes'        => $routes,
-            'filters'       => $request->only(['search', 'route', 'status', 'date']),
+            'requests' => $requests,
+            'routes' => $routes,
+            'filters' => $request->only(['search', 'route', 'status', 'date']),
             'stats' => [
-                'total'     => $totalToday,
-                'pending'   => $pendingToday,
+                'total' => $totalToday,
+                'pending' => $pendingToday,
                 'completed' => $completedToday,
                 'cancelled' => $cancelledToday,
             ],

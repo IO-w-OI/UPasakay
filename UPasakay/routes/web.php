@@ -16,14 +16,14 @@ Route::get('/', function () {
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    Route::get('live-map',  [LiveMapController::class,   'index'])->name('live-map');
+    Route::get('live-map', [LiveMapController::class, 'index'])->name('live-map');
 
     // Drivers
-    Route::get('drivers',           [DriverController::class, 'index'])->name('drivers.index');
-    Route::get('drivers/{driver}',  [DriverController::class, 'show'])->name('drivers.show');
-    Route::post('drivers',          [DriverController::class, 'store'])->name('drivers.store');
-    Route::patch('drivers/{driver}',[DriverController::class, 'update'])->name('drivers.update');
-    Route::delete('drivers/{driver}',[DriverController::class,'destroy'])->name('drivers.destroy');
+    Route::get('drivers', [DriverController::class, 'index'])->name('drivers.index');
+    Route::get('drivers/{driver}', [DriverController::class, 'show'])->name('drivers.show');
+    Route::post('drivers', [DriverController::class, 'store'])->name('drivers.store');
+    Route::patch('drivers/{driver}', [DriverController::class, 'update'])->name('drivers.update');
+    Route::delete('drivers/{driver}', [DriverController::class, 'destroy'])->name('drivers.destroy');
 
     // Pickup Requests
     Route::get('pickup-requests', [PickupRequestController::class, 'index'])->name('pickup-requests.index');
