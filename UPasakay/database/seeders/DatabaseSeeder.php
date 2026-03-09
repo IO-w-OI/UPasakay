@@ -8,7 +8,6 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-<<<<<<< Updated upstream
         $this->call([
             AdminSeeder::class,
             RouteSeeder::class,
@@ -18,7 +17,6 @@ class DatabaseSeeder extends Seeder
             PassengerSeeder::class,
             PickupRequestSeeder::class,
         ]);
-=======
         echo "Seeder is running!\n";
 >>>>>>> Stashed changes
     }
