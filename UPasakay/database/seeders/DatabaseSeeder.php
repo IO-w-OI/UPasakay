@@ -18,6 +18,5 @@ class DatabaseSeeder extends Seeder
             PickupRequestSeeder::class,
         ]);
         echo "Seeder is running!\n";
->>>>>>> Stashed changes
     }
 }
