@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { BookOpen, Folder, LayoutGrid } from 'lucide-vue-next';
-import NavFooter from '@/components/NavFooter.vue';
+import { LayoutGrid, Map, Bus, Users, ClipboardList, Bell, MessageSquare, Settings } from 'lucide-vue-next';
 import NavMain from '@/components/NavMain.vue';
-import NavUser from '@/components/NavUser.vue';
 import {
     Sidebar,
     SidebarContent,
@@ -12,35 +10,27 @@ import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
+    SidebarTrigger,
 } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import AppLogo from './AppLogo.vue';
 import { dashboard } from '@/routes';
+import { edit as editAppearance } from '@/routes/appearance';
 
 const mainNavItems: NavItem[] = [
-    {
-        title: 'Dashboard',
-        href: dashboard(),
-        icon: LayoutGrid,
-    },
-];
-
-const footerNavItems: NavItem[] = [
-    {
-        title: 'Github Repo',
-        href: 'https://github.com/laravel/vue-starter-kit',
-        icon: Folder,
-    },
-    {
-        title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#vue',
-        icon: BookOpen,
-    },
+    { title: 'Dashboard', href: dashboard(), icon: LayoutGrid },
+    { title: 'Live Map', href: '/live-map', icon: Map },
+    { title: 'Shuttles', href: '#', icon: Bus },
+    { title: 'Drivers', href: '/drivers', icon: Users },
+    { title: 'Requests', href: '/pickup-requests', icon: ClipboardList },
+    { title: 'Notifications', href: '/notifications', icon: Bell, badge: 3 },
+    { title: 'Feedback', href: '/feedback', icon: MessageSquare },
+    { title: 'Settings', href: editAppearance(), icon: Settings },
 ];
 </script>
 
 <template>
-    <Sidebar collapsible="icon" variant="inset">
+    <Sidebar collapsible="icon">
         <SidebarHeader>
             <SidebarMenu>
                 <SidebarMenuItem>
@@ -58,8 +48,11 @@ const footerNavItems: NavItem[] = [
         </SidebarContent>
 
         <SidebarFooter>
-            <NavFooter :items="footerNavItems" />
-            <NavUser />
+            <SidebarMenu>
+                <SidebarMenuItem>
+                    <SidebarTrigger class="w-full justify-start gap-2 text-sidebar-foreground hover:bg-sidebar-accent hover:text-white" />
+                </SidebarMenuItem>
+            </SidebarMenu>
         </SidebarFooter>
     </Sidebar>
     <slot />
