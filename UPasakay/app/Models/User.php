@@ -36,19 +36,6 @@ class User extends Authenticatable
     ];
 
     /**
-     * The column used for authentication password.
-     */
-    public function getAuthPasswordName(): string
-    {
-        return 'password_hash';
-    }
-
-    public function getAuthPassword(): string
-    {
-        return $this->password_hash;
-    }
-
-    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>
@@ -57,7 +44,7 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
-            'password_hash' => 'hashed',
+            'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
         ];
     }

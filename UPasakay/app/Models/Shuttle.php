@@ -4,34 +4,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class Shuttle extends Model
 {
-    protected $fillable = [
-        'shuttle_code',
-        'plate_number',
-        'capacity',
-        'is_active',
-        'status',
-        'route_id',
-        'driver_id',
-        'last_seen_at',
-    ];
-
-    protected $casts = [
-        'is_active' => 'boolean',
-        'last_seen_at' => 'datetime',
-    ];
+    protected $fillable = ['plate_number', 'capacity', 'is_active'];
 
     public function locations()
     {
         return $this->hasMany(ShuttleLocation::class);
-    }
-
-    public function route()
-    {
-        return $this->belongsTo(Route::class);
-    }
-
-    public function driver()
-    {
-        return $this->belongsTo(Driver::class);
     }
 }

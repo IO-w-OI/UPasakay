@@ -4,7 +4,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class Driver extends Model
 {
-    protected $fillable = ['user_id', 'full_name', 'license_number', 'is_available'];
+    protected $primaryKey = 'user_id';
+    public $incrementing = false;
+    protected $fillable = ['user_id', 'license_number', 'is_available'];
 
     public function user()
     {
