@@ -58,43 +58,39 @@ export const PageLogo = styled.Image`
 `;
 
 export const StyledFormArea = styled.View`
-    width: 90%;
+    width: 95%;
 `;
 
-// Inside your components/styles.js
-export const StyledTextInput = styled.TextInput`
-  background-color: ${Colors.base_page};
-  padding: 15px;
-  padding-left: 55px;
-  padding-right: 55px;
-  border-radius: 16px;  /* <--- ADD THIS (Adjust the number for more/less curve) */
-  font-size: 17px;
-  font-family: 'Nunito-Regular'; 
-  height: 49px;
-  margin-vertical: 3px;
-  margin-bottom: 10px;
-  color: ${Colors.text_active};
-`;
 
 export const StyledInputLabel = styled.Text`
-    color: ${Colors.base_page}; /* Changed to your light background for contrast */
-    font-family: 'Nunito-Regular'; 
+    color: ${Colors.white};
     font-size: 13px;
     text-align: left;
 `;
 
 export const LeftIcon = styled.View`
-    left: 17px;
-    top: 35px;
     position: absolute;
+    left: 17px;
     z-index: 1;
 `;
 
 export const RightIcon = styled.TouchableOpacity`
-    right: 17px;
-    top: 32px;
     position: absolute;
+    right: 17px;
     z-index: 1;
+`;
+
+// Make sure your Input doesn't have huge margins that push it away from the icons
+export const StyledTextInput = styled.TextInput`
+    background-color: ${Colors.base_page};
+    padding: 15px;
+    padding-left: 55px;
+    padding-right: 55px;
+    border-radius: 16px;
+    font-size: 16px;
+    height: 55px;
+    color: ${Colors.text_active};
+    margin-bottom: 1px;
 `;
 
 export const StyledButton = styled.TouchableOpacity`
@@ -103,7 +99,7 @@ export const StyledButton = styled.TouchableOpacity`
     justify-content: center;
     align-items: center;
     border-radius: 16px;  /* <--- ADD THIS (Adjust the number for more/less curve) */
-    margin-vertical: 7;
+    margin-vertical: 7px;
     height: 49px;
 
     ${(props) => props.google == true && `
@@ -149,7 +145,7 @@ export const MsgBox = styled.Text`
 export const LineContainer = styled.View`
     flex-direction: row;
     align-items: center;
-    margin-vertical: 20px;
+    margin-vertical: 5px;
 `;
 
 export const Line = styled.View`
@@ -172,10 +168,12 @@ export const GoogleLogo = styled.Image`
 `;
 
 export const ExtraView = styled.View`
-    justify-content: center;
-    flex-direction: row;
+    width: 100%;
     align-items: center;
-    padding: 20px;
+    justify-content: center;
+    /* REDUCE THIS VALUE */
+    margin-top: 10px;   /* Was probably 15px or 20px */
+    padding-bottom: 10px; 
 `;
 
 export const ExtraText = styled.Text`
@@ -183,6 +181,7 @@ export const ExtraText = styled.Text`
     align-items: center;
     color: ${Colors.white};
     font-size: 16px;
+    margin-top: 15px;
 `;
 
 export const TextLink = styled.TouchableOpacity`
@@ -193,4 +192,29 @@ export const TextLink = styled.TouchableOpacity`
 export const TextLinkContent = styled.Text`
     color: ${Colors.button_loginsignup};
     font-size: 16px;
-`;      
+`;
+
+export const ExtraSmallText = styled.Text`
+    font-size: 12px;
+    color: ${Colors.white};
+    text-align: center; /* Standard centering for all platforms */
+    line-height: 20px;
+`;
+
+export const SmallTextLink = styled.TouchableOpacity`
+    justify-content: center;
+    align-items: center;
+`;
+
+export const SmallTextLinkContent = styled.Text`
+    color: ${Colors.brand};
+    font-size: 13px;
+    font-weight: regular;
+    text-decoration-line: underline; 
+    
+    /* If you actually want a strike-through: */
+    /* text-decoration-line: line-through; */
+
+    /* If you want BOTH for some reason: */
+    /* text-decoration-line: underline line-through; */
+`;

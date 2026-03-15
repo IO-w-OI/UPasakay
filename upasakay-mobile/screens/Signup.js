@@ -9,6 +9,7 @@ import { View } from 'react-native';
 import {
     ButtonText,
     Colors,
+    ExtraSmallText,
     ExtraText,
     ExtraView,
     GoogleLogo,
@@ -19,6 +20,7 @@ import {
     OrText,
     PageLogo,
     RightIcon,
+    SmallTextLinkContent,
     StyledButton,
     StyledContainer,
     StyledFormArea,
@@ -37,8 +39,14 @@ const Signup = () => {
         <StyledContainer>
             <StatusBar style="light" />
             <InnerContainer>
-                <PageLogo resizeMode="cover" source={require('../assets/images/UPasakaySmall.png')} 
-/>  
+            <PageLogo 
+                resizeMode="contain" 
+                source={require('../assets/images/UPasakayBig.png')} 
+                style={{ 
+                    width: 723 * 0.35, 
+                    height: 406 * 0.35 
+                }} 
+            />
 
                 <Formik
                     initialValues={{ email: '', password: '' }}
@@ -47,7 +55,7 @@ const Signup = () => {
                     }}
                 >{({handleChange, handleBlur, handleSubmit, values}) => <StyledFormArea>
                     <MyTextInput
-                        label="Email Address"
+                      
                         icon="mail"
                         placeholder="Enter your email address"
                         placeholderTextColor={Colors.text_idle}
@@ -57,7 +65,7 @@ const Signup = () => {
                         keyboardType="email-address"
                     />
                     <MyTextInput
-                        label="Password"
+                    
                         icon="lock"
                         placeholder="Enter your password"
                         placeholderTextColor={Colors.text_idle}
@@ -68,7 +76,7 @@ const Signup = () => {
                         setHidePassword={setHidePassword}
                     />
                     <MyTextInput
-                        label="Confirm Password"
+                       
                         icon="lock"
                         placeholder="Confirm your password"
                         placeholderTextColor={Colors.text_idle}
@@ -78,6 +86,30 @@ const Signup = () => {
                         hidePassword={hideConfirmPassword}    // Use the new state
                         setHidePassword={setHideConfirmPassword} // Use the new setter
                     />
+
+                    <ExtraView>
+                        <ExtraSmallText>
+                            By clicking 'Sign Up', you have read and agreed to our{"\n"}
+                            
+                            {/* We use Text instead of TouchableOpacity/View here */}
+                            <ExtraSmallText 
+                                style={{ fontWeight: 'regular', color: Colors.button_loginsignup }} 
+                                onPress={() => router.push('/Login')}
+                            >
+                                <SmallTextLinkContent>Terms of Service</SmallTextLinkContent>
+                            </ExtraSmallText>
+                            
+                            <ExtraSmallText> and </ExtraSmallText>
+                            
+                            <ExtraSmallText 
+                                style={{ fontWeight: 'regular', color: Colors.button_loginsignup }} 
+                                onPress={() => router.push('/Login')}
+                            >
+                                <SmallTextLinkContent>Privacy Policy</SmallTextLinkContent>
+                            </ExtraSmallText>
+                        </ExtraSmallText>
+                    </ExtraView>
+
                     <StyledButton onPress={handleSubmit}>
                         <ButtonText>
                             Sign Up
@@ -95,14 +127,14 @@ const Signup = () => {
 
                             <StyledButton apple={true}>
                                 {/* Use Ionicons for the Apple Logo */}
-                                <Ionicons name="logo-apple" size={20} color={Colors.white} /> 
+                                <GoogleLogo source={require('../assets/images/apple-logo.png')} />
                                 <ButtonText apple={true}>Sign Up with Apple</ButtonText>
                             </StyledButton>
 
                             <ExtraView>
                                 <ExtraText>Already have an account? </ExtraText>
                                 <TextLink onPress={() => router.push('/Login')}> 
-                                    <TextLinkContent>Login</TextLinkContent>
+                                    <TextLinkContent>Log In</TextLinkContent>
                                 </TextLink>
                             </ExtraView>
 
@@ -115,25 +147,30 @@ const Signup = () => {
     );
 }
 
-const MyTextInput = ({label, icon, isPassword, hidePassword, setHidePassword, ...props}) => {
+// Add 'InputWrapper' to your imports from '../components/styles'
+const MyTextInput = ({ label, icon, isPassword, hidePassword, setHidePassword, ...props }) => {
     return (
-        <View>
-            <LeftIcon>
-                <Octicons name={icon} size={20} color={Colors.text_idle} />
-            </LeftIcon>
+        <View style={{ marginBottom: 5 }}>
             <StyledInputLabel>{label}</StyledInputLabel>
-            <StyledTextInput {...props} />
-            {isPassword && (
-                // This generic 'setHidePassword' will call whatever 
-                // function you passed into the prop (either the original or the 'Confirm' one)
-                <RightIcon onPress={() => setHidePassword(!hidePassword)}>
-                    <Ionicons 
-                        name={hidePassword ? 'eye-off' : 'eye'} 
-                        size={20} 
-                        color={Colors.text_idle} 
-                    />
-                </RightIcon>
-            )}
+            
+            {/* This wrapper is the secret sauce */}
+            <View style={{ justifyContent: 'center' }}> 
+                <LeftIcon>
+                    <Octicons name={icon} size={20} color={Colors.text_idle} />
+                </LeftIcon>
+                
+                <StyledTextInput {...props} />
+
+                {isPassword && (
+                    <RightIcon onPress={() => setHidePassword(!hidePassword)}>
+                        <Ionicons 
+                            name={hidePassword ? 'eye-off' : 'eye'} 
+                            size={20} 
+                            color={Colors.text_idle} 
+                        />
+                    </RightIcon>
+                )}
+            </View>
         </View>
     );
 };

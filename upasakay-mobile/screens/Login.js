@@ -45,7 +45,6 @@ const Login = () => {
                     }}
                 >{({handleChange, handleBlur, handleSubmit, values}) => <StyledFormArea>
                     <MyTextInput
-                        label="Email Address"
                         icon="mail"
                         placeholder="Enter your email address"
                         placeholderTextColor={Colors.text_idle}
@@ -55,7 +54,6 @@ const Login = () => {
                         keyboardType="email-address"
                     />
                     <MyTextInput
-                        label="Password"
                         icon="lock"
                         placeholder="Enter your password"
                         placeholderTextColor={Colors.text_idle}
@@ -82,7 +80,7 @@ const Login = () => {
 
                             <StyledButton apple={true}>
                                 {/* Use Ionicons for the Apple Logo */}
-                                <Ionicons name="logo-apple" size={20} color={Colors.white} /> 
+                                <GoogleLogo source={require('../assets/images/apple-logo.png')} /> 
                                 <ButtonText apple={true}>Log In with Apple</ButtonText>
                             </StyledButton>
                                 <ExtraView>
@@ -101,23 +99,33 @@ const Login = () => {
     );
 }
 
-const MyTextInput = ({label, icon, isPassword, hidePassword, setHidePassword, ...props}) => {
+// Add 'InputWrapper' to your imports from '../components/styles'
+const MyTextInput = ({ label, icon, isPassword, hidePassword, setHidePassword, ...props }) => {
     return (
-        <View>
-            <LeftIcon>
-                <Octicons name={icon} size={20} color={Colors.text_idle} />
-            </LeftIcon>
+        <View style={{ marginBottom: 7 }}>
             <StyledInputLabel>{label}</StyledInputLabel>
-            <StyledTextInput {...props} />
-            {isPassword && (
-                <RightIcon onPress={() => setHidePassword(!hidePassword)}>
-                    <Ionicons name={hidePassword ? 'eye-off' : 'eye'} size={20} 
-                    color={Colors.text_idle} />
-                </RightIcon>
-            )}
+            
+            {/* This wrapper is the secret sauce */}
+            <View style={{ justifyContent: 'center' }}> 
+                <LeftIcon>
+                    <Octicons name={icon} size={20} color={Colors.text_idle} />
+                </LeftIcon>
+                
+                <StyledTextInput {...props} />
+
+                {isPassword && (
+                    <RightIcon onPress={() => setHidePassword(!hidePassword)}>
+                        <Ionicons 
+                            name={hidePassword ? 'eye-off' : 'eye'} 
+                            size={20} 
+                            color={Colors.text_idle} 
+                        />
+                    </RightIcon>
+                )}
+            </View>
         </View>
-    )
-}
+    );
+};
 
 export default Login;
 
