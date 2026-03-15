@@ -1,7 +1,7 @@
 import React from 'react';
 
-import Login from '@/screens/Login';
+import Home from '@/screens/UserHome';
 
 export default function App() {
-  return <Login />
+  return <Home />
 }

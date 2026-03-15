@@ -9,6 +9,7 @@ export const Colors = {
     //Font Colors
     text_idle: '#8D8D8D',
     text_active: '#000000',
+    golden_brown: '#7A4A00',
 
     // Background Stills
     white: '#FFFFFF',
@@ -37,9 +38,11 @@ export const Colors = {
 const { top_loginsignup, bottom_loginsignup } = Colors;
 
 // We use .attrs to pass the 'colors' prop to LinearGradient
-export const StyledContainer = styled(LinearGradient).attrs({
-    colors: [top_loginsignup, bottom_loginsignup],
-})`
+// Add (props) logic to the colors array
+export const StyledContainer = styled(LinearGradient).attrs((props) => ({
+    // It will look for a 'colors' prop first, otherwise use defaults
+    colors: props.colors || [top_loginsignup, bottom_loginsignup],
+}))`
     flex: 1;
     padding: 25px;
     padding-top: ${StatusBarHeight + 24.5}px;
@@ -93,6 +96,15 @@ export const StyledTextInput = styled.TextInput`
     margin-bottom: 1px;
 `;
 
+export const BasePage = styled.View`
+    flex: 1;
+    width: 100%;
+    background-color: ${Colors.base_page};
+    border-radius: 16px;
+    padding: 20px;
+    align-items: center;
+`;
+
 export const StyledButton = styled.TouchableOpacity`
     padding: 5px;
     background-color: ${Colors.button_loginsignup};
@@ -115,6 +127,15 @@ export const StyledButton = styled.TouchableOpacity`
             justify-content: center;
         `
     }
+
+    /* iOS Shadow Properties */
+    shadow-color: #000;
+    shadow-offset: 0px 4px;
+    shadow-opacity: 0.25;
+    shadow-radius: 4px;
+
+    /* Android Shadow Property */
+    elevation: 5;
 `;
 
 export const ButtonText = styled.Text`
@@ -217,4 +238,28 @@ export const SmallTextLinkContent = styled.Text`
 
     /* If you want BOTH for some reason: */
     /* text-decoration-line: underline line-through; */
+`;
+
+export const Header = styled.Text`
+    margin-top: 10px;
+    font-size: 35px;
+    color: ${Colors.text_active};
+    text-align: left; 
+    font-family: 'Nunito-Bold';
+    
+    /* ADD THESE TWO LINES */
+    align-self: flex-start;
+    width: 100%;
+`;
+
+export const SubHeader = styled.Text`
+    margin-top: 10px;
+    font-size: 20px;
+    color: ${Colors.text_active};
+    text-align: left; 
+    font-family: 'Nunito-Bold';
+    
+    /* ADD THESE TWO LINES */
+    align-self: flex-start;
+    width: 120%;
 `;
