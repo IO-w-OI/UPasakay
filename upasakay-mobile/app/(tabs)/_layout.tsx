@@ -1,35 +1,23 @@
 import { Tabs } from 'expo-router';
 
-import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
   return (
     <Tabs
       screenOptions={{
-        href: null,
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
-        tabBarButton: HapticTab,
+        tabBarStyle: {
+          backgroundColor: '#701929', 
+          borderTopWidth: 0,
+          elevation: 0, // Removes shadow on Android
+        },
       }}>
+      
+      {/* Hides the "index" button from the bottom bar */}
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
-          href: null,
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="explore"
-        options={{
-          title: 'Explore',
-          href: null,
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          href: null, 
+          tabBarStyle: { display: 'none' }, // Hides bar on Login screen
         }}
       />
     </Tabs>
