@@ -16,9 +16,9 @@ class DriverSeeder extends Seeder
 
         $drivers = [
             ['email' => 'juan@upasakay.com', 'full_name' => 'Juan dela Cruz', 'license' => 'N01-23-000001'],
-            ['email' => 'maria@upasakay.com', 'full_name' => 'Maria Reyes', 'license' => 'N01-23-000002'],
+            ['email' => 'robert@upasakay.com', 'full_name' => 'Robert Reyes', 'license' => 'N01-23-000002'],
             ['email' => 'pedro@upasakay.com', 'full_name' => 'Pedro Santos', 'license' => 'N01-23-000003'],
-            ['email' => 'ana@upasakay.com', 'full_name' => 'Ana Gomez', 'license' => 'N01-23-000004'],
+            ['email' => 'greg@upasakay.com', 'full_name' => 'Greg Gomez', 'license' => 'N01-23-000004'],
         ];
 
         foreach ($drivers as $d) {

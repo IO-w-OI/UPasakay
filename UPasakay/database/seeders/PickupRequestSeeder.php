@@ -15,11 +15,22 @@ class PickupRequestSeeder extends Seeder
     {
         DB::statement('TRUNCATE TABLE pickup_requests RESTART IDENTITY CASCADE');
 
-        $south = Route::where('name', 'South')->first();
         $north = Route::where('name', 'North')->first();
+        $south = Route::where('name', 'South')->first();
         $cebu = Route::where('name', 'Cebu City')->first();
 
-        // Pull first available passenger user IDs
+        // Stops grouped by route for correct pickup/dropoff pairing
+        $northStops = Stop::where('route_id', $north->id)->pluck('id')->toArray();
+        $southStops = Stop::where('route_id', $south->id)->pluck('id')->toArray();
+        $cebuStops = Stop::where('route_id', $cebu->id)->pluck('id')->toArray();
+
+        $routeStops = [
+            $north->id => $northStops,
+            $south->id => $southStops,
+            $cebu->id => $cebuStops,
+        ];
+
+        // Pull passenger user IDs
         $users = User::whereNotIn('email', [
             'admin@upasakay.edu.ph',
             'juan@upasakay.com',
@@ -28,57 +39,57 @@ class PickupRequestSeeder extends Seeder
             'ana@upasakay.com',
         ])->pluck('id')->take(5)->toArray();
 
-        $uid = fn(int $i) => $users[$i] ?? 1;
+        $uid = fn(int $i) => $users[$i % count($users)] ?? 1;
 
-        $stops = Stop::pluck('id')->toArray();
-        $s = fn(int $i) => $stops[$i % count($stops)] ?? 1;
+        // Helper: pick a random pickup & dropoff within the same route
+        $pickDrop = function (int $routeId) use ($routeStops) {
+            $stops = $routeStops[$routeId];
+            $pickup = $stops[array_rand($stops)];
+            do {
+                $dropoff = $stops[array_rand($stops)];
+            } while ($dropoff === $pickup);
+            return [$pickup, $dropoff];
+        };
 
         $rows = [];
-        // 12 pending requests across routes
-        foreach ([
-            $south,
-            $north,
-            $cebu,
-            $south,
-            $north,
-            $cebu,
-            $south,
-            $north,
-            $cebu,
-            $south,
-            $north,
-            $cebu
-        ] as $i => $route) {
-            $rows[] = [
-                'user_id' => $uid($i % 5),
-                'route_id' => $route?->id ?? 1,
-                'pickup_stop_id' => $s($i),
-                'dropoff_stop_id' => $s($i + 1),
-                'status' => 'pending',
-                'completed_at' => null,
-                'created_at' => now()->subMinutes(rand(1, 120)),
-                'updated_at' => now(),
-            ];
+        $routes = [$north, $south, $cebu];
+
+        // 12 pending requests (4 per route)
+        foreach ($routes as $ri => $route) {
+            for ($j = 0; $j < 4; $j++) {
+                [$p, $d] = $pickDrop($route->id);
+                $rows[] = [
+                    'user_id' => $uid($ri * 4 + $j),
+                    'route_id' => $route->id,
+                    'pickup_stop_id' => $p,
+                    'dropoff_stop_id' => $d,
+                    'status' => 'pending',
+                    'completed_at' => null,
+                    'created_at' => now()->subMinutes(rand(1, 120)),
+                    'updated_at' => now(),
+                ];
+            }
         }
 
         // Completed requests for success-rate chart
-        $southId = $south?->id ?? 1;
-        $northId = $north?->id ?? 1;
-        $cebuId = $cebu?->id ?? 1;
-
         foreach (range(1, 35) as $i) { // South ~35
-            $rows[] = ['user_id' => $uid($i % 5), 'route_id' => $southId, 'pickup_stop_id' => $s(0), 'dropoff_stop_id' => $s(1), 'status' => 'completed', 'completed_at' => now()->subMinutes(rand(10, 300)), 'created_at' => now()->subHours(rand(1, 8)), 'updated_at' => now()];
+            [$p, $d] = $pickDrop($south->id);
+            $rows[] = ['user_id' => $uid($i), 'route_id' => $south->id, 'pickup_stop_id' => $p, 'dropoff_stop_id' => $d, 'status' => 'completed', 'completed_at' => now()->subMinutes(rand(10, 300)), 'created_at' => now()->subHours(rand(1, 8)), 'updated_at' => now()];
         }
         foreach (range(1, 28) as $i) { // North ~28
-            $rows[] = ['user_id' => $uid($i % 5), 'route_id' => $northId, 'pickup_stop_id' => $s(0), 'dropoff_stop_id' => $s(1), 'status' => 'completed', 'completed_at' => now()->subMinutes(rand(10, 300)), 'created_at' => now()->subHours(rand(1, 8)), 'updated_at' => now()];
+            [$p, $d] = $pickDrop($north->id);
+            $rows[] = ['user_id' => $uid($i), 'route_id' => $north->id, 'pickup_stop_id' => $p, 'dropoff_stop_id' => $d, 'status' => 'completed', 'completed_at' => now()->subMinutes(rand(10, 300)), 'created_at' => now()->subHours(rand(1, 8)), 'updated_at' => now()];
         }
         foreach (range(1, 18) as $i) { // Cebu City ~18
-            $rows[] = ['user_id' => $uid($i % 5), 'route_id' => $cebuId, 'pickup_stop_id' => $s(0), 'dropoff_stop_id' => $s(1), 'status' => 'completed', 'completed_at' => now()->subMinutes(rand(10, 300)), 'created_at' => now()->subHours(rand(1, 8)), 'updated_at' => now()];
+            [$p, $d] = $pickDrop($cebu->id);
+            $rows[] = ['user_id' => $uid($i), 'route_id' => $cebu->id, 'pickup_stop_id' => $p, 'dropoff_stop_id' => $d, 'status' => 'completed', 'completed_at' => now()->subMinutes(rand(10, 300)), 'created_at' => now()->subHours(rand(1, 8)), 'updated_at' => now()];
         }
-        // Failed requests
+
+        // Failed/cancelled requests
         foreach (range(1, 18) as $i) {
-            $routeId = [$southId, $northId, $cebuId][$i % 3];
-            $rows[] = ['user_id' => $uid($i % 5), 'route_id' => $routeId, 'pickup_stop_id' => $s(0), 'dropoff_stop_id' => $s(1), 'status' => 'cancelled', 'completed_at' => null, 'created_at' => now()->subHours(rand(1, 8)), 'updated_at' => now()];
+            $route = $routes[$i % 3];
+            [$p, $d] = $pickDrop($route->id);
+            $rows[] = ['user_id' => $uid($i), 'route_id' => $route->id, 'pickup_stop_id' => $p, 'dropoff_stop_id' => $d, 'status' => 'cancelled', 'completed_at' => null, 'created_at' => now()->subHours(rand(1, 8)), 'updated_at' => now()];
         }
 
         PickupRequest::insert($rows);
