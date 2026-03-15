@@ -11,6 +11,7 @@ export const Colors = {
     text_active: '#000000',
 
     // Background Stills
+    white: '#FFFFFF',
     base_page: '#F2F9F3', 
     top_loginsignup: '#8D1436', 
     bottom_loginsignup: '#400A19', 
@@ -107,22 +108,84 @@ export const LeftIcon = styled.View`
 
 export const RightIcon = styled.TouchableOpacity`
     right: 17px;
-    top: 30px;
+    top: 32px;
     position: absolute;
     z-index: 1;
 `;
 
 export const StyledButton = styled.TouchableOpacity`
-    padding: 15px;
+    padding: 7px;
     background-color: ${Colors.button_loginsignup};
     justify-content: center;
     align-items: center;
-    border-radius: 5px;
-    margin-vertical: 5px;
-    height: 60px;
+    border-radius: 16px;  /* <--- ADD THIS (Adjust the number for more/less curve) */
+    margin-vertical: 10px;
+    height: 49px;
+
+    ${(props) => props.google == true && `
+            background-color: ${Colors.base_page};
+            flex-direction: row;
+            justify-content: center;
+        `
+    }
+
+    ${(props) => props.apple == true && `
+            background-color: ${Colors.text_active};
+            flex-direction: row;
+            justify-content: center;
+        `
+    }
 `;
 
 export const ButtonText = styled.Text`
-    color: ${Colors.base_page}; /* Changed to your light background for contrast */
-    font-size: 16px;
+    /* Default color for the standard Login button */
+    color: ${Colors.base_page}; 
+    font-size: 20px;
+    font-family: 'Nunito-Regular';
+    text-align: center;
+
+    /* If the google prop is true, override the color and padding */
+    ${(props) => props.google === true && `
+        color: ${Colors.text_active}; 
+        padding: 5px; 
+    `}
+
+    /* If the apple prop is true, override the color and padding */
+    ${(props) => props.apple === true && `
+        color: ${Colors.white}; 
+        padding: 5px; 
+    `}
+`;
+export const MsgBox = styled.Text`
+    text-align: center;
+    font-size: 13px;
+    color: ${Colors.text_active};
+`;
+
+// 1. The container that holds everything in a row
+export const LineContainer = styled.View`
+    flex-direction: row;
+    align-items: center;
+    margin-vertical: 20px;
+`;
+
+// 2. The lines (give them flex: 1 so they grow to fill the space)
+export const Line = styled.View`
+    flex: 1;
+    height: 1px;
+    background-color: #FFFFFF; /* or your Colors.darkLight */
+`;
+
+// 3. The "or" text with some padding so it doesn't touch the lines
+export const OrText = styled.Text`
+    color: #FFFFFF;
+    padding-horizontal: 10px;
+    font-size: 14px;
+    text-align: center;
+`;
+
+export const GoogleLogo = styled.Image`
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
 `;
