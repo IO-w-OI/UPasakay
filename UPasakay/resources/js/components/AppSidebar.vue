@@ -20,10 +20,9 @@ import { edit as editAppearance } from '@/routes/appearance';
 const mainNavItems: NavItem[] = [
     { title: 'Dashboard', href: dashboard(), icon: LayoutGrid },
     { title: 'Live Map', href: '/live-map', icon: Map },
-    { title: 'Shuttles', href: '#', icon: Bus },
     { title: 'Drivers', href: '/drivers', icon: Users },
     { title: 'Requests', href: '/pickup-requests', icon: ClipboardList },
-    { title: 'Notifications', href: '/notifications', icon: Bell, badge: 3 },
+    { title: 'Notifications', href: '/notifications', icon: Bell },
     { title: 'Feedback', href: '/feedback', icon: MessageSquare },
     { title: 'Settings', href: editAppearance(), icon: Settings },
 ];
@@ -50,7 +49,6 @@ const mainNavItems: NavItem[] = [
         <SidebarFooter>
             <SidebarMenu>
                 <SidebarMenuItem>
-                    <SidebarTrigger class="w-full justify-start gap-2 text-sidebar-foreground hover:bg-sidebar-accent hover:text-white" />
                 </SidebarMenuItem>
             </SidebarMenu>
         </SidebarFooter>

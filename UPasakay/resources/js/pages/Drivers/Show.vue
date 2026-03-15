@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
-import { Mail, Key, Bus, ChevronLeft, User } from 'lucide-vue-next';
+import { Mail, Key, Bus, ChevronLeft, User, Star } from 'lucide-vue-next';
 import { ref } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
@@ -103,7 +103,7 @@ const routeBadge = (r: string) =>
                         <p class="font-medium text-gray-800">{{ driver.last_login }}</p>
                     </div>
 
-                    <div class="mt-4 grid grid-cols-3 gap-3 text-center">
+                        <div class="mt-4 grid grid-cols-3 gap-3 text-center">
                         <div class="rounded-xl bg-gray-50 p-3">
                             <p class="text-lg font-bold text-gray-900">{{ driver.total_sessions }}</p>
                             <p class="text-[10px] text-gray-400">Sessions</p>
@@ -114,7 +114,8 @@ const routeBadge = (r: string) =>
                         </div>
                         <div class="rounded-xl bg-gray-50 p-3">
                             <p class="text-lg font-bold text-gray-900">{{ driver.avg_rating }}</p>
-                            <p class="text-[10px] text-gray-400">Avg ⭐</p>
+                                <p class="text-lg font-bold text-gray-900">{{ driver.avg_rating }} <Star class="inline-block h-5 w-5 text-yellow-500 ml-2" /></p>
+                                <p class="mt-1 text-sm text-gray-400">Avg Rating</p>
                         </div>
                     </div>
 
@@ -196,7 +197,7 @@ const routeBadge = (r: string) =>
                             <p class="mt-1 text-sm text-gray-400">Total Sessions</p>
                         </div>
                         <div class="rounded-xl bg-gray-50 p-4 text-center">
-                            <p class="text-3xl font-bold text-gray-900">{{ driver.avg_rating }} ⭐</p>
+                            <p class="text-3xl font-bold text-gray-900">{{ driver.avg_rating }} <Star class="inline-block h-5 w-5 text-yellow-500 ml-2" /></p>
                             <p class="mt-1 text-sm text-gray-400">Avg Rating</p>
                         </div>
                         <div class="rounded-xl bg-gray-50 p-4 text-center">
