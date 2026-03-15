@@ -54,23 +54,7 @@ export const InnerContainer = styled.View`
 export const PageLogo = styled.Image`
     width: 192.03px;
     height: 181px;
-    margin-bottom: 30px;
-`;
-
-export const PageTitle = styled.Text`
-    font-size: 30px;
-    text-align: center;
-    font-weight: bold;
-    color: ${Colors.button_loginsignup}; /* Changed to your yellow for contrast */
-    padding: 10px;
-`;
-
-export const SubTitle = styled.Text`
-    font-size: 18px;
     margin-bottom: 20px;
-    letter-spacing: 1px;
-    font-weight: bold;
-    color: ${Colors.button_loginsignup}; /* Changed to your yellow for contrast */
 `;
 
 export const StyledFormArea = styled.View`
@@ -84,7 +68,7 @@ export const StyledTextInput = styled.TextInput`
   padding-left: 55px;
   padding-right: 55px;
   border-radius: 16px;  /* <--- ADD THIS (Adjust the number for more/less curve) */
-  font-size: 16px;
+  font-size: 17px;
   font-family: 'Nunito-Regular'; 
   height: 49px;
   margin-vertical: 3px;
@@ -101,7 +85,7 @@ export const StyledInputLabel = styled.Text`
 
 export const LeftIcon = styled.View`
     left: 17px;
-    top: 32px;
+    top: 35px;
     position: absolute;
     z-index: 1;
 `;
@@ -114,12 +98,12 @@ export const RightIcon = styled.TouchableOpacity`
 `;
 
 export const StyledButton = styled.TouchableOpacity`
-    padding: 7px;
+    padding: 5px;
     background-color: ${Colors.button_loginsignup};
     justify-content: center;
     align-items: center;
     border-radius: 16px;  /* <--- ADD THIS (Adjust the number for more/less curve) */
-    margin-vertical: 10px;
+    margin-vertical: 7;
     height: 49px;
 
     ${(props) => props.google == true && `
@@ -162,24 +146,21 @@ export const MsgBox = styled.Text`
     color: ${Colors.text_active};
 `;
 
-// 1. The container that holds everything in a row
 export const LineContainer = styled.View`
     flex-direction: row;
     align-items: center;
     margin-vertical: 20px;
 `;
 
-// 2. The lines (give them flex: 1 so they grow to fill the space)
 export const Line = styled.View`
     flex: 1;
     height: 1px;
     background-color: #FFFFFF; /* or your Colors.darkLight */
 `;
 
-// 3. The "or" text with some padding so it doesn't touch the lines
 export const OrText = styled.Text`
     color: #FFFFFF;
-    padding-horizontal: 10px;
+    padding-horizontal: 5px;
     font-size: 14px;
     text-align: center;
 `;
@@ -189,3 +170,27 @@ export const GoogleLogo = styled.Image`
     height: 20px;
     margin-right: 10px;
 `;
+
+export const ExtraView = styled.View`
+    justify-content: center;
+    flex-direction: row;
+    align-items: center;
+    padding: 20px;
+`;
+
+export const ExtraText = styled.Text`
+    justify-content: center;
+    align-items: center;
+    color: ${Colors.white};
+    font-size: 16px;
+`;
+
+export const TextLink = styled.TouchableOpacity`
+    justify-content: center;
+    align-items: center;
+`;
+
+export const TextLinkContent = styled.Text`
+    color: ${Colors.button_loginsignup};
+    font-size: 16px;
+`;      

@@ -1,18 +1,20 @@
 import { Ionicons, Octicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Formik } from 'formik';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { View } from 'react-native';
 
 import {
     ButtonText,
     Colors,
+    ExtraText,
+    ExtraView,
     GoogleLogo,
     InnerContainer,
     LeftIcon,
     Line,
     LineContainer,
-    MsgBox,
     OrText,
     PageLogo,
     RightIcon,
@@ -21,9 +23,12 @@ import {
     StyledFormArea,
     StyledInputLabel,
     StyledTextInput,
+    TextLink,
+    TextLinkContent
 } from '../components/styles';
 
 const Login = () => {
+    const router = useRouter(); 
     const [hidePassword, setHidePassword] = useState(true);
 
     return (
@@ -60,10 +65,9 @@ const Login = () => {
                         hidePassword={hidePassword}
                         setHidePassword={setHidePassword}
                     />
-                    <MsgBox>...</MsgBox>
                     <StyledButton onPress={handleSubmit}>
                         <ButtonText>
-                            Login
+                            Log In
                         </ButtonText>
                     </StyledButton>
                         <LineContainer>
@@ -75,11 +79,19 @@ const Login = () => {
                                 <GoogleLogo source={require('../assets/images/google-logo.png')} /> 
                                 <ButtonText google={true}>Log In with Google</ButtonText>
                             </StyledButton>
-<StyledButton apple={true}>
-    {/* Use Ionicons for the Apple Logo */}
-    <Ionicons name="logo-apple" size={20} color={Colors.base_page} /> 
-    <ButtonText apple={true}>Sign In with Apple</ButtonText>
-</StyledButton>
+
+                            <StyledButton apple={true}>
+                                {/* Use Ionicons for the Apple Logo */}
+                                <Ionicons name="logo-apple" size={20} color={Colors.white} /> 
+                                <ButtonText apple={true}>Log In with Apple</ButtonText>
+                            </StyledButton>
+                                <ExtraView>
+                                    <ExtraText>Don't have an account already? </ExtraText>
+                                        <TextLink onPress={() => router.push('/Signup')}> 
+                                                <TextLinkContent> Sign up now! </TextLinkContent>
+                                        </TextLink>
+                                </ExtraView>
+
                 </StyledFormArea>
                 }
                 </Formik>
