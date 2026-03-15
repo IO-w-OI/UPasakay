@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
-import { Map, Bus, MapPin, RefreshCw, ClipboardList, ArrowRight } from 'lucide-vue-next';
-import { ref, computed } from 'vue';
+import { Map as MapIcon, Bus, MapPin, RefreshCw, ClipboardList, ArrowRight } from 'lucide-vue-next';
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import { dashboard } from '@/routes';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Home', href: dashboard().url },
@@ -71,6 +73,71 @@ const routeDot = (route: string) =>
     ({ South: 'bg-green-500', North: 'bg-blue-500', 'Cebu City': 'bg-orange-500' }[route] ?? 'bg-gray-400');
 
 const activeCount = computed(() => props.shuttles.filter(s => s.status === 'active').length);
+
+// ── Leaflet map ────────────────────────────────────────────────────────────
+const mapRef = ref<HTMLDivElement | null>(null);
+let map: L.Map | null = null;
+const shuttleMarkers = new Map<number, L.Marker>();
+
+const statusColors: Record<string, string> = { active: '#16a34a', idle: '#fb923c', offline: '#9ca3af' };
+
+const makeShuttleIcon = (status: string) => L.divIcon({
+    className: '',
+    html: `<div style="background:${statusColors[status] ?? '#9ca3af'};width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 2px 6px rgba(0,0,0,.3);border:2px solid #fff;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6v6"/><path d="M15 6v6"/><path d="M2 12h19.6"/><path d="M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.8 19.1 6 18 6H4a2 2 0 0 0-2 2v10h3"/><circle cx="7" cy="18" r="2"/><path d="M9 18h5"/><circle cx="16" cy="18" r="2"/></svg></div>`,
+    iconSize: [32, 32],
+    iconAnchor: [16, 16],
+});
+
+const passengerIcon = L.divIcon({
+    className: '',
+    html: '<div style="color:#ef4444;filter:drop-shadow(0 1px 2px rgba(0,0,0,.3));"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3" fill="white" stroke="white"/></svg></div>',
+    iconSize: [22, 22],
+    iconAnchor: [11, 22],
+});
+
+const syncMarkers = () => {
+    if (!map) return;
+    // Remove all existing markers
+    shuttleMarkers.forEach(m => m.remove());
+    shuttleMarkers.clear();
+
+    filtered.value.forEach((s, i) => {
+        const lat = s.latitude ?? 10.3157 + (i * 0.004);
+        const lng = s.longitude ?? 123.8854 + (i * 0.005);
+        const marker = L.marker([lat, lng], { icon: makeShuttleIcon(s.status) })
+            .bindPopup(`<div style="font-size:13px;"><b>${s.code}</b><br>Driver: ${s.driver}<br>Route: ${s.route}<br>Speed: ${s.speed} km/h<br>Status: ${s.status}</div>`)
+            .addTo(map!);
+        marker.on('click', () => selectShuttle(s));
+        shuttleMarkers.set(s.id, marker);
+    });
+
+    props.pendingRequests.slice(0, 8).forEach((r, i) => {
+        const lat = 10.3140 + (i * 0.003);
+        const lng = 123.8870 + (i * 0.004);
+        L.marker([lat, lng], { icon: passengerIcon })
+            .bindPopup(`<div style="font-size:13px;"><b>#${r.id}</b> ${r.passenger}<br>${r.route} • ${r.stop}</div>`)
+            .addTo(map!);
+    });
+};
+
+watch(filtered, () => syncMarkers());
+
+onMounted(() => {
+    nextTick(() => {
+        if (!mapRef.value) return;
+        map = L.map(mapRef.value).setView([10.3157, 123.8900], 14);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap contributors',
+        }).addTo(map);
+        syncMarkers();
+    });
+});
+
+onUnmounted(() => {
+    map?.remove();
+    map = null;
+});
 </script>
 
 <template>
@@ -94,7 +161,7 @@ const activeCount = computed(() => props.shuttles.filter(s => s.status === 'acti
                         placeholder="Search shuttle or driver…"
                         class="w-44 text-sm text-gray-700 outline-none placeholder:text-gray-400"
                     />
-                    <Map class="h-4 w-4 text-gray-400" />
+                    <MapIcon class="h-4 w-4 text-gray-400" />
                 </div>
                 <button
                     class="ml-auto flex items-center gap-1.5 text-sm font-medium text-green-600 hover:text-green-700"
@@ -111,87 +178,15 @@ const activeCount = computed(() => props.shuttles.filter(s => s.status === 'acti
                 <!-- Map area -->
                 <div class="relative flex flex-1 flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
 
-                    <!-- No-API placeholder map -->
-                    <div class="relative flex-1 overflow-hidden bg-[#f0f4f0]">
-
-                        <!-- SVG grid roads -->
-                        <svg class="absolute inset-0 h-full w-full" xmlns="http://www.w3.org/2000/svg">
-                            <defs>
-                                <pattern id="gridmap" width="80" height="80" patternUnits="userSpaceOnUse">
-                                    <rect width="80" height="80" fill="#e8f0e8"/>
-                                    <path d="M 80 0 L 0 0 L 0 80" stroke="#c8dcc8" stroke-width="0.8" fill="none"/>
-                                </pattern>
-                            </defs>
-                            <rect width="100%" height="100%" fill="url(#gridmap)" />
-
-                            <!-- Stylised "roads" -->
-                            <line x1="20%" y1="0"   x2="20%" y2="100%" stroke="#d0c8b0" stroke-width="5" stroke-dasharray="0"/>
-                            <line x1="50%" y1="0"   x2="50%" y2="100%" stroke="#d0c8b0" stroke-width="8" />
-                            <line x1="80%" y1="0"   x2="80%" y2="100%" stroke="#d0c8b0" stroke-width="5" />
-                            <line x1="0"   y1="30%" x2="100%" y2="30%" stroke="#d0c8b0" stroke-width="5" />
-                            <line x1="0"   y1="60%" x2="100%" y2="60%" stroke="#d0c8b0" stroke-width="8" />
-
-                            <!-- Block fills (simulate city blocks) -->
-                            <rect x="22%" y="2%"  width="26%" height="27%" rx="4" fill="#ddeace" opacity="0.6"/>
-                            <rect x="52%" y="2%"  width="26%" height="27%" rx="4" fill="#ddeace" opacity="0.6"/>
-                            <rect x="2%"  y="32%" width="16%" height="26%" rx="4" fill="#ddeace" opacity="0.6"/>
-                            <rect x="22%" y="32%" width="26%" height="26%" rx="4" fill="#e2ebd8" opacity="0.6"/>
-                            <rect x="52%" y="32%" width="26%" height="26%" rx="4" fill="#ddeace" opacity="0.6"/>
-                            <rect x="2%"  y="62%" width="16%" height="30%" rx="4" fill="#ddeace" opacity="0.6"/>
-                            <rect x="22%" y="62%" width="26%" height="30%" rx="4" fill="#e2ebd8" opacity="0.6"/>
-                            <rect x="52%" y="62%" width="26%" height="30%" rx="4" fill="#ddeace" opacity="0.6"/>
-                        </svg>
-
-                        <!-- Static shuttle markers (visual only, positioned illustratively) -->
-                        <template v-for="(s, i) in filtered" :key="s.id">
-                            <div
-                                class="absolute flex -translate-x-1/2 -translate-y-1/2 cursor-pointer flex-col items-center"
-                                :style="{ left: (18 + i * 22) % 80 + 10 + '%', top: (25 + i * 18) % 70 + 10 + '%' }"
-                                @click="selectShuttle(s)"
-                            >
-                                <div
-                                    class="flex h-8 w-8 items-center justify-center rounded-full shadow-md ring-2 ring-white transition-transform hover:scale-110"
-                                    :class="s.status === 'active' ? 'bg-green-600' : s.status === 'idle' ? 'bg-orange-400' : 'bg-gray-400'"
-                                >
-                                    <Bus class="h-4 w-4 text-white" />
-                                </div>
-                                <span class="mt-0.5 rounded bg-white px-1 text-[10px] font-semibold text-gray-700 shadow">{{ s.code }}</span>
-
-                                <!-- Popup on selection -->
-                                <div
-                                    v-if="selected?.id === s.id"
-                                    class="absolute bottom-full mb-2 w-44 rounded-xl border border-gray-200 bg-white p-3 shadow-lg"
-                                >
-                                    <p class="text-xs font-bold text-gray-800">{{ s.code }}</p>
-                                    <p class="text-xs text-gray-500">Driver: {{ s.driver }}</p>
-                                    <p class="text-xs text-gray-500">Route: {{ s.route }}</p>
-                                    <p class="text-xs text-gray-500">Speed: {{ s.speed }} km/h</p>
-                                    <p class="text-xs text-gray-500">Last seen: {{ s.last_seen }}</p>
-                                    <span
-                                        class="mt-1 inline-block rounded-full px-2 py-0.5 text-[10px] font-medium capitalize"
-                                        :class="statusBadge(s.status)"
-                                    >{{ s.status }}</span>
-                                </div>
-                            </div>
-                        </template>
-
-                        <!-- Waiting passenger pins (one per pending request, illustrative) -->
-                        <template v-for="(r, i) in pendingRequests.slice(0, 4)" :key="r.id">
-                            <div
-                                class="absolute flex -translate-x-1/2 -translate-y-full flex-col items-center"
-                                :style="{ left: (30 + i * 20) % 75 + 12 + '%', top: (45 + i * 15) % 65 + 15 + '%' }"
-                            >
-                                <MapPin class="h-5 w-5 text-red-500 drop-shadow" />
-                            </div>
-                        </template>
-
+                    <!-- Leaflet map -->
+                    <div ref="mapRef" class="relative flex-1 z-0">
                         <!-- No data overlay -->
                         <div
                             v-if="filtered.length === 0"
-                            class="absolute inset-0 flex items-center justify-center"
+                            class="pointer-events-none absolute inset-0 z-[1000] flex items-center justify-center"
                         >
                             <div class="rounded-xl bg-white/80 px-6 py-4 text-center shadow">
-                                <Map class="mx-auto mb-2 h-8 w-8 text-gray-300" />
+                                <MapIcon class="mx-auto mb-2 h-8 w-8 text-gray-300" />
                                 <p class="text-sm font-medium text-gray-500">No shuttles match the filter</p>
                             </div>
                         </div>
@@ -219,7 +214,7 @@ const activeCount = computed(() => props.shuttles.filter(s => s.status === 'acti
 
                     <!-- Click hint -->
                     <div class="flex items-center gap-2 border-t border-blue-100 bg-blue-50 px-4 py-2 text-xs text-blue-600">
-                        <Map class="h-3.5 w-3.5" />
+                        <MapIcon class="h-3.5 w-3.5" />
                         Click any shuttle or pin on the map to view details in a popup
                     </div>
                 </div>

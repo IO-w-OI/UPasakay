@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { Search, Download, ChevronRight, MapPin, Eye } from 'lucide-vue-next';
-import { ref } from 'vue';
+import { Search, Download, ChevronRight, MapPin, Eye, Check, X, Map } from 'lucide-vue-next';
+import { ref, nextTick, onUnmounted } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import { dashboard } from '@/routes';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Home',     href: dashboard().url },
@@ -43,14 +45,40 @@ const apply = () => {
 
 // ── Expanded row ───────────────────────────────────────────────────────────
 const expanded = ref<number | null>(null);
-const toggleExpand = (id: number) => { expanded.value = expanded.value === id ? null : id; };
+const toggleExpand = (id: number) => {
+    expanded.value = expanded.value === id ? null : id;
+    if (expanded.value !== null) {
+        const req = props.requests.data.find(r => r.id === expanded.value);
+        if (req?.latitude && req?.longitude) {
+            nextTick(() => initRequestMap(req.id, req.latitude!, req.longitude!));
+        }
+    }
+};
+
+// ── Leaflet request maps ─────────────────────────────────────────────────
+const requestMaps = new window.Map<number, L.Map>();
+
+const initRequestMap = (id: number, lat: number, lng: number) => {
+    requestMaps.get(id)?.remove();
+    const el = document.getElementById(`req-map-${id}`);
+    if (!el) return;
+    const m = L.map(el, { zoomControl: false, attributionControl: false }).setView([lat, lng], 16);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(m);
+    L.marker([lat, lng]).addTo(m);
+    requestMaps.set(id, m);
+};
+
+onUnmounted(() => {
+    requestMaps.forEach(m => m.remove());
+    requestMaps.clear();
+});
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 const statusColor  = (s: string) =>
     ({ pending: 'bg-yellow-100 text-yellow-700', completed: 'bg-green-100 text-green-700', cancelled: 'bg-red-100 text-red-600' }[s] ?? 'bg-gray-100 text-gray-500');
 
 const statusIcon = (s: string) =>
-    ({ pending: '🟡', completed: '✅', cancelled: '❌' }[s] ?? '⚪');
+    ({ pending: Map, completed: Check, cancelled: X }[s] ?? Map);
 
 const routeBadge = (r: string) =>
     ({ South: 'bg-green-100 text-green-700', North: 'bg-blue-100 text-blue-700', 'Cebu City': 'bg-orange-100 text-orange-700' }[r] ?? 'bg-gray-100 text-gray-600');
@@ -98,9 +126,9 @@ const statCards = [
                     <option value="completed">Completed</option>
                     <option value="cancelled">Cancelled</option>
                 </select>
-                <select v-model="dateFilter" @change="apply"
+                    <select v-model="dateFilter" @change="apply"
                     class="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:outline-none">
-                    <option value="today">📅 Today</option>
+                    <option value="today">Today</option>
                     <option value="">All Time</option>
                 </select>
                 <button class="ml-auto flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50">
@@ -144,7 +172,7 @@ const statCards = [
                                     <td class="px-4 py-3 text-gray-600">{{ r.driver }}</td>
                                     <td class="px-4 py-3">
                                         <span class="rounded-full px-2.5 py-0.5 text-xs font-medium capitalize" :class="statusColor(r.status)">
-                                            {{ statusIcon(r.status) }} {{ r.status }}
+                                            <component :is="statusIcon(r.status)" class="inline-block h-3 w-3 mr-1" /> {{ r.status }}
                                         </span>
                                     </td>
                                     <td class="px-4 py-3">
@@ -177,8 +205,12 @@ const statCards = [
                                                 <div><span class="text-gray-500">Requested: </span><span class="text-gray-800">{{ r.time }}</span></div>
                                                 <div><span class="text-gray-500">ETA: </span><span class="text-gray-800">{{ r.eta }}</span></div>
                                             </div>
-                                            <div class="mt-4 flex h-28 items-center justify-center rounded-xl border border-dashed border-gray-200 bg-gray-50 text-sm text-gray-400">
-                                                🗺 Map requires GPS API integration
+                                            <div v-if="r.latitude && r.longitude"
+                                                :id="`req-map-${r.id}`"
+                                                class="mt-4 h-28 w-full rounded-xl border border-gray-200 z-0">
+                                            </div>
+                                            <div v-else class="mt-4 flex h-28 items-center justify-center rounded-xl border border-dashed border-gray-200 bg-gray-50 text-sm text-gray-400">
+                                                <Map class="inline-block h-5 w-5 mr-2" /> No GPS coordinates available
                                             </div>
                                         </div>
                                     </td>
