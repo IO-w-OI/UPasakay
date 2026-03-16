@@ -1,14 +1,16 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
 import {
     Bus, Users, ClipboardList, Star, Eye,
     Map, BarChart2, CheckCircle2,
     MapPin, CheckCheck, Clock, Bell, UserCircle2, XCircle, Pin,
 } from 'lucide-vue-next';
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, nextTick } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import { dashboard } from '@/routes';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 
 // ── Props from DashboardController ───────────────────────────────────────────
 const props = defineProps<{
@@ -40,8 +42,15 @@ const breadcrumbs: BreadcrumbItem[] = [
 // ── Live datetime ─────────────────────────────────────────────────────────────
 const now = ref(new Date());
 let timer: ReturnType<typeof setInterval>;
-onMounted(() => { timer = setInterval(() => { now.value = new Date(); }, 60_000); });
-onUnmounted(() => clearInterval(timer));
+onMounted(() => {
+    timer = setInterval(() => { now.value = new Date(); }, 60_000);
+    nextTick(() => initMiniMap());
+});
+onUnmounted(() => {
+    clearInterval(timer);
+    miniMap?.remove();
+    miniMap = null;
+});
 
 const currentDatetime = computed(() => {
     const d = now.value;
@@ -76,16 +85,43 @@ const activityIconMap: Record<string, unknown> = {
 };
 const activityIconComponent = (icon: string) => activityIconMap[icon] ?? Pin;
 
-// ── Mock shuttle positions on the mini-map ────────────────────────────────────
+// ── Leaflet mini-map ──────────────────────────────────────────────────────────
+const miniMapRef = ref<HTMLDivElement | null>(null);
+let miniMap: L.Map | null = null;
+
 const mapShuttles = [
-    { code: 'SH-001', x: 30,  y: 55 },
-    { code: 'SH-002', x: 55,  y: 30 },
-    { code: 'SH-003', x: 75,  y: 60 },
+    { code: 'SH-001', lat: 10.2994, lng: 123.8924, route: 'South' },   // Capitol Site, heading to Tabunok
+    { code: 'SH-002', lat: 10.3450, lng: 123.9130, route: 'North' },   // Talamban Jct, heading to Consolacion
+    { code: 'SH-003', lat: 10.3270, lng: 123.8958, route: 'Cebu City' }, // JY Square, heading to Talamban
 ];
 const mapPins = [
-    { x: 45, y: 65 },
-    { x: 62, y: 45 },
+    { lat: 10.3100, lng: 123.8907 },  // Fuente Osmeña (passenger waiting, South)
+    { lat: 10.3275, lng: 123.9050 },  // Banilad IT Park (passenger waiting, North)
 ];
+
+const shuttleIcon = L.divIcon({
+    className: '',
+    html: '<div style="background:#16a34a;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 2px 6px rgba(0,0,0,.3);border:2px solid #fff;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6v6"/><path d="M15 6v6"/><path d="M2 12h19.6"/><path d="M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.8 19.1 6 18 6H4a2 2 0 0 0-2 2v10h3"/><circle cx="7" cy="18" r="2"/><path d="M9 18h5"/><circle cx="16" cy="18" r="2"/></svg></div>',
+    iconSize: [28, 28],
+    iconAnchor: [14, 14],
+});
+
+const stopIcon = L.divIcon({
+    className: '',
+    html: '<div style="color:#ef4444;filter:drop-shadow(0 1px 2px rgba(0,0,0,.3));"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3" fill="white" stroke="white"/></svg></div>',
+    iconSize: [20, 20],
+    iconAnchor: [10, 20],
+});
+
+const initMiniMap = () => {
+    if (!miniMapRef.value || miniMap) return;
+    miniMap = L.map(miniMapRef.value, { zoomControl: false, attributionControl: false }).setView([10.3157, 123.8900], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+    }).addTo(miniMap);
+    mapShuttles.forEach(s => L.marker([s.lat, s.lng], { icon: shuttleIcon }).bindTooltip(s.code).addTo(miniMap!));
+    mapPins.forEach(p => L.marker([p.lat, p.lng], { icon: stopIcon }).addTo(miniMap!));
+};
 </script>
 
 <template>
@@ -146,42 +182,11 @@ const mapPins = [
                         <h2 class="flex items-center gap-2 text-sm font-semibold text-gray-700">
                             <Map class="h-4 w-4 text-gray-400" /> Live Map (Mini)
                         </h2>
-                        <button class="text-xs font-medium text-blue-500 hover:underline">View Full Map &rsaquo;</button>
+                        <Link href="/live-map" class="text-xs font-medium text-blue-500 hover:underline">View Full Map &rsaquo;</Link>
                     </div>
 
-                    <!-- Simple grid map -->
-                    <div class="relative h-44 w-full overflow-hidden rounded-xl border border-gray-100 bg-[#eef4ee]">
-                        <!-- Grid lines -->
-                        <svg class="absolute inset-0 h-full w-full" xmlns="http://www.w3.org/2000/svg">
-                            <defs>
-                                <pattern id="grid" width="25%" height="25%" patternUnits="objectBoundingBox">
-                                    <path d="M 0 0 L 0 100% M 0 0 L 100% 0" stroke="#c8dfc8" stroke-width="1" fill="none"/>
-                                </pattern>
-                            </defs>
-                            <rect width="100%" height="100%" fill="url(#grid)" />
-                        </svg>
-
-                        <!-- Shuttle markers -->
-                        <div
-                            v-for="sh in mapShuttles"
-                            :key="sh.code"
-                            class="absolute flex h-7 w-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-green-600 text-xs text-white shadow-md"
-                            :style="{ left: sh.x + '%', top: sh.y + '%' }"
-                            :title="sh.code"
-                        >
-                            <Bus class="h-4 w-4" />
-                        </div>
-
-                        <!-- Stop pins -->
-                        <div
-                            v-for="(pin, i) in mapPins"
-                            :key="i"
-                            class="absolute flex h-5 w-5 -translate-x-1/2 -translate-y-full items-center justify-center text-red-500"
-                            :style="{ left: pin.x + '%', top: pin.y + '%' }"
-                        >
-                            <MapPin class="h-4 w-4" />
-                        </div>
-                    </div>
+                    <!-- Leaflet mini-map -->
+                    <div ref="miniMapRef" class="h-44 w-full rounded-xl border border-gray-100 z-0"></div>
                 </div>
 
                 <!-- Recent Activity -->
@@ -298,6 +303,7 @@ const mapPins = [
                     <svg width="160" height="160" viewBox="0 0 160 160" class="my-2">
                         <!-- Background ring -->
                         <circle cx="80" cy="80" r="60" fill="none" stroke="#f0f0f0" stroke-width="20"/>
+
                         <!-- Success arc (green) -->
                         <circle
                             cx="80" cy="80" r="60"
@@ -305,9 +311,10 @@ const mapPins = [
                             stroke="#22c55e"
                             stroke-width="20"
                             :stroke-dasharray="`${successDash} ${CIRC}`"
-                            stroke-dashoffset="94"
+                            :stroke-dashoffset="0"
                             stroke-linecap="round"
-                        />
+                            transform="rotate(-90 80 80)"
+                        />                        
                         <!-- Failed arc (red) -->
                         <circle
                             cx="80" cy="80" r="60"
@@ -315,9 +322,12 @@ const mapPins = [
                             stroke="#ef4444"
                             stroke-width="20"
                             :stroke-dasharray="`${failedDash} ${CIRC}`"
-                            :stroke-dashoffset="-(successDash - 94)"
+                            :stroke-dashoffset="`-${successDash}`"
                             stroke-linecap="round"
+                            transform="rotate(-90 80 80)"
                         />
+
+
                         <!-- Center label -->
                         <text x="80" y="76" text-anchor="middle" class="font-bold" font-size="22" fill="#111827" font-weight="700">{{ successPct }}%</text>
                         <text x="80" y="96" text-anchor="middle" font-size="11" fill="#9ca3af">Success</text>

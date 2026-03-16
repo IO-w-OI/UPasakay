@@ -14,6 +14,7 @@ class DatabaseSeeder extends Seeder
             StopSeeder::class,
             DriverSeeder::class,
             ShuttleSeeder::class,
+            ShuttleLocationSeeder::class,
             PassengerSeeder::class,
             PickupRequestSeeder::class,
         ]);

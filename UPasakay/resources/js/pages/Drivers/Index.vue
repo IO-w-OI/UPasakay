@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
-import { Search, Download, UserPlus, Eye, Edit, MoreHorizontal, Trash2, ChevronLeft, ChevronRight } from 'lucide-vue-next';
+import { Search, Download, UserPlus, Eye, Edit, MoreHorizontal, Trash2, ChevronLeft, ChevronRight, Key, Bus } from 'lucide-vue-next';
 import { ref, computed } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
@@ -193,10 +193,10 @@ const routeBadge = (r: string) =>
                                                     <Edit class="h-4 w-4" /> Edit Details
                                                 </button>
                                                 <button class="flex w-full items-center gap-2.5 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                                                    🔑 Reset Password
+                                                    <Key class="h-4 w-4" /> Reset Password
                                                 </button>
                                                 <button class="flex w-full items-center gap-2.5 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                                                    🚌 Assign Shuttle
+                                                    <Bus class="h-4 w-4" /> Assign Shuttle
                                                 </button>
                                                 <button @click="deactivate(d.id)"
                                                     class="flex w-full items-center gap-2.5 px-4 py-2 text-sm text-red-600 hover:bg-red-50">

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
-import { Bell, Calendar, Search } from 'lucide-vue-next';
+import { Bell, Calendar, Search, AlertTriangle, Check } from 'lucide-vue-next';
 import { ref, computed } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
@@ -26,9 +26,9 @@ const form = ref({
 const charCount = computed(() => form.value.message.length);
 
 const preview = computed(() => {
-    if (!form.value.message) return '🔔 UPasakay\nYour notification preview will appear here.';
+    if (!form.value.message) return 'UPasakay\nYour notification preview will appear here.';
     const route = form.value.targetRoute === 'all' ? 'All Routes' : form.value.targetRoute;
-    return `🔔 UPasakay\n${form.value.message}\n(${route})`;
+    return `UPasakay\n${form.value.message}\n(${route})`;
 });
 
 const send = () => { alert('Notification sent!'); form.value.message = ''; };
@@ -45,7 +45,7 @@ const filteredLog = computed(() =>
 );
 
 const typeIcon = (t: string) =>
-    ({ schedule: '📅', delay: '🔔', change: '⚠️' }[t] ?? '🔔');
+    ({ schedule: Calendar, delay: Bell, change: AlertTriangle }[t] ?? Bell);
 </script>
 
 <template>
@@ -141,11 +141,11 @@ const typeIcon = (t: string) =>
                                         <div class="text-gray-400">{{ n.date }}</div>
                                     </td>
                                     <td class="py-2.5 pr-3">
-                                        <span class="text-sm">{{ typeIcon(n.type) }} {{ n.label }}</span>
+                                        <span class="text-sm"><component :is="typeIcon(n.type)" class="inline-block h-4 w-4 text-gray-400 mr-1" /> {{ n.label }}</span>
                                     </td>
                                     <td class="py-2.5 pr-3 text-gray-600 text-sm">{{ n.target }}</td>
                                     <td class="py-2.5">
-                                        <span class="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">✅ Sent</span>
+                                        <span class="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700"><Check class="inline-block h-3 w-3 mr-1" />Sent</span>
                                     </td>
                                 </tr>
                             </tbody>
@@ -165,7 +165,8 @@ const typeIcon = (t: string) =>
                                     </div>
                                     <span :class="sn.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'"
                                         class="rounded-full px-2 py-0.5 text-xs font-medium">
-                                        {{ sn.active ? '✅ Active' : 'Paused' }}
+                                        <component :is="sn.active ? Check : null" class="inline-block h-3 w-3 mr-1" v-if="sn.active" />
+                                        {{ sn.active ? 'Active' : 'Paused' }}
                                     </span>
                                 </div>
                                 <p class="mb-2 text-xs text-gray-400">{{ sn.schedule }} · Target: {{ sn.target }} · {{ sn.auto ? 'Auto' : 'Manual' }}</p>

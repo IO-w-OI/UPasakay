@@ -19,9 +19,9 @@ class ShuttleSeeder extends Seeder
         $cebu = Route::where('name', 'Cebu City')->first();
 
         $juan = Driver::where('full_name', 'Juan dela Cruz')->first();
-        $maria = Driver::where('full_name', 'Maria Reyes')->first();
+        $robert = Driver::where('full_name', 'Robert Reyes')->first();
         $pedro = Driver::where('full_name', 'Pedro Santos')->first();
-        $ana = Driver::where('full_name', 'Ana Gomez')->first();
+        $greg = Driver::where('full_name', 'Greg Gomez')->first();
 
         Shuttle::insert([
             [
@@ -43,7 +43,7 @@ class ShuttleSeeder extends Seeder
                 'is_active' => true,
                 'status' => 'active',
                 'route_id' => $north?->id,
-                'driver_id' => $maria?->id,
+                'driver_id' => $robert?->id,
                 'last_seen_at' => now()->subMinutes(1),
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -67,7 +67,7 @@ class ShuttleSeeder extends Seeder
                 'is_active' => false,
                 'status' => 'offline',
                 'route_id' => $south?->id,
-                'driver_id' => $ana?->id,
+                'driver_id' => $greg?->id,
                 'last_seen_at' => now()->subHours(2),
                 'created_at' => now(),
                 'updated_at' => now(),
