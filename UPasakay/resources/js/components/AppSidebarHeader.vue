@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, router, usePage } from '@inertiajs/vue3';
-import { Bell, CircleHelp, LogOut, UserCircle } from 'lucide-vue-next';
+import { CircleHelp, LogOut, UserCircle } from 'lucide-vue-next';
 import Breadcrumbs from '@/components/Breadcrumbs.vue';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { logout } from '@/routes';
@@ -37,11 +37,6 @@ const handleLogout = () => {
 
         <!-- Right: actions -->
         <div class="flex items-center gap-3">
-            <!-- Notifications -->
-            <button class="relative rounded-full p-1.5 text-muted-foreground hover:bg-accent hover:text-accent-foreground">
-                <Bell class="h-5 w-5" />
-            </button>
-
             <!-- Help -->
             <button class="rounded-full p-1.5 text-muted-foreground hover:bg-accent hover:text-accent-foreground">
                 <CircleHelp class="h-5 w-5" />
