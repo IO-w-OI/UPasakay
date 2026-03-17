@@ -199,7 +199,7 @@ watch(resolvedAppearance, () => {
                     class="ml-auto flex items-center gap-1.5 text-sm font-medium text-green-600 hover:text-green-700"
                     @click="autoRefresh = !autoRefresh"
                 >
-                    <RefreshCw class="h-4 w-4" :class="autoRefresh ? 'animate-spin [animation-duration:3s]' : ''" />
+                    <RefreshCw class="h-4 w-4" :class="autoRefresh ? 'animate-spin animation-duration-[3s]' : ''" />
                     Auto-refresh
                 </button>
             </div>
@@ -215,7 +215,7 @@ watch(resolvedAppearance, () => {
                         <!-- No data overlay -->
                         <div
                             v-if="filtered.length === 0"
-                            class="pointer-events-none absolute inset-0 z-[1000] flex items-center justify-center"
+                            class="pointer-events-none absolute inset-0 z-1000 flex items-center justify-center"
                         >
                             <div class="rounded-xl bg-card/80 px-6 py-4 text-center shadow">
                                 <MapIcon class="mx-auto mb-2 h-8 w-8 text-muted-foreground/50" />

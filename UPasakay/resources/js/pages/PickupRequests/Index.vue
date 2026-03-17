@@ -18,6 +18,7 @@ const props = defineProps<{
         data: Array<{
             id: number; passenger: string; location: string; route: string;
             driver: string; status: string; time: string; date: string; eta: string;
+            created_at: string | null; completed_at: string | null;
             latitude: number | null; longitude: number | null;
         }>;
         current_page: number; last_page: number; total: number; per_page: number;
@@ -149,6 +150,8 @@ const statCards = [
                                 <th class="px-4 py-3">Route</th>
                                 <th class="px-4 py-3">Driver</th>
                                 <th class="px-4 py-3">Status</th>
+                                <th class="px-4 py-3">Created</th>
+                                <th class="px-4 py-3">Completed</th>
                                 <th class="px-4 py-3"></th>
                             </tr>
                         </thead>
@@ -175,6 +178,8 @@ const statCards = [
                                             <component :is="statusIcon(r.status)" class="inline-block h-3 w-3 mr-1" /> {{ r.status }}
                                         </span>
                                     </td>
+                                    <td class="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">{{ r.created_at ?? '—' }}</td>
+                                    <td class="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">{{ r.completed_at ?? '—' }}</td>
                                     <td class="px-4 py-3">
                                         <div class="flex items-center gap-1" @click.stop>
                                             <button class="rounded-lg border border-border/70 px-2.5 py-1 text-xs font-medium text-muted-foreground hover:bg-accent">
@@ -189,7 +194,7 @@ const statCards = [
 
                                 <!-- Expanded row -->
                                 <tr v-if="expanded === r.id">
-                                    <td colspan="8" class="border-b border-border/50 bg-muted/50 px-6 py-4">
+                                    <td colspan="10" class="border-b border-border/50 bg-muted/50 px-6 py-4">
                                         <div class="rounded-xl border border-border/70 bg-card p-5 shadow-sm shadow-black/5 dark:shadow-black/20">
                                             <div class="mb-3 flex items-center justify-between">
                                                 <h3 class="font-semibold text-foreground">REQUEST #{{ r.id }}</h3>
@@ -218,7 +223,7 @@ const statCards = [
                             </template>
 
                             <tr v-if="requests.data.length === 0">
-                                <td colspan="8" class="py-10 text-center text-sm text-muted-foreground">No requests found.</td>
+                                <td colspan="10" class="py-10 text-center text-sm text-muted-foreground">No requests found.</td>
                             </tr>
                         </tbody>
                     </table>

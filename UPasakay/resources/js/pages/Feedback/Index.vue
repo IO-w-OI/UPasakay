@@ -1,7 +1,6 @@
 <script setup lang="ts">
+import { Search, Download, Star, BarChart2, X, MessageSquare, ChevronRight, Check, CheckCircle2, Bus } from 'lucide-vue-next';
 import { Head, router } from '@inertiajs/vue3';
-import { Search, Download, Star, BarChart2, X, Bus, MessageSquare, Check, CheckCircle2 } from 'lucide-vue-next';
-import { ChevronRight } from 'lucide-vue-next';
 import { ref, computed } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
@@ -37,26 +36,27 @@ const replyText    = ref('');
 
 const filteredFeedback = computed(() =>
     props.feedback.filter(f =>
-        (!searchFb.value || f.passenger.toLowerCase().includes(searchFb.value.toLowerCase())) &&
+        (!searchFb.value || f.passenger.toLowerCase().includes(searchFb.value.toLowerCase()) || f.comment.toLowerCase().includes(searchFb.value.toLowerCase())) &&
         (ratingFilter.value === 'All' || f.rating === Number(ratingFilter.value)) &&
         (routeFilter.value === 'All' || f.route === routeFilter.value)
     )
 );
 
 // ── Reports tab filters ────────────────────────────────────────────────────
-const reportRange = ref(props.filters?.range ?? '7');
-const reportRoute = ref(props.filters?.reportRoute ?? 'All');
 
+
+const sendReply = () => { replyTarget.value = null; replyText.value = ''; };
+
+// ── Reports tab chart helpers ──────────────────────────────────────────────
+const reportRange = ref('7');
+const reportRoute = ref(props.filters?.reportRoute ?? 'All');
 const applyReportFilters = () => {
-    router.get('/feedback', {
+        router.get('/feedback', {
         range: reportRange.value,
         reportRoute: reportRoute.value !== 'All' ? reportRoute.value : undefined,
     }, { preserveState: true, replace: true });
 };
 
-const sendReply = () => { replyTarget.value = null; replyText.value = ''; };
-
-// ── Reports tab chart helpers ──────────────────────────────────────────────
 const maxPickup = computed(() => Math.max(...props.dailyPickups.map(d => d.count), 1));
 const maxRoute  = computed(() => Math.max(...props.routePerformance.map(r => r.count), 1));
 
@@ -132,6 +132,11 @@ const statusBadge = (s: string) =>
                         <option value="3">3 Stars</option>
                         <option value="2">2 Stars</option>
                         <option value="1">1 Star</option>
+                        <option value="5">5 Stars</option>
+                        <option value="4">4 Stars</option>
+                        <option value="3">3 Stars</option>
+                        <option value="2">2 Stars</option>
+                        <option value="1">1 Star</option>
 
                     </select>
                     <select v-model="routeFilter"
@@ -173,9 +178,9 @@ const statusBadge = (s: string) =>
                                     </td>
                                     <td class="px-4 py-3 max-w-xs truncate text-muted-foreground">"{{ f.comment }}"</td>
                                     <td class="px-4 py-3">
-                                        <span class="rounded-full px-2.5 py-0.5 text-xs font-medium capitalize" :class="statusBadge(f.status)">
-                                            <Check v-if="f.status === 'boarded'" class="inline-block h-3 w-3 text-green-600 mr-1" />
-                                            <X v-else class="inline-block h-3 w-3 text-red-500 mr-1" />
+                                        <span class="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium capitalize" :class="statusBadge(f.status)">
+                                            <Check v-if="f.status === 'boarded'" class="h-3 w-3" />
+                                            <X v-else class="h-3 w-3" />
                                             {{ f.status === 'boarded' ? 'Boarded' : 'Failed' }}
                                         </span>
                                     </td>
