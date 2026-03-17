@@ -1,10 +1,6 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
-<<<<<<< Updated upstream
-import { Bell, Calendar, Search, AlertTriangle, Check } from 'lucide-vue-next';
-=======
 import { AlertTriangle, Bell, Calendar, Check, Clock, Search } from 'lucide-vue-next';
->>>>>>> Stashed changes
 import { ref, computed } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
@@ -48,13 +44,8 @@ const filteredLog = computed(() =>
     )
 );
 
-<<<<<<< Updated upstream
-const typeIcon = (t: string) =>
-    ({ schedule: Calendar, delay: Bell, change: AlertTriangle }[t] ?? Bell);
-=======
 const typeIconComponent = (t: string) =>
     ({ schedule: Calendar, delay: Clock, change: AlertTriangle }[t] ?? Bell);
->>>>>>> Stashed changes
 </script>
 
 <template>
@@ -177,10 +168,6 @@ const typeIconComponent = (t: string) =>
                                     </div>
                                     <span :class="sn.active ? 'bg-green-500/15 text-green-600 dark:text-green-400' : 'bg-muted text-muted-foreground'"
                                         class="rounded-full px-2 py-0.5 text-xs font-medium">
-<<<<<<< Updated upstream
-                                        <component :is="sn.active ? Check : null" class="inline-block h-3 w-3 mr-1" v-if="sn.active" />
-=======
->>>>>>> Stashed changes
                                         {{ sn.active ? 'Active' : 'Paused' }}
                                     </span>
                                 </div>
