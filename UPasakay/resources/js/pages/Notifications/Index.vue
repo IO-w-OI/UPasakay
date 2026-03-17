@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
-import { Bell, Calendar, Search } from 'lucide-vue-next';
+import { Bell, Calendar, Search, AlertTriangle, Check } from 'lucide-vue-next';
 import { ref, computed } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
@@ -26,9 +26,9 @@ const form = ref({
 const charCount = computed(() => form.value.message.length);
 
 const preview = computed(() => {
-    if (!form.value.message) return '🔔 UPasakay\nYour notification preview will appear here.';
+    if (!form.value.message) return 'UPasakay\nYour notification preview will appear here.';
     const route = form.value.targetRoute === 'all' ? 'All Routes' : form.value.targetRoute;
-    return `🔔 UPasakay\n${form.value.message}\n(${route})`;
+    return `UPasakay\n${form.value.message}\n(${route})`;
 });
 
 const send = () => { alert('Notification sent!'); form.value.message = ''; };
@@ -45,7 +45,7 @@ const filteredLog = computed(() =>
 );
 
 const typeIcon = (t: string) =>
-    ({ schedule: '📅', delay: '🔔', change: '⚠️' }[t] ?? '🔔');
+    ({ schedule: Calendar, delay: Bell, change: AlertTriangle }[t] ?? Bell);
 </script>
 
 <template>
@@ -165,7 +165,8 @@ const typeIcon = (t: string) =>
                                     </div>
                                     <span :class="sn.active ? 'bg-green-500/15 text-green-600 dark:text-green-400' : 'bg-muted text-muted-foreground'"
                                         class="rounded-full px-2 py-0.5 text-xs font-medium">
-                                        {{ sn.active ? '✅ Active' : 'Paused' }}
+                                        <component :is="sn.active ? Check : null" class="inline-block h-3 w-3 mr-1" v-if="sn.active" />
+                                        {{ sn.active ? 'Active' : 'Paused' }}
                                     </span>
                                 </div>
                                 <p class="mb-2 text-xs text-muted-foreground">{{ sn.schedule }} · Target: {{ sn.target }} · {{ sn.auto ? 'Auto' : 'Manual' }}</p>

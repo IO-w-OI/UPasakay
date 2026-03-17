@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
-import { Search, Download, UserPlus, Eye, Edit, MoreHorizontal, Trash2, ChevronLeft, ChevronRight } from 'lucide-vue-next';
+import { Search, Download, UserPlus, Eye, Edit, MoreHorizontal, Trash2, ChevronLeft, ChevronRight, Key, Bus } from 'lucide-vue-next';
 import { ref, computed } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';

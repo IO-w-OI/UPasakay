@@ -34,6 +34,17 @@ class DriverController extends Controller
             }
         }
 
+        if ($request->filled('route')) {
+            $routeName = $request->route;
+            $query->whereHas('user', function () {})
+                ->whereIn('id', function ($sub) use ($routeName) {
+                    $sub->select('driver_id')
+                        ->from('shuttles')
+                        ->join('routes', 'routes.id', '=', 'shuttles.route_id')
+                        ->where('routes.name', $routeName);
+                });
+        }
+
         $drivers = $query->orderBy('full_name')->paginate(25)->withQueryString();
 
         // Enrich with shuttle/route data

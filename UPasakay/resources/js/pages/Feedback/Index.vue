@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
-import { Search, Download, Star, BarChart2, X } from 'lucide-vue-next';
+import { Head, router } from '@inertiajs/vue3';
+import { Search, Download, Star, BarChart2, X, Bus, MessageSquare, Check, CheckCircle2 } from 'lucide-vue-next';
+import { ChevronRight } from 'lucide-vue-next';
 import { ref, computed } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
@@ -15,8 +16,9 @@ const props = defineProps<{
     routes: string[];
     feedback: Array<{
         id: number; passenger: string; rating: number; comment: string;
-        status: string; date: string; replied: boolean;
+        route: string; status: string; date: string; replied: boolean;
     }>;
+    filters?: { range?: string; reportRoute?: string };
     stats: { total: number; avgRating: number; boardedPct: number; failedPct: number };
     dailyPickups: Array<{ label: string; count: number }>;
     routePerformance: Array<{ name: string; count: number }>;
@@ -36,9 +38,21 @@ const replyText    = ref('');
 const filteredFeedback = computed(() =>
     props.feedback.filter(f =>
         (!searchFb.value || f.passenger.toLowerCase().includes(searchFb.value.toLowerCase())) &&
-        (ratingFilter.value === 'All' || f.rating === Number(ratingFilter.value))
+        (ratingFilter.value === 'All' || f.rating === Number(ratingFilter.value)) &&
+        (routeFilter.value === 'All' || f.route === routeFilter.value)
     )
 );
+
+// ── Reports tab filters ────────────────────────────────────────────────────
+const reportRange = ref(props.filters?.range ?? '7');
+const reportRoute = ref(props.filters?.reportRoute ?? 'All');
+
+const applyReportFilters = () => {
+    router.get('/feedback', {
+        range: reportRange.value,
+        reportRoute: reportRoute.value !== 'All' ? reportRoute.value : undefined,
+    }, { preserveState: true, replace: true });
+};
 
 const sendReply = () => { replyTarget.value = null; replyText.value = ''; };
 
@@ -53,7 +67,6 @@ const failedDash  = computed(() => (props.stats.failedPct  / 100) * CIRC);
 const failedOffset = computed(() => CIRC - successDash.value);
 
 // Helpers
-const stars = (n: number) => '⭐'.repeat(n);
 const statusBadge = (s: string) =>
     ({ boarded: 'bg-green-500/15 text-green-600 dark:text-green-400', failed: 'bg-red-500/15 text-red-600 dark:text-red-400' }[s] ?? 'bg-muted text-muted-foreground');
 </script>
@@ -114,11 +127,12 @@ const statusBadge = (s: string) =>
                         class="rounded-lg border border-border/70 bg-card px-3 py-2 text-sm text-foreground focus:outline-none">
                         
                         <option value="All">Rating: All</option>
-                        <option value="5">⭐⭐⭐⭐⭐</option>
-                        <option value="4">⭐⭐⭐⭐</option>
-                        <option value="3">⭐⭐⭐</option>
-                        <option value="2">⭐⭐</option>
-                        <option value="1">⭐</option>
+                        <option value="5">5 Stars</option>
+                        <option value="4">4 Stars</option>
+                        <option value="3">3 Stars</option>
+                        <option value="2">2 Stars</option>
+                        <option value="1">1 Star</option>
+
                     </select>
                     <select v-model="routeFilter"
                         class="rounded-lg border border-border/70 bg-card px-3 py-2 text-sm text-foreground focus:outline-none">
@@ -160,7 +174,9 @@ const statusBadge = (s: string) =>
                                     <td class="px-4 py-3 max-w-xs truncate text-muted-foreground">"{{ f.comment }}"</td>
                                     <td class="px-4 py-3">
                                         <span class="rounded-full px-2.5 py-0.5 text-xs font-medium capitalize" :class="statusBadge(f.status)">
-                                            {{ f.status === 'boarded' ? '✅ Boarded' : '❌ Failed' }}
+                                            <Check v-if="f.status === 'boarded'" class="inline-block h-3 w-3 text-green-600 mr-1" />
+                                            <X v-else class="inline-block h-3 w-3 text-red-500 mr-1" />
+                                            {{ f.status === 'boarded' ? 'Boarded' : 'Failed' }}
                                         </span>
                                     </td>
                                     <td class="px-4 py-3 text-muted-foreground text-xs">{{ f.date }}</td>
@@ -268,10 +284,13 @@ const statusBadge = (s: string) =>
                         </h3>
                         <svg width="140" height="140" viewBox="0 0 140 140">
                             <circle cx="70" cy="70" r="54" fill="none" stroke="#f0f0f0" stroke-width="18"/>
-                            <circle cx="70" cy="70" r="54" fill="none" stroke="#22c55e" stroke-width="18"
-                                :stroke-dasharray="`${successDash} ${CIRC}`" stroke-dashoffset="84" stroke-linecap="round"/>
+                            
                             <circle cx="70" cy="70" r="54" fill="none" stroke="#ef4444" stroke-width="18"
-                                :stroke-dasharray="`${failedDash} ${CIRC}`" :stroke-dashoffset="-(successDash - 84)" stroke-linecap="round"/>
+                                :stroke-dasharray="` ${failedDash} ${CIRC}`" :stroke-dashoffset="0" stroke-linecap="round"/>
+
+                                <circle cx="70" cy="70" r="54" fill="none" stroke="#22c55e" stroke-width="18"
+                                :stroke-dasharray="`${successDash} ${CIRC}`" :stroke-dashoffset="`-${failedDash}`" stroke-linecap="round"/>
+
                             <text x="70" y="66" text-anchor="middle" font-size="20" font-weight="700" fill="#111827">{{ stats.boardedPct }}%</text>
                             <text x="70" y="83" text-anchor="middle" font-size="10" fill="#9ca3af">Success</text>
                         </svg>
@@ -347,8 +366,9 @@ const statusBadge = (s: string) =>
                             Cancel
                         </button>
                         <button @click="sendReply"
-                            class="rounded-xl bg-[#8B0000] px-4 py-2 text-sm font-semibold text-white hover:bg-[#700000]">
-                            ✅ Send Reply
+                            class="rounded-xl bg-[#8B0000] px-4 py-2 text-sm font-semibold text-white hover:bg-[#700000] flex items-center gap-2">
+                            <Check class="h-4 w-4" />
+                            <span>Send Reply</span>
                         </button>
                     </div>
                 </div>

@@ -61,4 +61,9 @@ class User extends Authenticatable
             'two_factor_confirmed_at' => 'datetime',
         ];
     }
+
+    public function passenger()
+    {
+        return $this->hasOne(Passenger::class);
+    }
 }

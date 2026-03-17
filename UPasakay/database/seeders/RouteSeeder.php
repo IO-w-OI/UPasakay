@@ -14,34 +14,34 @@ class RouteSeeder extends Seeder
 
         Route::insert([
             [
-                'name' => 'South',
-                'start_location' => 'UP Gate',
-                'end_location' => 'SM Cebu',
-                'distance_km' => 6.50,
-                'estimated_duration_minutes' => 25,
+                'name' => 'North',
+                'start_location' => 'UP Cebu',
+                'end_location' => 'Consolacion',
+                'distance_km' => 14.00,
+                'estimated_duration_minutes' => 30,
                 'is_active' => true,
                 'created_at' => now(),
-                'updated_at' => now()
+                'updated_at' => now(),
             ],
             [
-                'name' => 'North',
-                'start_location' => 'UP Gate',
-                'end_location' => 'Ayala Center',
-                'distance_km' => 4.20,
-                'estimated_duration_minutes' => 18,
+                'name' => 'South',
+                'start_location' => 'UP Cebu',
+                'end_location' => 'Tabunok, Talisay',
+                'distance_km' => 10.00,
+                'estimated_duration_minutes' => 30,
                 'is_active' => true,
                 'created_at' => now(),
-                'updated_at' => now()
+                'updated_at' => now(),
             ],
             [
                 'name' => 'Cebu City',
-                'start_location' => 'UP Gate',
-                'end_location' => 'Colon Street',
-                'distance_km' => 8.00,
-                'estimated_duration_minutes' => 35,
+                'start_location' => 'UP Cebu',
+                'end_location' => 'Talamban',
+                'distance_km' => 6.00,
+                'estimated_duration_minutes' => 30,
                 'is_active' => true,
                 'created_at' => now(),
-                'updated_at' => now()
+                'updated_at' => now(),
             ],
         ]);
     }

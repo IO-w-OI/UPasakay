@@ -25,8 +25,10 @@ class PickupRequestController extends Controller
 
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->whereHas('user', fn($q) => $q->where('name', 'like', "%$search%")
-                ->orWhere('email', 'like', "%$search%"));
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('user', fn($u) => $u->where('email', 'like', "%$search%"))
+                  ->orWhereHas('user.passenger', fn($p) => $p->where('passenger_number', 'like', "%$search%"));
+            });
         }
 
         if ($request->filled('route') && $request->route !== 'All') {

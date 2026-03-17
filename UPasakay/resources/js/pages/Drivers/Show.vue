@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
-import { Mail, Key, Bus, ChevronLeft, User } from 'lucide-vue-next';
+import { Mail, Key, Bus, ChevronLeft, User, Star } from 'lucide-vue-next';
 import { ref } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
