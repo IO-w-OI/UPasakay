@@ -75,19 +75,19 @@ onUnmounted(() => {
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 const statusColor  = (s: string) =>
-    ({ pending: 'bg-yellow-100 text-yellow-700', completed: 'bg-green-100 text-green-700', cancelled: 'bg-red-100 text-red-600' }[s] ?? 'bg-gray-100 text-gray-500');
+    ({ pending: 'bg-yellow-500/15 text-yellow-600 dark:text-yellow-400', completed: 'bg-green-500/15 text-green-600 dark:text-green-400', cancelled: 'bg-red-500/15 text-red-600 dark:text-red-400' }[s] ?? 'bg-muted text-muted-foreground');
 
 const statusIcon = (s: string) =>
     ({ pending: Map, completed: Check, cancelled: X }[s] ?? Map);
 
 const routeBadge = (r: string) =>
-    ({ South: 'bg-green-100 text-green-700', North: 'bg-blue-100 text-blue-700', 'Cebu City': 'bg-orange-100 text-orange-700' }[r] ?? 'bg-gray-100 text-gray-600');
+    ({ South: 'bg-green-500/15 text-green-600 dark:text-green-400', North: 'bg-blue-500/15 text-blue-600 dark:text-blue-400', 'Cebu City': 'bg-orange-500/15 text-orange-600 dark:text-orange-400' }[r] ?? 'bg-muted text-muted-foreground');
 
 const statCards = [
-    { label: 'Total Today',  key: 'total',     color: 'text-gray-900' },
-    { label: 'Pending',      key: 'pending',   color: 'text-yellow-600' },
-    { label: 'Completed',    key: 'completed', color: 'text-green-600' },
-    { label: 'Cancelled',    key: 'cancelled', color: 'text-red-600' },
+    { label: 'Total Today',  key: 'total',     color: 'text-foreground' },
+    { label: 'Pending',      key: 'pending',   color: 'text-yellow-600 dark:text-yellow-400' },
+    { label: 'Completed',    key: 'completed', color: 'text-green-600 dark:text-green-400' },
+    { label: 'Cancelled',    key: 'cancelled', color: 'text-red-600 dark:text-red-400' },
 ] as const;
 </script>
 
@@ -96,52 +96,52 @@ const statCards = [
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="space-y-5 p-6">
 
-            <h1 class="text-2xl font-bold text-gray-900">Pickup Requests</h1>
+            <h1 class="text-2xl font-bold text-foreground">Pickup Requests</h1>
 
             <!-- Stat cards -->
             <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
                 <div v-for="card in statCards" :key="card.key"
-                    class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm text-center">
+                    class="rounded-2xl border border-border/70 bg-card p-5 shadow-sm shadow-black/5 dark:shadow-black/20 text-center">
                     <p class="text-3xl font-bold" :class="card.color">{{ stats[card.key] }}</p>
-                    <p class="mt-1 text-sm text-gray-400">{{ card.label }}</p>
+                    <p class="mt-1 text-sm text-muted-foreground">{{ card.label }}</p>
                 </div>
             </div>
 
             <!-- Filter bar -->
-            <div class="flex flex-wrap items-center gap-3 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-                <div class="flex flex-1 items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 min-w-48">
-                    <Search class="h-4 w-4 text-gray-400 shrink-0" />
+            <div class="flex flex-wrap items-center gap-3 rounded-2xl border border-border/70 bg-card p-4 shadow-sm shadow-black/5 dark:shadow-black/20">
+                <div class="flex flex-1 items-center gap-2 rounded-lg border border-border/70 px-3 py-2 min-w-48">
+                    <Search class="h-4 w-4 text-muted-foreground shrink-0" />
                     <input v-model="search" @input="apply" placeholder="Search passenger…"
-                        class="flex-1 text-sm outline-none placeholder:text-gray-400" />
+                        class="flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground" />
                 </div>
                 <select v-model="routeFilter" @change="apply"
-                    class="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:outline-none">
+                    class="rounded-lg border border-border/70 bg-card px-3 py-2 text-sm text-foreground focus:outline-none">
                     <option value="All">Route: All</option>
                     <option v-for="r in routes" :key="r" :value="r">{{ r }}</option>
                 </select>
                 <select v-model="statusFilter" @change="apply"
-                    class="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:outline-none">
+                    class="rounded-lg border border-border/70 bg-card px-3 py-2 text-sm text-foreground focus:outline-none">
                     <option value="All">Status: All</option>
                     <option value="pending">Pending</option>
                     <option value="completed">Completed</option>
                     <option value="cancelled">Cancelled</option>
                 </select>
                     <select v-model="dateFilter" @change="apply"
-                    class="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:outline-none">
+                    class="rounded-lg border border-border/70 bg-card px-3 py-2 text-sm text-foreground focus:outline-none">
                     <option value="today">Today</option>
                     <option value="">All Time</option>
                 </select>
-                <button class="ml-auto flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50">
+                <button class="ml-auto flex items-center gap-1.5 rounded-lg border border-border/70 px-3 py-2 text-sm text-muted-foreground hover:bg-accent">
                     <Download class="h-4 w-4" /> CSV
                 </button>
             </div>
 
             <!-- Table -->
-            <div class="rounded-2xl border border-gray-200 bg-white shadow-sm">
+            <div class="rounded-2xl border border-border/70 bg-card shadow-sm shadow-black/5 dark:shadow-black/20">
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm">
                         <thead>
-                            <tr class="border-b border-gray-100 text-left text-xs font-medium uppercase tracking-wide text-gray-400">
+                            <tr class="border-b border-border/50 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
                                 <th class="w-6 px-4 py-3"></th>
                                 <th class="px-4 py-3">Req ID</th>
                                 <th class="px-4 py-3">Passenger</th>
@@ -154,22 +154,22 @@ const statCards = [
                         </thead>
                         <tbody>
                             <template v-for="r in requests.data" :key="r.id">
-                                <tr class="border-b border-gray-50 hover:bg-gray-50 cursor-pointer"
-                                    :class="expanded === r.id ? 'bg-gray-50' : ''"
+                                <tr class="border-b border-border/30 hover:bg-accent cursor-pointer"
+                                    :class="expanded === r.id ? 'bg-accent' : ''"
                                     @click="toggleExpand(r.id)">
-                                    <td class="px-4 py-3 text-gray-400">
+                                    <td class="px-4 py-3 text-muted-foreground">
                                         <ChevronRight class="h-4 w-4 transition"
                                             :class="expanded === r.id ? 'rotate-90' : ''" />
                                     </td>
-                                    <td class="px-4 py-3 font-semibold text-gray-800">#{{ r.id }}</td>
-                                    <td class="px-4 py-3 text-gray-700">{{ r.passenger }}</td>
-                                    <td class="px-4 py-3 text-gray-500">{{ r.location }}</td>
+                                    <td class="px-4 py-3 font-semibold text-foreground">#{{ r.id }}</td>
+                                    <td class="px-4 py-3 text-foreground">{{ r.passenger }}</td>
+                                    <td class="px-4 py-3 text-muted-foreground">{{ r.location }}</td>
                                     <td class="px-4 py-3">
                                         <span class="rounded-full px-2.5 py-0.5 text-xs font-medium" :class="routeBadge(r.route)">
                                             {{ r.route }}
                                         </span>
                                     </td>
-                                    <td class="px-4 py-3 text-gray-600">{{ r.driver }}</td>
+                                    <td class="px-4 py-3 text-muted-foreground">{{ r.driver }}</td>
                                     <td class="px-4 py-3">
                                         <span class="rounded-full px-2.5 py-0.5 text-xs font-medium capitalize" :class="statusColor(r.status)">
                                             <component :is="statusIcon(r.status)" class="inline-block h-3 w-3 mr-1" /> {{ r.status }}
@@ -177,10 +177,10 @@ const statCards = [
                                     </td>
                                     <td class="px-4 py-3">
                                         <div class="flex items-center gap-1" @click.stop>
-                                            <button class="rounded-lg border border-gray-200 px-2.5 py-1 text-xs font-medium text-gray-600 hover:bg-gray-100">
+                                            <button class="rounded-lg border border-border/70 px-2.5 py-1 text-xs font-medium text-muted-foreground hover:bg-accent">
                                                 <Eye class="inline h-3 w-3 mr-0.5" /> View
                                             </button>
-                                            <button class="rounded-lg border border-gray-200 px-2.5 py-1 text-xs font-medium text-gray-600 hover:bg-gray-100">
+                                            <button class="rounded-lg border border-border/70 px-2.5 py-1 text-xs font-medium text-muted-foreground hover:bg-accent">
                                                 <MapPin class="inline h-3 w-3 mr-0.5" /> Locate
                                             </button>
                                         </div>
@@ -189,27 +189,27 @@ const statCards = [
 
                                 <!-- Expanded row -->
                                 <tr v-if="expanded === r.id">
-                                    <td colspan="8" class="border-b border-gray-100 bg-gray-50 px-6 py-4">
-                                        <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+                                    <td colspan="8" class="border-b border-border/50 bg-muted/50 px-6 py-4">
+                                        <div class="rounded-xl border border-border/70 bg-card p-5 shadow-sm shadow-black/5 dark:shadow-black/20">
                                             <div class="mb-3 flex items-center justify-between">
-                                                <h3 class="font-semibold text-gray-900">REQUEST #{{ r.id }}</h3>
+                                                <h3 class="font-semibold text-foreground">REQUEST #{{ r.id }}</h3>
                                                 <span class="rounded-full px-3 py-1 text-xs font-medium capitalize" :class="statusColor(r.status)">
                                                     Status: {{ statusIcon(r.status) }} {{ r.status }}
                                                 </span>
                                             </div>
                                             <div class="grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
-                                                <div><span class="text-gray-500">Passenger: </span><span class="text-gray-800">{{ r.passenger }}</span></div>
-                                                <div><span class="text-gray-500">Route: </span><span class="text-gray-800">{{ r.route }}</span></div>
-                                                <div><span class="text-gray-500">Waiting at: </span><span class="text-gray-800">{{ r.location }}</span></div>
-                                                <div><span class="text-gray-500">Driver: </span><span class="text-gray-800">{{ r.driver }}</span></div>
-                                                <div><span class="text-gray-500">Requested: </span><span class="text-gray-800">{{ r.time }}</span></div>
-                                                <div><span class="text-gray-500">ETA: </span><span class="text-gray-800">{{ r.eta }}</span></div>
+                                                <div><span class="text-muted-foreground">Passenger: </span><span class="text-foreground">{{ r.passenger }}</span></div>
+                                                <div><span class="text-muted-foreground">Route: </span><span class="text-foreground">{{ r.route }}</span></div>
+                                                <div><span class="text-muted-foreground">Waiting at: </span><span class="text-foreground">{{ r.location }}</span></div>
+                                                <div><span class="text-muted-foreground">Driver: </span><span class="text-foreground">{{ r.driver }}</span></div>
+                                                <div><span class="text-muted-foreground">Requested: </span><span class="text-foreground">{{ r.time }}</span></div>
+                                                <div><span class="text-muted-foreground">ETA: </span><span class="text-foreground">{{ r.eta }}</span></div>
                                             </div>
                                             <div v-if="r.latitude && r.longitude"
                                                 :id="`req-map-${r.id}`"
-                                                class="mt-4 h-28 w-full rounded-xl border border-gray-200 z-0">
+                                                class="mt-4 h-28 w-full rounded-xl border border-border/70 z-0">
                                             </div>
-                                            <div v-else class="mt-4 flex h-28 items-center justify-center rounded-xl border border-dashed border-gray-200 bg-gray-50 text-sm text-gray-400">
+                                            <div v-else class="mt-4 flex h-28 items-center justify-center rounded-xl border border-dashed border-border/70 bg-muted/50 text-sm text-muted-foreground">
                                                 <Map class="inline-block h-5 w-5 mr-2" /> No GPS coordinates available
                                             </div>
                                         </div>
@@ -218,22 +218,22 @@ const statCards = [
                             </template>
 
                             <tr v-if="requests.data.length === 0">
-                                <td colspan="8" class="py-10 text-center text-sm text-gray-400">No requests found.</td>
+                                <td colspan="8" class="py-10 text-center text-sm text-muted-foreground">No requests found.</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
 
                 <!-- Pagination -->
-                <div class="flex items-center justify-between border-t border-gray-100 px-4 py-3 text-sm text-gray-500">
+                <div class="flex items-center justify-between border-t border-border/50 px-4 py-3 text-sm text-muted-foreground">
                     <span>{{ requests.total }} total requests</span>
                     <div class="flex items-center gap-1">
                         <template v-for="link in requests.links" :key="link.label">
                             <Link v-if="link.url" :href="link.url"
                                 class="rounded-lg px-2.5 py-1.5 text-xs font-medium"
-                                :class="link.active ? 'bg-[#8B0000] text-white' : 'border border-gray-200 text-gray-600 hover:bg-gray-50'"
+                                :class="link.active ? 'bg-[#8B0000] text-white' : 'border border-border/70 text-muted-foreground hover:bg-accent'"
                                 v-html="link.label" />
-                            <span v-else class="rounded-lg px-2.5 py-1.5 text-xs text-gray-300" v-html="link.label" />
+                            <span v-else class="rounded-lg px-2.5 py-1.5 text-xs text-muted-foreground/50" v-html="link.label" />
                         </template>
                     </div>
                 </div>

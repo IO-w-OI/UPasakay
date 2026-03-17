@@ -25,11 +25,11 @@ const handleLogout = () => {
 
 <template>
     <header
-        class="sticky top-0 z-10 flex h-14 shrink-0 items-center justify-between border-b border-gray-200 bg-white px-4"
+        class="sticky top-0 z-10 flex h-14 shrink-0 items-center justify-between border-b border-border/70 bg-background/95 px-4 backdrop-blur supports-backdrop-filter:bg-background/80"
     >
         <!-- Left: sidebar trigger + breadcrumb -->
         <div class="flex items-center gap-2">
-            <SidebarTrigger class="-ml-1 text-gray-600" />
+            <SidebarTrigger class="-ml-1 text-muted-foreground hover:text-foreground" />
             <template v-if="breadcrumbs && breadcrumbs.length > 0">
                 <Breadcrumbs :breadcrumbs="breadcrumbs" />
             </template>
@@ -38,22 +38,22 @@ const handleLogout = () => {
         <!-- Right: actions -->
         <div class="flex items-center gap-3">
             <!-- Notifications -->
-            <button class="relative rounded-full p-1.5 text-gray-500 hover:bg-gray-100">
+            <button class="relative rounded-full p-1.5 text-muted-foreground hover:bg-accent hover:text-accent-foreground">
                 <Bell class="h-5 w-5" />
             </button>
 
             <!-- Help -->
-            <button class="rounded-full p-1.5 text-gray-500 hover:bg-gray-100">
+            <button class="rounded-full p-1.5 text-muted-foreground hover:bg-accent hover:text-accent-foreground">
                 <CircleHelp class="h-5 w-5" />
             </button>
 
             <!-- Divider -->
-            <div class="h-6 w-px bg-gray-200"></div>
+            <div class="h-6 w-px bg-border"></div>
 
             <!-- User -->
             <div class="flex items-center gap-2">
-                <UserCircle class="h-7 w-7 text-gray-500" />
-                <span class="text-sm font-medium text-gray-700">{{ user?.name ?? 'Admin' }}</span>
+                <UserCircle class="h-7 w-7 text-muted-foreground" />
+                <span class="text-sm font-medium text-foreground">{{ user?.name ?? 'Admin' }}</span>
             </div>
 
             <!-- Logout -->
@@ -61,7 +61,7 @@ const handleLogout = () => {
                 :href="logout()"
                 method="post"
                 as="button"
-                class="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-100"
+                class="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                 @click="handleLogout"
                 data-test="logout-button"
             >
