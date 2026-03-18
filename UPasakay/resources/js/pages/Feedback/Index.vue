@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Search, Download, Star, BarChart2, X, MessageSquare, ChevronRight, Check, CheckCircle2, Bus } from 'lucide-vue-next';
 import { Head, router } from '@inertiajs/vue3';
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import { dashboard } from '@/routes';
@@ -24,7 +24,9 @@ const props = defineProps<{
     shuttleActivity: Array<{ date: string; shuttle: string; driver: string; route: string; start: string; end: string; pickups: number }>;
 }>();
 
-const activeTab = ref<'feedback' | 'reports'>('feedback');
+const activeTab = ref<'feedback' | 'reports'>(
+    new URLSearchParams(window.location.search).get('tab') === 'reports' ? 'reports' : 'feedback',
+);
 
 // ── Feedback tab ───────────────────────────────────────────────────────────
 const searchFb   = ref('');
