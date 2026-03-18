@@ -70,7 +70,7 @@ const currentDatetime = computed(() => {
 
 // Donut chart (SVG) 
 const RADIUS = 60;
-const CIRC   = 2 * Math.PI * RADIUS; // â‰ˆ 377
+const CIRC   = 2 * Math.PI * RADIUS; // ≈ 377
 
 const successDash = computed(() => (props.successPct / 100) * CIRC);
 const failedDash  = computed(() => (props.failedPct  / 100) * CIRC);
@@ -113,7 +113,7 @@ const mapShuttles = [
     { code: 'SH-003', lat: 10.3270, lng: 123.8958, route: 'Cebu City' }, // JY Square, heading to Talamban
 ];
 const mapPins = [
-    { lat: 10.3100, lng: 123.8907 },  // Fuente OsmeÃ±a (passenger waiting, South)
+    { lat: 10.3100, lng: 123.8907 },  // Fuente Osmeña (passenger waiting, South)
     { lat: 10.3275, lng: 123.9050 },  // Banilad IT Park (passenger waiting, North)
 ];
 
@@ -239,7 +239,7 @@ watch(resolvedAppearance, () => {
                     </div>
                     <div class="text-3xl font-bold text-foreground">{{ stats.activeShuttles }}</div>
                     <div class="mt-1 text-sm text-muted-foreground">Active Shuttles</div>
-                    <div class="mt-2 text-xs font-medium text-emerald-500 dark:text-emerald-300">â†‘ 1 vs yesterday</div>
+                    <div class="mt-2 text-xs font-medium text-emerald-500 dark:text-emerald-300">↑ 1 vs yesterday</div>
                 </div>
 
                 <!-- Drivers Online -->
@@ -249,7 +249,7 @@ watch(resolvedAppearance, () => {
                     </div>
                     <div class="text-3xl font-bold text-foreground">{{ stats.driversOnline }}</div>
                     <div class="mt-1 text-sm text-muted-foreground">Drivers Online</div>
-                    <div class="mt-2 text-xs font-medium text-orange-500 dark:text-orange-300">â†“ 2 vs yesterday</div>
+                    <div class="mt-2 text-xs font-medium text-orange-500 dark:text-orange-300">↓ 2 vs yesterday</div>
                 </div>
 
                 <!-- Pending Requests -->
@@ -259,7 +259,7 @@ watch(resolvedAppearance, () => {
                     </div>
                     <div class="text-3xl font-bold text-foreground">{{ stats.pendingRequests }}</div>
                     <div class="mt-1 text-sm text-muted-foreground">Pending Requests</div>
-                    <div class="mt-2 text-xs font-medium text-orange-500 dark:text-orange-300">â†‘ 4 vs yesterday</div>
+                    <div class="mt-2 text-xs font-medium text-orange-500 dark:text-orange-300">↑ 4 vs yesterday</div>
                 </div>
 
                 <!-- Avg Feedback -->
@@ -269,7 +269,7 @@ watch(resolvedAppearance, () => {
                     </div>
                     <div class="text-3xl font-bold text-foreground">{{ stats.avgFeedback }}</div>
                     <div class="mt-1 text-sm text-muted-foreground">Avg Feedback Today</div>
-                    <div class="mt-2 text-xs font-medium text-emerald-500 dark:text-emerald-300">â†‘ 0.3 vs yesterday</div>
+                    <div class="mt-2 text-xs font-medium text-emerald-500 dark:text-emerald-300">↑ 0.3 vs yesterday</div>
                 </div>
             </div>
 
