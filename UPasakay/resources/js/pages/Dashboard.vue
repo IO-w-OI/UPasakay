@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
 import {
     Bus, Users, ClipboardList, Star, Eye,
@@ -12,8 +12,9 @@ import { type BreadcrumbItem } from '@/types';
 import { dashboard } from '@/routes';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { dashboardRoutes, type Landmark, type RouteConfig } from '@/data/routeData';
 
-// ── Props from DashboardController ───────────────────────────────────────────
+// Props from DashboardController
 const props = defineProps<{
     stats: {
         activeShuttles: number;
@@ -33,16 +34,17 @@ const props = defineProps<{
     successPct: number;
     failedPct: number;
     recentActivity: Array<{ icon: string; text: string; time: string }>;
+    notifications: Array<{ icon: string; text: string; time: string }>;
 }>();
 
-// ── Breadcrumbs ───────────────────────────────────────────────────────────────
+// Breadcrumbs 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Dashboard', href: dashboard().url },
 ];
 
 const { resolvedAppearance } = useAppearance();
 
-// ── Live datetime ─────────────────────────────────────────────────────────────
+// Live datetime 
 const now = ref(new Date());
 let timer: ReturnType<typeof setInterval>;
 onMounted(() => {
@@ -51,6 +53,10 @@ onMounted(() => {
 });
 onUnmounted(() => {
     clearInterval(timer);
+    miniMapRoutePolylines.forEach(pl => pl.remove());
+    miniMapRoutePolylines.length = 0;
+    miniMapStopMarkers.forEach(cm => cm.remove());
+    miniMapStopMarkers.length = 0;
     miniMap?.remove();
     miniMap = null;
 });
@@ -62,16 +68,16 @@ const currentDatetime = computed(() => {
         + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 });
 
-// ── Donut chart (SVG) ─────────────────────────────────────────────────────────
+// Donut chart (SVG) 
 const RADIUS = 60;
-const CIRC   = 2 * Math.PI * RADIUS; // ≈ 377
+const CIRC   = 2 * Math.PI * RADIUS; // â‰ˆ 377
 
 const successDash = computed(() => (props.successPct / 100) * CIRC);
 const failedDash  = computed(() => (props.failedPct  / 100) * CIRC);
 // Start failed arc after the success arc
 const failedOffset = computed(() => CIRC - successDash.value);
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// Helpers
 const statusColor = (status: string) =>
     ({
         active: 'bg-emerald-500/15 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
@@ -81,9 +87,9 @@ const statusColor = (status: string) =>
 
 const routeColor = (route: string) =>
     ({
-        South: 'bg-emerald-500/15 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
-        North: 'bg-blue-500/15 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300',
-        'Cebu City': 'bg-orange-500/15 text-orange-700 dark:bg-orange-500/20 dark:text-orange-300',
+    South: 'bg-emerald-500/15 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300', 
+    North: 'bg-blue-500/15 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300', 
+    'Cebu City': 'bg-orange-500/15 text-orange-700 dark:bg-orange-500/20 dark:text-orange-300',
     }[route] ?? 'bg-muted text-muted-foreground');
 
 const activityIconMap: Record<string, unknown> = {
@@ -96,7 +102,7 @@ const activityIconMap: Record<string, unknown> = {
 };
 const activityIconComponent = (icon: string) => activityIconMap[icon] ?? Pin;
 
-// ── Leaflet mini-map ──────────────────────────────────────────────────────────
+// Leaflet mini-map 
 const miniMapRef = ref<HTMLDivElement | null>(null);
 let miniMap: L.Map | null = null;
 let miniMapTileLayer: L.TileLayer | null = null;
@@ -107,9 +113,66 @@ const mapShuttles = [
     { code: 'SH-003', lat: 10.3270, lng: 123.8958, route: 'Cebu City' }, // JY Square, heading to Talamban
 ];
 const mapPins = [
-    { lat: 10.3100, lng: 123.8907 },  // Fuente Osmeña (passenger waiting, South)
+    { lat: 10.3100, lng: 123.8907 },  // Fuente OsmeÃ±a (passenger waiting, South)
     { lat: 10.3275, lng: 123.9050 },  // Banilad IT Park (passenger waiting, North)
 ];
+
+// Route data (imported from @/data/routeData) 
+const routeStops: RouteConfig = dashboardRoutes;
+
+const miniMapRoutePolylines: L.Polyline[] = [];
+const miniMapStopMarkers: L.CircleMarker[] = [];
+
+// Route each consecutive pair of stops so the path is forced through every waypoint
+async function fetchSegmentedRoute(stops: [number, number][]): Promise<[number, number][]> {
+    if (stops.length < 2) return stops;
+    const fullPath: [number, number][] = [];
+    for (let i = 0; i < stops.length - 1; i++) {
+        const from = stops[i];
+        const to = stops[i + 1];
+        try {
+            const coords = `${from[1]},${from[0]};${to[1]},${to[0]}`;
+            const url = `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`;
+            const res = await fetch(url);
+            const data = await res.json();
+            if (data.routes?.length) {
+                const seg = data.routes[0].geometry.coordinates.map(
+                    ([lng, lat]: [number, number]) => [lat, lng] as [number, number],
+                );
+                // Skip first point of subsequent segments to avoid duplicates
+                fullPath.push(...(i === 0 ? seg : seg.slice(1)));
+            } else {
+                if (i === 0) fullPath.push(from);
+                fullPath.push(to);
+            }
+        } catch {
+            if (i === 0) fullPath.push(from);
+            fullPath.push(to);
+        }
+    }
+    return fullPath;
+}
+
+async function drawMiniMapRoutes(targetMap: L.Map) {
+    for (const key of Object.keys(routeStops)) {
+        const route = routeStops[key];
+        try {
+            const path = route.path ?? await fetchSegmentedRoute(route.stops);
+            const pl = L.polyline(path, { color: route.color, weight: 4,  opacity: 0.65, smoothFactor: 1.5 }).addTo(targetMap);
+            miniMapRoutePolylines.push(pl);
+        } catch {
+            const pl = L.polyline(route.stops, { color: route.color, weight: 3, opacity: 0.65 }).addTo(targetMap);
+            miniMapRoutePolylines.push(pl);
+        }
+        route.landmarks.forEach((landmark) => {
+            const [lat, lng] = landmark.coord;
+            const cm = L.circleMarker([lat, lng], { radius: 3, color: route.color, fillColor: route.color, fillOpacity: 1, weight: 1 })
+                .bindTooltip(landmark.name, { permanent: false, direction: 'top', offset: [0, -5] })
+                .addTo(targetMap);
+            miniMapStopMarkers.push(cm);
+        });
+    }
+}
 
 const shuttleIcon = L.divIcon({
     className: '',
@@ -151,6 +214,9 @@ const initMiniMap = () => {
     mapShuttles.forEach(s => L.marker([s.lat, s.lng], { icon: shuttleIcon }).bindTooltip(s.code).addTo(miniMap!));
     mapPins.forEach(p => L.marker([p.lat, p.lng], { icon: stopIcon }).addTo(miniMap!));
     setTimeout(() => miniMap?.invalidateSize(), 200);
+
+    // Draw OSRM road-following routes
+    drawMiniMapRoutes(miniMap!);
 };
 
 watch(resolvedAppearance, () => {
@@ -164,7 +230,7 @@ watch(resolvedAppearance, () => {
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="space-y-5 p-6">
 
-            <!-- ── Stats cards ──────────────────────────────────────────────── -->
+            <!-- Stats cards-->
             <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
                 <!-- Active Shuttles -->
                 <div class="rounded-2xl border border-border/70 bg-card p-5 shadow-sm shadow-black/5 dark:shadow-black/20">
@@ -173,7 +239,7 @@ watch(resolvedAppearance, () => {
                     </div>
                     <div class="text-3xl font-bold text-foreground">{{ stats.activeShuttles }}</div>
                     <div class="mt-1 text-sm text-muted-foreground">Active Shuttles</div>
-                    <div class="mt-2 text-xs font-medium text-emerald-500 dark:text-emerald-300">↑ 1 vs yesterday</div>
+                    <div class="mt-2 text-xs font-medium text-emerald-500 dark:text-emerald-300">â†‘ 1 vs yesterday</div>
                 </div>
 
                 <!-- Drivers Online -->
@@ -183,7 +249,7 @@ watch(resolvedAppearance, () => {
                     </div>
                     <div class="text-3xl font-bold text-foreground">{{ stats.driversOnline }}</div>
                     <div class="mt-1 text-sm text-muted-foreground">Drivers Online</div>
-                    <div class="mt-2 text-xs font-medium text-orange-500 dark:text-orange-300">↓ 2 vs yesterday</div>
+                    <div class="mt-2 text-xs font-medium text-orange-500 dark:text-orange-300">â†“ 2 vs yesterday</div>
                 </div>
 
                 <!-- Pending Requests -->
@@ -193,7 +259,7 @@ watch(resolvedAppearance, () => {
                     </div>
                     <div class="text-3xl font-bold text-foreground">{{ stats.pendingRequests }}</div>
                     <div class="mt-1 text-sm text-muted-foreground">Pending Requests</div>
-                    <div class="mt-2 text-xs font-medium text-orange-500 dark:text-orange-300">↑ 4 vs yesterday</div>
+                    <div class="mt-2 text-xs font-medium text-orange-500 dark:text-orange-300">â†‘ 4 vs yesterday</div>
                 </div>
 
                 <!-- Avg Feedback -->
@@ -203,11 +269,11 @@ watch(resolvedAppearance, () => {
                     </div>
                     <div class="text-3xl font-bold text-foreground">{{ stats.avgFeedback }}</div>
                     <div class="mt-1 text-sm text-muted-foreground">Avg Feedback Today</div>
-                    <div class="mt-2 text-xs font-medium text-emerald-500 dark:text-emerald-300">↑ 0.3 vs yesterday</div>
+                    <div class="mt-2 text-xs font-medium text-emerald-500 dark:text-emerald-300">â†‘ 0.3 vs yesterday</div>
                 </div>
             </div>
 
-            <!-- ── Live Map + Recent Activity ──────────────────────────────── -->
+            <!-- Live Map + Recent Activity-->
             <div class="grid grid-cols-1 gap-4 lg:grid-cols-12">
 
                 <!-- Live Map Mini -->
@@ -223,14 +289,14 @@ watch(resolvedAppearance, () => {
                     <div ref="miniMapRef" class="z-0 h-44 w-full overflow-hidden rounded-xl border border-border/70 bg-muted/30"></div>
                 </div>
 
-                <!-- Recent Activity -->
+                <!-- Notifications -->
                 <div class="rounded-2xl border border-border/70 bg-card p-5 shadow-sm shadow-black/5 dark:shadow-black/20 lg:col-span-5">
                     <h2 class="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
-                        <ClipboardList class="h-4 w-4 text-muted-foreground" /> Recent Activity
+                        <Bell class="h-4 w-4 text-muted-foreground" /> Notifications
                     </h2>
                     <ul class="space-y-3">
                         <li
-                            v-for="(item, i) in recentActivity"
+                            v-for="(item, i) in notifications"
                             :key="i"
                             class="flex items-start gap-3"
                         >
@@ -241,17 +307,17 @@ watch(resolvedAppearance, () => {
                             </div>
                         </li>
                     </ul>
-                    <button class="mt-3 text-xs font-medium text-primary hover:text-primary/80 hover:underline">View All Activity &rsaquo;</button>
+                    <Link href="/notifications" class="mt-3 inline-block text-xs font-medium text-primary hover:text-primary/80 hover:underline">View All Notifications &rsaquo;</Link>
                 </div>
             </div>
 
-            <!-- ── Shuttle Status Overview ───────────────────────────────────── -->
+            <!-- Shuttle Status Overview -->
             <div class="rounded-2xl border border-border/70 bg-card p-5 shadow-sm shadow-black/5 dark:shadow-black/20">
                 <div class="mb-4 flex items-center justify-between">
                     <h2 class="flex items-center gap-2 text-sm font-semibold text-foreground">
                         <Bus class="h-4 w-4 text-muted-foreground" /> Shuttle Status Overview
                     </h2>
-                    <button class="text-xs font-medium text-primary hover:text-primary/80 hover:underline">View All &rsaquo;</button>
+                    <Link href="/feedback?tab=reports" class="text-xs font-medium text-primary hover:text-primary/80 hover:underline">View All &rsaquo;</Link>
                 </div>
 
                 <div class="overflow-x-auto">
@@ -298,7 +364,7 @@ watch(resolvedAppearance, () => {
                 </div>
             </div>
 
-            <!-- ── Charts row ────────────────────────────────────────────────── -->
+            <!-- Charts row -->
             <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
 
                 <!-- Pickups per Route (horizontal bar chart) -->
@@ -383,4 +449,5 @@ watch(resolvedAppearance, () => {
         </div>
     </AppLayout>
 </template>
+
 
