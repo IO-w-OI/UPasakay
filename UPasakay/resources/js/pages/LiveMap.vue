@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
 import { Map as MapIcon, Bus, MapPin, RefreshCw, ClipboardList, ArrowRight } from 'lucide-vue-next';
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
@@ -8,6 +8,7 @@ import { dashboard } from '@/routes';
 import { useAppearance } from '@/composables/useAppearance';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { liveMapRoutes, type Landmark, type RouteConfig } from '@/data/routeData';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Home', href: dashboard().url },
@@ -35,13 +36,13 @@ const props = defineProps<{
     }>;
 }>();
 
-// ── Filter / search ────────────────────────────────────────────────────────
+// Filter / search
 const routeFilter = ref('All');
 const searchQuery  = ref('');
 const autoRefresh  = ref(true);
 
 const routes = computed(() => {
-    const unique = [...new Set(props.shuttles.map(s => s.route).filter(r => r !== '—'))];
+    const unique = [...new Set(props.shuttles.map(s => s.route).filter(r => r !== '”'))];
     return ['All', ...unique];
 });
 
@@ -54,7 +55,7 @@ const filtered = computed(() =>
     })
 );
 
-// ── Selected shuttle (for detail popup) ───────────────────────────────────
+//  Selected shuttle (for detail popup) 
 const selected = ref<typeof props.shuttles[0] | null>(null);
 const selectShuttle = (s: typeof props.shuttles[0]) => {
     selected.value = selected.value?.id === s.id ? null : s;
@@ -62,7 +63,7 @@ const selectShuttle = (s: typeof props.shuttles[0]) => {
 
 const { resolvedAppearance } = useAppearance();
 
-// ── Helpers ────────────────────────────────────────────────────────────────
+//  Helpers 
 const statusDot = (status: string) =>
     ({ active: 'bg-green-500', idle: 'bg-orange-400', offline: 'bg-gray-400' }[status] ?? 'bg-gray-400');
 
@@ -77,7 +78,7 @@ const routeDot = (route: string) =>
 
 const activeCount = computed(() => props.shuttles.filter(s => s.status === 'active').length);
 
-// ── Leaflet map ────────────────────────────────────────────────────────────
+//  Leaflet map 
 const mapRef = ref<HTMLDivElement | null>(null);
 let map: L.Map | null = null;
 let tileLayer: L.TileLayer | null = null;
@@ -125,13 +126,73 @@ const syncMarkers = () => {
         const lat = 10.3140 + (i * 0.003);
         const lng = 123.8870 + (i * 0.004);
         const m = L.marker([lat, lng], { icon: passengerIcon })
-            .bindPopup(`<div style="font-size:13px;"><b>#${r.id}</b> ${r.passenger}<br>${r.route} • ${r.stop}</div>`)
+            .bindPopup(`<div style="font-size:13px;"><b>#${r.id}</b> ${r.passenger}<br>${r.route} ¢ ${r.stop}</div>`)
             .addTo(map!);
         otherMarkers.push(m);
     });
 };
 
 watch(filtered, () => syncMarkers());
+
+// Route data (imported from @/data/routeData)
+const routeStops: RouteConfig = liveMapRoutes;
+
+
+const routePolylines: L.Polyline[] = [];
+const stopMarkers: L.CircleMarker[] = [];
+
+// Route each consecutive pair of stops so the path is forced through every waypoint
+async function fetchSegmentedRoute(stops: [number, number][]): Promise<[number, number][]> {
+    if (stops.length < 2) return stops;
+    const fullPath: [number, number][] = [];
+    for (let i = 0; i < stops.length - 1; i++) {
+        const from = stops[i];
+        const to = stops[i + 1];
+        try {
+            const coords = `${from[1]},${from[0]};${to[1]},${to[0]}`;
+            const url = `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`;
+            const res = await fetch(url);
+            const data = await res.json();
+            if (data.routes?.length) {
+                const seg = data.routes[0].geometry.coordinates.map(
+                    ([lng, lat]: [number, number]) => [lat, lng] as [number, number],
+                );
+                // Skip first point of subsequent segments to avoid duplicates
+                fullPath.push(...(i === 0 ? seg : seg.slice(1)));
+            } else {
+                if (i === 0) fullPath.push(from);
+                fullPath.push(to);
+            }
+        } catch {
+            if (i === 0) fullPath.push(from);
+            fullPath.push(to);
+        }
+    }
+    return fullPath;
+}
+
+async function drawRoutes(targetMap: L.Map) {
+    for (const key of Object.keys(routeStops)) {
+        const route = routeStops[key];
+        try {
+            const path = route.path ?? await fetchSegmentedRoute(route.stops);
+            const pl = L.polyline(path, { color: route.color, weight: 5, opacity: 0.65, smoothFactor: 1.5 }).addTo(targetMap);
+            routePolylines.push(pl);
+        } catch {
+            // Fallback to straight lines if OSRM fails
+            const pl = L.polyline(route.stops, { color: route.color, weight: 4, opacity: 0.65 }).addTo(targetMap);
+            routePolylines.push(pl);
+        }
+        // Add circle markers at landmark stops only
+        route.landmarks.forEach((landmark) => {
+            const [lat, lng] = landmark.coord;
+            const cm = L.circleMarker([lat, lng], { radius: 5, color: route.color, fillColor: route.color, fillOpacity: 1, weight: 2 })
+                .bindTooltip(landmark.name, { permanent: false, direction: 'top', offset: [0, -5] })
+                .addTo(targetMap);
+            stopMarkers.push(cm);
+        });
+    }
+}
 
 onMounted(() => {
     nextTick(() => {
@@ -144,8 +205,12 @@ onMounted(() => {
             subdomains: isDark ? 'abcd' : 'abc',
         }).addTo(map);
         syncMarkers();
+
         // Leaflet needs a tick for the flex container to settle its dimensions
         setTimeout(() => map?.invalidateSize(), 200);
+
+        // Draw OSRM road-following routes
+        drawRoutes(map!);
     });
 });
 
@@ -154,6 +219,10 @@ onUnmounted(() => {
     shuttleMarkers.clear();
     otherMarkers.forEach(m => m.remove());
     otherMarkers.length = 0;
+    routePolylines.forEach(pl => pl.remove());
+    routePolylines.length = 0;
+    stopMarkers.forEach(cm => cm.remove());
+    stopMarkers.length = 0;
     tileLayer?.remove();
     tileLayer = null;
     map?.remove();
@@ -178,7 +247,7 @@ watch(resolvedAppearance, () => {
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-[calc(100vh-4rem)] flex-col gap-0 overflow-hidden p-6 pb-0">
 
-            <!-- ── Filters row ─────────────────────────────────────────────── -->
+            <!--  Filters row  -->
             <div class="mb-3 flex items-center gap-2">
                 <select
                     v-model="routeFilter"
@@ -190,7 +259,7 @@ watch(resolvedAppearance, () => {
                     <input
                         v-model="searchQuery"
                         type="text"
-                        placeholder="Search shuttle or driver…"
+                        placeholder="Search shuttle or driver"
                         class="w-44 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
                     />
                     <MapIcon class="h-4 w-4 text-muted-foreground" />
@@ -204,7 +273,7 @@ watch(resolvedAppearance, () => {
                 </button>
             </div>
 
-            <!-- ── Main body: map + sidebar ───────────────────────────────── -->
+            <!--  Main body: map + sidebar  -->
             <div class="flex min-h-0 flex-1 gap-4 pb-6">
 
                 <!-- Map area -->
@@ -320,3 +389,4 @@ watch(resolvedAppearance, () => {
         </div>
     </AppLayout>
 </template>
+
