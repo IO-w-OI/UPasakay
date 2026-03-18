@@ -23,7 +23,7 @@ const mainNavItems: NavItem[] = [
     { title: 'Drivers', href: '/drivers', icon: Users },
     { title: 'Requests', href: '/pickup-requests', icon: ClipboardList },
     { title: 'Notifications', href: '/notifications', icon: Bell },
-    { title: 'Feedback', href: '/feedback', icon: MessageSquare },
+    { title: 'Feedback & Reports', href: '/feedback', icon: MessageSquare },
     { title: 'Settings', href: editAppearance(), icon: Settings },
 ];
 </script>
