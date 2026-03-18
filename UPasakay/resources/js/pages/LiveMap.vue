@@ -78,6 +78,13 @@ const routeDot = (route: string) =>
 
 const activeCount = computed(() => props.shuttles.filter(s => s.status === 'active').length);
 
+const filteredRequests = computed(() => {
+    const list = routeFilter.value === 'All'
+        ? props.pendingRequests
+        : props.pendingRequests.filter(r => r.route === routeFilter.value);
+    return list.slice(0, 5);
+});
+
 //  Leaflet map 
 const mapRef = ref<HTMLDivElement | null>(null);
 let map: L.Map | null = null;
@@ -122,11 +129,15 @@ const syncMarkers = () => {
         shuttleMarkers.set(s.id, marker);
     });
 
-    props.pendingRequests.slice(0, 8).forEach((r, i) => {
+    const visibleRequests = routeFilter.value === 'All'
+        ? props.pendingRequests.slice(0, 8)
+        : props.pendingRequests.filter(r => r.route === routeFilter.value).slice(0, 8);
+
+    visibleRequests.forEach((r, i) => {
         const lat = 10.3140 + (i * 0.003);
         const lng = 123.8870 + (i * 0.004);
         const m = L.marker([lat, lng], { icon: passengerIcon })
-            .bindPopup(`<div style="font-size:13px;"><b>#${r.id}</b> ${r.passenger}<br>${r.route} ¢ ${r.stop}</div>`)
+            .bindPopup(`<div style="font-size:13px;"><b>#${r.id}</b> ${r.passenger}<br>${r.route} - ${r.stop}</div>`)
             .addTo(map!);
         otherMarkers.push(m);
     });
@@ -138,8 +149,36 @@ watch(filtered, () => syncMarkers());
 const routeStops: RouteConfig = liveMapRoutes;
 
 
-const routePolylines: L.Polyline[] = [];
-const stopMarkers: L.CircleMarker[] = [];
+const routePolylines = new Map<string, L.Polyline>();
+const routeStopMarkers = new Map<string, L.CircleMarker[]>();
+
+const filterKeyToRouteKey: Record<string, string> = {
+    'South': 'south',
+    'North': 'north',
+    'Cebu City': 'cebuCity',
+};
+
+function syncRouteVisibility() {
+    if (!map) return;
+    const activeKey = filterKeyToRouteKey[routeFilter.value];
+    for (const [key, pl] of routePolylines) {
+        const visible = !activeKey || key === activeKey;
+        if (visible && !map.hasLayer(pl)) pl.addTo(map);
+        if (!visible && map.hasLayer(pl)) map.removeLayer(pl);
+    }
+    for (const [key, markers] of routeStopMarkers) {
+        const visible = !activeKey || key === activeKey;
+        markers.forEach(cm => {
+            if (visible && !map!.hasLayer(cm)) cm.addTo(map!);
+            if (!visible && map!.hasLayer(cm)) map!.removeLayer(cm);
+        });
+    }
+}
+
+watch(routeFilter, () => {
+    syncRouteVisibility();
+    syncMarkers();
+});
 
 // Route each consecutive pair of stops so the path is forced through every waypoint
 async function fetchSegmentedRoute(stops: [number, number][]): Promise<[number, number][]> {
@@ -177,21 +216,22 @@ async function drawRoutes(targetMap: L.Map) {
         try {
             const path = route.path ?? await fetchSegmentedRoute(route.stops);
             const pl = L.polyline(path, { color: route.color, weight: 5, opacity: 0.65, smoothFactor: 1.5 }).addTo(targetMap);
-            routePolylines.push(pl);
+            routePolylines.set(key, pl);
         } catch {
-            // Fallback to straight lines if OSRM fails
             const pl = L.polyline(route.stops, { color: route.color, weight: 4, opacity: 0.65 }).addTo(targetMap);
-            routePolylines.push(pl);
+            routePolylines.set(key, pl);
         }
-        // Add circle markers at landmark stops only
+        const markers: L.CircleMarker[] = [];
         route.landmarks.forEach((landmark) => {
             const [lat, lng] = landmark.coord;
             const cm = L.circleMarker([lat, lng], { radius: 5, color: route.color, fillColor: route.color, fillOpacity: 1, weight: 2 })
                 .bindTooltip(landmark.name, { permanent: false, direction: 'top', offset: [0, -5] })
                 .addTo(targetMap);
-            stopMarkers.push(cm);
+            markers.push(cm);
         });
+        routeStopMarkers.set(key, markers);
     }
+    syncRouteVisibility();
 }
 
 onMounted(() => {
@@ -220,9 +260,9 @@ onUnmounted(() => {
     otherMarkers.forEach(m => m.remove());
     otherMarkers.length = 0;
     routePolylines.forEach(pl => pl.remove());
-    routePolylines.length = 0;
-    stopMarkers.forEach(cm => cm.remove());
-    stopMarkers.length = 0;
+    routePolylines.clear();
+    routeStopMarkers.forEach(markers => markers.forEach(cm => cm.remove()));
+    routeStopMarkers.clear();
     tileLayer?.remove();
     tileLayer = null;
     map?.remove();
@@ -363,10 +403,10 @@ watch(resolvedAppearance, () => {
                     <!-- Pending Requests panel -->
                     <div class="rounded-2xl border border-border/70 bg-card p-4 shadow-sm shadow-black/5 dark:shadow-black/20">
                         <h3 class="mb-3 text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                            Pending Requests ({{ pendingRequests.length }})
+                            Pending Requests ({{ filteredRequests.length }})
                         </h3>
                         <div class="space-y-3">
-                            <div v-for="r in pendingRequests.slice(0, 5)" :key="r.id">
+                            <div v-for="r in filteredRequests" :key="r.id">
                                 <p class="text-sm font-semibold text-foreground">#{{ r.id }} &mdash; {{ r.passenger }}</p>
                                 <p class="text-xs text-muted-foreground">{{ r.route }} &middot; {{ r.time }}</p>
                                 <p class="flex items-center gap-1 text-xs text-muted-foreground/70">
@@ -374,7 +414,7 @@ watch(resolvedAppearance, () => {
                                 </p>
                             </div>
 
-                            <div v-if="pendingRequests.length === 0" class="py-2 text-center text-xs text-muted-foreground">
+                            <div v-if="filteredRequests.length === 0" class="py-2 text-center text-xs text-muted-foreground">
                                 No pending requests
                             </div>
                         </div>
