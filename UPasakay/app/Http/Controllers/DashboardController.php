@@ -79,6 +79,14 @@ class DashboardController extends Controller
             ['icon' => 'bell', 'text' => 'Announcement sent — All routes', 'time' => '08:00 AM'],
         ])->merge($recentRequests)->take(6);
 
+        $notifications = collect([
+            ['icon' => 'bell', 'text' => 'Schedule update: South Route delayed by 15 mins', 'time' => '09:15 AM'],
+            ['icon' => 'bus', 'text' => 'Shuttle SH-003 maintenance reminder', 'time' => '08:45 AM'],
+            ['icon' => 'clock', 'text' => 'Peak hour starts in 30 minutes', 'time' => '08:30 AM'],
+            ['icon' => 'user', 'text' => 'New driver assignment: J. Reyes → North Route', 'time' => '08:15 AM'],
+            ['icon' => 'bell', 'text' => 'System backup completed successfully', 'time' => '07:00 AM'],
+        ]);
+
         return Inertia::render('Dashboard', [
             'stats' => [
                 'activeShuttles' => $activeShuttles,
@@ -92,6 +100,7 @@ class DashboardController extends Controller
             'successPct' => $successPct,
             'failedPct' => $failedPct,
             'recentActivity' => $recentActivity,
+            'notifications' => $notifications,
         ]);
     }
 }
