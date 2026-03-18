@@ -59,6 +59,7 @@ class DriverController extends Controller
                 'id' => $d->id,
                 'employee_id' => 'D-' . str_pad($d->id, 3, '0', STR_PAD_LEFT),
                 'full_name' => $d->full_name ?? '—',
+                'license_number' => $d->license_number ?? '—',
                 'status' => $d->is_available ? 'active' : 'inactive',
                 'route' => $shuttle?->route?->name ?? '—',
                 'shuttle' => $shuttle?->shuttle_code ?? '—',
@@ -70,8 +71,20 @@ class DriverController extends Controller
 
         $routes = Route::where('is_active', true)->pluck('name');
 
+        $shuttles = Shuttle::with(['route', 'driver'])->orderBy('shuttle_code')->get()->map(fn($s) => [
+            'id' => $s->id,
+            'shuttle_code' => $s->shuttle_code,
+            'plate_number' => $s->plate_number,
+            'capacity' => $s->capacity,
+            'status' => $s->status ?? ($s->is_active ? 'active' : 'inactive'),
+            'route' => $s->route?->name ?? '—',
+            'driver' => $s->driver?->full_name ?? '—',
+            'is_active' => $s->is_active,
+        ]);
+
         return Inertia::render('Drivers/Index', [
             'drivers' => $drivers,
+            'shuttles' => $shuttles,
             'routes' => $routes,
             'filters' => $request->only(['search', 'status', 'route']),
         ]);
@@ -154,10 +167,11 @@ class DriverController extends Controller
     {
         $request->validate([
             'full_name' => 'required|string|max:255',
+            'license_number' => 'sometimes|string|max:255',
             'is_available' => 'boolean',
         ]);
 
-        $driver->update($request->only(['full_name', 'is_available']));
+        $driver->update($request->only(['full_name', 'license_number', 'is_available']));
 
         return back()->with('success', 'Driver updated successfully.');
     }
