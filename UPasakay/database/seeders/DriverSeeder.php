@@ -29,7 +29,7 @@ class DriverSeeder extends Seeder
 
             Driver::updateOrCreate(
                 ['user_id' => $user->id],
-                ['full_name' => $d['full_name'], 'license_number' => $d['license'], 'is_available' => true]
+                ['full_name' => $d['full_name'], 'license_number' => $d['license'], 'is_available' => true, 'driver_status' => 'active']
             );
         }
     }
