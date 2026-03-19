@@ -6,6 +6,7 @@ class Shuttle extends Model
 {
     protected $fillable = [
         'shuttle_code',
+        'shuttle_type',
         'plate_number',
         'capacity',
         'is_active',
