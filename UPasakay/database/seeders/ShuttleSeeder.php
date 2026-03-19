@@ -26,6 +26,7 @@ class ShuttleSeeder extends Seeder
         Shuttle::insert([
             [
                 'shuttle_code' => 'SH-001',
+                'shuttle_type' => 'van',
                 'plate_number' => 'GBH-1234',
                 'capacity' => 20,
                 'is_active' => true,
@@ -38,6 +39,7 @@ class ShuttleSeeder extends Seeder
             ],
             [
                 'shuttle_code' => 'SH-002',
+                'shuttle_type' => 'minibus',
                 'plate_number' => 'KTR-5678',
                 'capacity' => 20,
                 'is_active' => true,
@@ -50,6 +52,7 @@ class ShuttleSeeder extends Seeder
             ],
             [
                 'shuttle_code' => 'SH-003',
+                'shuttle_type' => 'van',
                 'plate_number' => 'PLM-9101',
                 'capacity' => 15,
                 'is_active' => true,
@@ -62,6 +65,7 @@ class ShuttleSeeder extends Seeder
             ],
             [
                 'shuttle_code' => 'SH-004',
+                'shuttle_type' => 'bus',
                 'plate_number' => 'ZXQ-1122',
                 'capacity' => 15,
                 'is_active' => false,
