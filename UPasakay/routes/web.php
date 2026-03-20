@@ -6,6 +6,7 @@ use App\Http\Controllers\FeedbackController;
 use App\Http\Controllers\LiveMapController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PickupRequestController;
+use App\Http\Controllers\ShuttleWebController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
@@ -23,7 +24,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('drivers/{driver}', [DriverController::class, 'show'])->name('drivers.show');
     Route::post('drivers', [DriverController::class, 'store'])->name('drivers.store');
     Route::patch('drivers/{driver}', [DriverController::class, 'update'])->name('drivers.update');
+    Route::patch('drivers/{driver}/reset-password', [DriverController::class, 'resetPassword'])->name('drivers.reset-password');
     Route::delete('drivers/{driver}', [DriverController::class, 'destroy'])->name('drivers.destroy');
+
+    // Shuttles
+    Route::patch('shuttles/{shuttle}', [ShuttleWebController::class, 'update'])->name('shuttles.update');
+    Route::patch('shuttles/{shuttle}/assign-driver', [ShuttleWebController::class, 'assignDriver'])->name('shuttles.assign-driver');
+    Route::patch('shuttles/{shuttle}/status', [ShuttleWebController::class, 'updateStatus'])->name('shuttles.update-status');
 
     // Pickup Requests
     Route::get('pickup-requests', [PickupRequestController::class, 'index'])->name('pickup-requests.index');

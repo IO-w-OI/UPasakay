@@ -1,18 +1,20 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
 import {
     Bus, Users, ClipboardList, Star, Eye,
     Map, BarChart2, CheckCircle2,
     MapPin, CheckCheck, Clock, Bell, UserCircle2, XCircle, Pin,
 } from 'lucide-vue-next';
-import { computed, onMounted, onUnmounted, ref, nextTick } from 'vue';
+import { computed, onMounted, onUnmounted, ref, nextTick, watch } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { useAppearance } from '@/composables/useAppearance';
 import { type BreadcrumbItem } from '@/types';
 import { dashboard } from '@/routes';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { dashboardRoutes, type Landmark, type RouteConfig } from '@/data/routeData';
 
-// ── Props from DashboardController ───────────────────────────────────────────
+// Props from DashboardController
 const props = defineProps<{
     stats: {
         activeShuttles: number;
@@ -32,14 +34,17 @@ const props = defineProps<{
     successPct: number;
     failedPct: number;
     recentActivity: Array<{ icon: string; text: string; time: string }>;
+    notifications: Array<{ icon: string; text: string; time: string }>;
 }>();
 
-// ── Breadcrumbs ───────────────────────────────────────────────────────────────
+// Breadcrumbs 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Dashboard', href: dashboard().url },
 ];
 
-// ── Live datetime ─────────────────────────────────────────────────────────────
+const { resolvedAppearance } = useAppearance();
+
+// Live datetime 
 const now = ref(new Date());
 let timer: ReturnType<typeof setInterval>;
 onMounted(() => {
@@ -48,6 +53,10 @@ onMounted(() => {
 });
 onUnmounted(() => {
     clearInterval(timer);
+    miniMapRoutePolylines.forEach(pl => pl.remove());
+    miniMapRoutePolylines.length = 0;
+    miniMapStopMarkers.forEach(cm => cm.remove());
+    miniMapStopMarkers.length = 0;
     miniMap?.remove();
     miniMap = null;
 });
@@ -59,7 +68,7 @@ const currentDatetime = computed(() => {
         + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 });
 
-// ── Donut chart (SVG) ─────────────────────────────────────────────────────────
+// Donut chart (SVG) 
 const RADIUS = 60;
 const CIRC   = 2 * Math.PI * RADIUS; // ≈ 377
 
@@ -68,12 +77,20 @@ const failedDash  = computed(() => (props.failedPct  / 100) * CIRC);
 // Start failed arc after the success arc
 const failedOffset = computed(() => CIRC - successDash.value);
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// Helpers
 const statusColor = (status: string) =>
-    ({ active: 'bg-green-100 text-green-700', idle: 'bg-orange-100 text-orange-700', offline: 'bg-gray-100 text-gray-500' }[status] ?? 'bg-gray-100 text-gray-500');
+    ({
+        active: 'bg-emerald-500/15 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
+        idle: 'bg-orange-500/15 text-orange-700 dark:bg-orange-500/20 dark:text-orange-300',
+        offline: 'bg-muted text-muted-foreground',
+    }[status] ?? 'bg-muted text-muted-foreground');
 
 const routeColor = (route: string) =>
-    ({ South: 'bg-green-100 text-green-700', North: 'bg-blue-100 text-blue-700', 'Cebu City': 'bg-orange-100 text-orange-700' }[route] ?? 'bg-gray-100 text-gray-600');
+    ({
+    South: 'bg-emerald-500/15 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300', 
+    North: 'bg-blue-500/15 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300', 
+    'Cebu City': 'bg-orange-500/15 text-orange-700 dark:bg-orange-500/20 dark:text-orange-300',
+    }[route] ?? 'bg-muted text-muted-foreground');
 
 const activityIconMap: Record<string, unknown> = {
     bus:   Bus,
@@ -85,9 +102,10 @@ const activityIconMap: Record<string, unknown> = {
 };
 const activityIconComponent = (icon: string) => activityIconMap[icon] ?? Pin;
 
-// ── Leaflet mini-map ──────────────────────────────────────────────────────────
+// Leaflet mini-map 
 const miniMapRef = ref<HTMLDivElement | null>(null);
 let miniMap: L.Map | null = null;
+let miniMapTileLayer: L.TileLayer | null = null;
 
 const mapShuttles = [
     { code: 'SH-001', lat: 10.2994, lng: 123.8924, route: 'South' },   // Capitol Site, heading to Tabunok
@@ -98,6 +116,63 @@ const mapPins = [
     { lat: 10.3100, lng: 123.8907 },  // Fuente Osmeña (passenger waiting, South)
     { lat: 10.3275, lng: 123.9050 },  // Banilad IT Park (passenger waiting, North)
 ];
+
+// Route data (imported from @/data/routeData) 
+const routeStops: RouteConfig = dashboardRoutes;
+
+const miniMapRoutePolylines: L.Polyline[] = [];
+const miniMapStopMarkers: L.CircleMarker[] = [];
+
+// Route each consecutive pair of stops so the path is forced through every waypoint
+async function fetchSegmentedRoute(stops: [number, number][]): Promise<[number, number][]> {
+    if (stops.length < 2) return stops;
+    const fullPath: [number, number][] = [];
+    for (let i = 0; i < stops.length - 1; i++) {
+        const from = stops[i];
+        const to = stops[i + 1];
+        try {
+            const coords = `${from[1]},${from[0]};${to[1]},${to[0]}`;
+            const url = `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`;
+            const res = await fetch(url);
+            const data = await res.json();
+            if (data.routes?.length) {
+                const seg = data.routes[0].geometry.coordinates.map(
+                    ([lng, lat]: [number, number]) => [lat, lng] as [number, number],
+                );
+                // Skip first point of subsequent segments to avoid duplicates
+                fullPath.push(...(i === 0 ? seg : seg.slice(1)));
+            } else {
+                if (i === 0) fullPath.push(from);
+                fullPath.push(to);
+            }
+        } catch {
+            if (i === 0) fullPath.push(from);
+            fullPath.push(to);
+        }
+    }
+    return fullPath;
+}
+
+async function drawMiniMapRoutes(targetMap: L.Map) {
+    for (const key of Object.keys(routeStops)) {
+        const route = routeStops[key];
+        try {
+            const path = route.path ?? await fetchSegmentedRoute(route.stops);
+            const pl = L.polyline(path, { color: route.color, weight: 4,  opacity: 0.65, smoothFactor: 1.5 }).addTo(targetMap);
+            miniMapRoutePolylines.push(pl);
+        } catch {
+            const pl = L.polyline(route.stops, { color: route.color, weight: 3, opacity: 0.65 }).addTo(targetMap);
+            miniMapRoutePolylines.push(pl);
+        }
+        route.landmarks.forEach((landmark) => {
+            const [lat, lng] = landmark.coord;
+            const cm = L.circleMarker([lat, lng], { radius: 3, color: route.color, fillColor: route.color, fillOpacity: 1, weight: 1 })
+                .bindTooltip(landmark.name, { permanent: false, direction: 'top', offset: [0, -5] })
+                .addTo(targetMap);
+            miniMapStopMarkers.push(cm);
+        });
+    }
+}
 
 const shuttleIcon = L.divIcon({
     className: '',
@@ -113,15 +188,40 @@ const stopIcon = L.divIcon({
     iconAnchor: [10, 20],
 });
 
+const miniMapTileUrl = computed(() =>
+    resolvedAppearance.value === 'dark'
+        ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+        : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+);
+
+const setMiniMapTiles = () => {
+    if (!miniMap) return;
+
+    miniMapTileLayer?.remove();
+
+    miniMapTileLayer = L.tileLayer(miniMapTileUrl.value, {
+        maxZoom: 19,
+        subdomains: resolvedAppearance.value === 'dark' ? 'abcd' : 'abc',
+    });
+
+    miniMapTileLayer.addTo(miniMap);
+};
+
 const initMiniMap = () => {
     if (!miniMapRef.value || miniMap) return;
     miniMap = L.map(miniMapRef.value, { zoomControl: false, attributionControl: false }).setView([10.3157, 123.8900], 13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-    }).addTo(miniMap);
+    setMiniMapTiles();
     mapShuttles.forEach(s => L.marker([s.lat, s.lng], { icon: shuttleIcon }).bindTooltip(s.code).addTo(miniMap!));
     mapPins.forEach(p => L.marker([p.lat, p.lng], { icon: stopIcon }).addTo(miniMap!));
+    setTimeout(() => miniMap?.invalidateSize(), 200);
+
+    // Draw OSRM road-following routes
+    drawMiniMapRoutes(miniMap!);
 };
+
+watch(resolvedAppearance, () => {
+    setMiniMapTiles();
+});
 </script>
 
 <template>
@@ -130,100 +230,100 @@ const initMiniMap = () => {
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="space-y-5 p-6">
 
-            <!-- ── Stats cards ──────────────────────────────────────────────── -->
+            <!-- Stats cards-->
             <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
                 <!-- Active Shuttles -->
-                <div class="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-                    <div class="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-100 text-indigo-500">
+                <div class="rounded-2xl border border-border/70 bg-card p-5 shadow-sm shadow-black/5 dark:shadow-black/20">
+                    <div class="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-500/12 text-indigo-500 dark:bg-indigo-500/18 dark:text-indigo-300">
                         <Bus class="h-5 w-5" />
                     </div>
-                    <div class="text-3xl font-bold text-gray-900">{{ stats.activeShuttles }}</div>
-                    <div class="mt-1 text-sm text-gray-400">Active Shuttles</div>
-                    <div class="mt-2 text-xs font-medium text-green-500">↑ 1 vs yesterday</div>
+                    <div class="text-3xl font-bold text-foreground">{{ stats.activeShuttles }}</div>
+                    <div class="mt-1 text-sm text-muted-foreground">Active Shuttles</div>
+                    <div class="mt-2 text-xs font-medium text-emerald-500 dark:text-emerald-300">↑ 1 vs yesterday</div>
                 </div>
 
                 <!-- Drivers Online -->
-                <div class="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-                    <div class="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-purple-100 text-purple-500">
+                <div class="rounded-2xl border border-border/70 bg-card p-5 shadow-sm shadow-black/5 dark:shadow-black/20">
+                    <div class="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/12 text-purple-500 dark:bg-purple-500/18 dark:text-purple-300">
                         <Users class="h-5 w-5" />
                     </div>
-                    <div class="text-3xl font-bold text-gray-900">{{ stats.driversOnline }}</div>
-                    <div class="mt-1 text-sm text-gray-400">Drivers Online</div>
-                    <div class="mt-2 text-xs font-medium text-orange-500">↓ 2 vs yesterday</div>
+                    <div class="text-3xl font-bold text-foreground">{{ stats.driversOnline }}</div>
+                    <div class="mt-1 text-sm text-muted-foreground">Drivers Online</div>
+                    <div class="mt-2 text-xs font-medium text-orange-500 dark:text-orange-300">↓ 2 vs yesterday</div>
                 </div>
 
                 <!-- Pending Requests -->
-                <div class="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-                    <div class="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-orange-100 text-orange-500">
+                <div class="rounded-2xl border border-border/70 bg-card p-5 shadow-sm shadow-black/5 dark:shadow-black/20">
+                    <div class="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500/12 text-orange-500 dark:bg-orange-500/18 dark:text-orange-300">
                         <ClipboardList class="h-5 w-5" />
                     </div>
-                    <div class="text-3xl font-bold text-gray-900">{{ stats.pendingRequests }}</div>
-                    <div class="mt-1 text-sm text-gray-400">Pending Requests</div>
-                    <div class="mt-2 text-xs font-medium text-orange-500">↑ 4 vs yesterday</div>
+                    <div class="text-3xl font-bold text-foreground">{{ stats.pendingRequests }}</div>
+                    <div class="mt-1 text-sm text-muted-foreground">Pending Requests</div>
+                    <div class="mt-2 text-xs font-medium text-orange-500 dark:text-orange-300">↑ 4 vs yesterday</div>
                 </div>
 
                 <!-- Avg Feedback -->
-                <div class="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-                    <div class="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-yellow-100 text-yellow-500">
+                <div class="rounded-2xl border border-border/70 bg-card p-5 shadow-sm shadow-black/5 dark:shadow-black/20">
+                    <div class="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-yellow-500/12 text-yellow-500 dark:bg-yellow-500/18 dark:text-yellow-300">
                         <Star class="h-5 w-5" />
                     </div>
-                    <div class="text-3xl font-bold text-gray-900">{{ stats.avgFeedback }}</div>
-                    <div class="mt-1 text-sm text-gray-400">Avg Feedback Today</div>
-                    <div class="mt-2 text-xs font-medium text-green-500">↑ 0.3 vs yesterday</div>
+                    <div class="text-3xl font-bold text-foreground">{{ stats.avgFeedback }}</div>
+                    <div class="mt-1 text-sm text-muted-foreground">Avg Feedback Today</div>
+                    <div class="mt-2 text-xs font-medium text-emerald-500 dark:text-emerald-300">↑ 0.3 vs yesterday</div>
                 </div>
             </div>
 
-            <!-- ── Live Map + Recent Activity ──────────────────────────────── -->
+            <!-- Live Map + Recent Activity-->
             <div class="grid grid-cols-1 gap-4 lg:grid-cols-12">
 
                 <!-- Live Map Mini -->
-                <div class="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm lg:col-span-7">
+                <div class="rounded-2xl border border-border/70 bg-card p-5 shadow-sm shadow-black/5 dark:shadow-black/20 lg:col-span-7">
                     <div class="mb-3 flex items-center justify-between">
-                        <h2 class="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                            <Map class="h-4 w-4 text-gray-400" /> Live Map (Mini)
+                        <h2 class="flex items-center gap-2 text-sm font-semibold text-foreground">
+                            <Map class="h-4 w-4 text-muted-foreground" /> Live Map (Mini)
                         </h2>
-                        <Link href="/live-map" class="text-xs font-medium text-blue-500 hover:underline">View Full Map &rsaquo;</Link>
+                        <Link href="/live-map" class="text-xs font-medium text-primary hover:text-primary/80 hover:underline">View Full Map &rsaquo;</Link>
                     </div>
 
                     <!-- Leaflet mini-map -->
-                    <div ref="miniMapRef" class="h-44 w-full rounded-xl border border-gray-100 z-0"></div>
+                    <div ref="miniMapRef" class="z-0 h-44 w-full overflow-hidden rounded-xl border border-border/70 bg-muted/30"></div>
                 </div>
 
-                <!-- Recent Activity -->
-                <div class="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm lg:col-span-5">
-                    <h2 class="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-700">
-                        <ClipboardList class="h-4 w-4 text-gray-400" /> Recent Activity
+                <!-- Notifications -->
+                <div class="rounded-2xl border border-border/70 bg-card p-5 shadow-sm shadow-black/5 dark:shadow-black/20 lg:col-span-5">
+                    <h2 class="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
+                        <Bell class="h-4 w-4 text-muted-foreground" /> Notifications
                     </h2>
                     <ul class="space-y-3">
                         <li
-                            v-for="(item, i) in recentActivity"
+                            v-for="(item, i) in notifications"
                             :key="i"
                             class="flex items-start gap-3"
                         >
-                            <component :is="activityIconComponent(item.icon)" class="mt-0.5 h-4 w-4 shrink-0 text-gray-400" />
-                            <div class="flex-1 min-w-0">
-                                <p class="truncate text-xs text-gray-700">{{ item.text }}</p>
-                                <p class="text-[11px] text-gray-400">{{ item.time }}</p>
+                            <component :is="activityIconComponent(item.icon)" class="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                            <div class="min-w-0 flex-1">
+                                <p class="truncate text-xs text-foreground">{{ item.text }}</p>
+                                <p class="text-[11px] text-muted-foreground">{{ item.time }}</p>
                             </div>
                         </li>
                     </ul>
-                    <button class="mt-3 text-xs font-medium text-blue-500 hover:underline">View All Activity &rsaquo;</button>
+                    <Link href="/notifications" class="mt-3 inline-block text-xs font-medium text-primary hover:text-primary/80 hover:underline">View All Notifications &rsaquo;</Link>
                 </div>
             </div>
 
-            <!-- ── Shuttle Status Overview ───────────────────────────────────── -->
-            <div class="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+            <!-- Shuttle Status Overview -->
+            <div class="rounded-2xl border border-border/70 bg-card p-5 shadow-sm shadow-black/5 dark:shadow-black/20">
                 <div class="mb-4 flex items-center justify-between">
-                    <h2 class="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                        <Bus class="h-4 w-4 text-gray-400" /> Shuttle Status Overview
+                    <h2 class="flex items-center gap-2 text-sm font-semibold text-foreground">
+                        <Bus class="h-4 w-4 text-muted-foreground" /> Shuttle Status Overview
                     </h2>
-                    <button class="text-xs font-medium text-blue-500 hover:underline">View All &rsaquo;</button>
+                    <Link href="/feedback?tab=reports" class="text-xs font-medium text-primary hover:text-primary/80 hover:underline">View All &rsaquo;</Link>
                 </div>
 
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm">
                         <thead>
-                            <tr class="border-b border-gray-100 text-left text-xs font-medium text-gray-400">
+                            <tr class="border-b border-border/70 text-left text-xs font-medium text-muted-foreground">
                                 <th class="pb-2 pr-4">Shuttle ID</th>
                                 <th class="pb-2 pr-4">Driver</th>
                                 <th class="pb-2 pr-4">Route</th>
@@ -236,10 +336,10 @@ const initMiniMap = () => {
                             <tr
                                 v-for="s in shuttles"
                                 :key="s.shuttle_code"
-                                class="border-b border-gray-50 last:border-0"
+                                class="border-b border-border/50 last:border-0"
                             >
-                                <td class="py-3 pr-4 font-semibold text-gray-800">{{ s.shuttle_code }}</td>
-                                <td class="py-3 pr-4 text-gray-600">{{ s.driver }}</td>
+                                <td class="py-3 pr-4 font-semibold text-foreground">{{ s.shuttle_code }}</td>
+                                <td class="py-3 pr-4 text-muted-foreground">{{ s.driver }}</td>
                                 <td class="py-3 pr-4">
                                     <span
                                         class="rounded-full px-2.5 py-0.5 text-xs font-medium"
@@ -252,9 +352,9 @@ const initMiniMap = () => {
                                         :class="statusColor(s.status)"
                                     >{{ s.status.charAt(0).toUpperCase() + s.status.slice(1) }}</span>
                                 </td>
-                                <td class="py-3 pr-4 text-gray-400 text-xs">{{ s.last_seen }}</td>
+                                <td class="py-3 pr-4 text-xs text-muted-foreground">{{ s.last_seen }}</td>
                                 <td class="py-3">
-                                    <button class="text-gray-300 hover:text-gray-500">
+                                    <button class="text-muted-foreground/70 hover:text-foreground">
                                         <Eye class="h-4 w-4" />
                                     </button>
                                 </td>
@@ -264,28 +364,28 @@ const initMiniMap = () => {
                 </div>
             </div>
 
-            <!-- ── Charts row ────────────────────────────────────────────────── -->
+            <!-- Charts row -->
             <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
 
                 <!-- Pickups per Route (horizontal bar chart) -->
-                <div class="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-                    <h2 class="mb-4 flex items-center gap-2 text-sm font-semibold text-gray-700">
-                        <BarChart2 class="h-4 w-4 text-gray-400" /> Pickups per Route
+                <div class="rounded-2xl border border-border/70 bg-card p-5 shadow-sm shadow-black/5 dark:shadow-black/20">
+                    <h2 class="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground">
+                        <BarChart2 class="h-4 w-4 text-muted-foreground" /> Pickups per Route
                     </h2>
                     <div class="space-y-4">
                         <div v-for="r in pickupsPerRoute" :key="r.name">
                             <div class="mb-1 flex items-center justify-between text-xs">
-                                <span class="text-gray-500">{{ r.name }}</span>
+                                <span class="text-muted-foreground">{{ r.name }}</span>
                             </div>
-                            <div class="h-6 w-full overflow-hidden rounded-full bg-gray-100">
+                            <div class="h-6 w-full overflow-hidden rounded-full bg-muted">
                                 <div
-                                    class="h-full rounded-full bg-[#1a6b2f] transition-all duration-500"
+                                    class="h-full rounded-full bg-emerald-600 transition-all duration-500"
                                     :style="{ width: ((r.count / maxPickups) * 100).toFixed(1) + '%' }"
                                 ></div>
                             </div>
                         </div>
                         <!-- X-axis labels -->
-                        <div class="flex justify-between text-[10px] text-gray-400">
+                        <div class="flex justify-between text-[10px] text-muted-foreground">
                             <span>0</span>
                             <span>{{ Math.round(maxPickups * 0.25) }}</span>
                             <span>{{ Math.round(maxPickups * 0.5) }}</span>
@@ -296,13 +396,13 @@ const initMiniMap = () => {
                 </div>
 
                 <!-- Boarding Success Rate (donut) -->
-                <div class="flex flex-col items-center rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-                    <h2 class="mb-4 w-full text-left flex items-center gap-2 text-sm font-semibold text-gray-700">
-                        <CheckCircle2 class="h-4 w-4 text-gray-400" /> Boarding Success Rate
+                <div class="flex flex-col items-center rounded-2xl border border-border/70 bg-card p-5 shadow-sm shadow-black/5 dark:shadow-black/20">
+                    <h2 class="mb-4 flex w-full items-center gap-2 text-left text-sm font-semibold text-foreground">
+                        <CheckCircle2 class="h-4 w-4 text-muted-foreground" /> Boarding Success Rate
                     </h2>
                     <svg width="160" height="160" viewBox="0 0 160 160" class="my-2">
                         <!-- Background ring -->
-                        <circle cx="80" cy="80" r="60" fill="none" stroke="#f0f0f0" stroke-width="20"/>
+                        <circle cx="80" cy="80" r="60" fill="none" stroke="var(--muted)" stroke-width="20"/>
 
                         <!-- Success arc (green) -->
                         <circle
@@ -329,18 +429,18 @@ const initMiniMap = () => {
 
 
                         <!-- Center label -->
-                        <text x="80" y="76" text-anchor="middle" class="font-bold" font-size="22" fill="#111827" font-weight="700">{{ successPct }}%</text>
-                        <text x="80" y="96" text-anchor="middle" font-size="11" fill="#9ca3af">Success</text>
+                        <text x="80" y="76" text-anchor="middle" class="font-bold" font-size="22" fill="var(--foreground)" font-weight="700">{{ successPct }}%</text>
+                        <text x="80" y="96" text-anchor="middle" font-size="11" fill="var(--muted-foreground)">Success</text>
                     </svg>
 
                     <div class="mt-2 flex gap-6">
-                        <div class="flex items-center gap-1.5 text-xs text-gray-600">
+                        <div class="flex items-center gap-1.5 text-xs text-muted-foreground">
                             <span class="inline-block h-2.5 w-2.5 rounded-full bg-green-500"></span>
-                            Success — {{ successPct }}%
+                            Success - {{ successPct }}%
                         </div>
-                        <div class="flex items-center gap-1.5 text-xs text-gray-600">
+                        <div class="flex items-center gap-1.5 text-xs text-muted-foreground">
                             <span class="inline-block h-2.5 w-2.5 rounded-full bg-red-500"></span>
-                            Failed — {{ failedPct }}%
+                            Failed - {{ failedPct }}%
                         </div>
                     </div>
                 </div>
@@ -349,4 +449,5 @@ const initMiniMap = () => {
         </div>
     </AppLayout>
 </template>
+
 

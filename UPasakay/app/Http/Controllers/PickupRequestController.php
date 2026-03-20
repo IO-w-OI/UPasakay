@@ -27,7 +27,7 @@ class PickupRequestController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->whereHas('user', fn($u) => $u->where('email', 'like', "%$search%"))
-                  ->orWhereHas('user.passenger', fn($p) => $p->where('passenger_number', 'like', "%$search%"));
+                    ->orWhereHas('user.passenger', fn($p) => $p->where('passenger_number', 'like', "%$search%"));
             });
         }
 
@@ -55,6 +55,8 @@ class PickupRequestController extends Controller
                 'status' => $r->status,
                 'time' => Carbon::parse($r->created_at)->format('h:i A'),
                 'date' => Carbon::parse($r->created_at)->format('M j'),
+                'created_at' => $r->created_at ? Carbon::parse($r->created_at)->format('M j, Y h:i A') : null,
+                'completed_at' => $r->completed_at ? Carbon::parse($r->completed_at)->format('M j, Y h:i A') : null,
                 'eta' => '~4 minutes',
                 'latitude' => null,
                 'longitude' => null,
