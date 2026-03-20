@@ -33,6 +33,59 @@ UPasakay is a shuttle management system (mobile + web) that provides:
 
 ---
 
+> [!IMPORTANT]
+>
+> ## Recent README Update (2026-03-20)
+>
+> Use this quick setup checklist before running the project locally.
+>
+> ### 1) Running on Herd (Windows)
+>
+> - If your `php.ini` only contains:
+>   - `variables_order = "GPCS"`
+>   - `opcache.enable=1`
+>   - `opcache.enable_cli=1`
+> - This is expected for Herd/Herd Lite custom overrides.
+> - Do not manually add extensions there.
+> - Update Herd to latest, then verify PHP modules with:
+>   ```bash
+>   php -m
+>   ```
+>
+> ### 2) If PHP is missing modules on Windows (manual PHP 8.4 NTS)
+>
+> - Download PHP 8.4 NTS from: https://windows.php.net/download/
+> - Extract to a stable folder (example: `C:\php-8.4.16`).
+> - Add that folder to your system `Path`.
+> - Confirm:
+>   ```bash
+>   php -v
+>   php --ini
+>   ```
+>
+> ### 3) Frontend Commands
+>
+> - Development server (HMR):
+>   ```bash
+>   npm run dev
+>   ```
+> - Production build:
+>   ```bash
+>   npm run build
+>   ```
+>
+> ### 4) Updating Seeders
+>
+> - When changing demo/test data, update files under `database/seeders/`.
+> - Re-run seeders with either:
+>   ```bash
+>   php artisan db:seed
+>   ```
+>   or reset and reseed:
+>   ```bash
+>   php artisan migrate:fresh --seed
+>   ```
+
 # 📥 Repository Access
 
 Clone the repository:
