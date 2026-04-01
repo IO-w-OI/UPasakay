@@ -17,10 +17,13 @@ on:
 jobs:
   ci:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./UPasakay
 
     strategy:
       matrix:
-        php-version: ['8.3', '8.4']
+        php-version: ["8.3", "8.4"]
 
     services:
       postgres:
@@ -32,7 +35,7 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd="pg_isready"
+          --health-cmd="pg_isready -U upasakay_user -d upasakay_test"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
@@ -52,7 +55,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: "22"
 
       - name: Install Node Dependencies
         run: npm ci
@@ -69,7 +72,7 @@ jobs:
       - name: Configure Test Database
         run: |
           echo "DB_CONNECTION=pgsql" >> .env
-          echo "DB_HOST=127.0.0.1" >> .env
+          echo "DB_HOST=postgres" >> .env
           echo "DB_PORT=5432" >> .env
           echo "DB_DATABASE=upasakay_test" >> .env
           echo "DB_USERNAME=upasakay_user" >> .env
