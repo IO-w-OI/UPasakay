@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
+import L from 'leaflet';
 import { Search, Download, ChevronRight, MapPin, Eye, Check, X, Map } from 'lucide-vue-next';
 import { ref, nextTick, onUnmounted } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { type BreadcrumbItem } from '@/types';
 import { dashboard } from '@/routes';
-import L from 'leaflet';
+import { type BreadcrumbItem } from '@/types';
 import 'leaflet/dist/leaflet.css';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -236,9 +236,12 @@ const statCards = [
                         <template v-for="link in requests.links" :key="link.label">
                             <Link v-if="link.url" :href="link.url"
                                 class="rounded-lg px-2.5 py-1.5 text-xs font-medium"
-                                :class="link.active ? 'bg-[#8B0000] text-white' : 'border border-border/70 text-muted-foreground hover:bg-accent'"
-                                v-html="link.label" />
-                            <span v-else class="rounded-lg px-2.5 py-1.5 text-xs text-muted-foreground/50" v-html="link.label" />
+                                :class="link.active ? 'bg-[#8B0000] text-white' : 'border border-border/70 text-muted-foreground hover:bg-accent'">
+                                <span v-html="link.label" />
+                            </Link>
+                            <span v-else class="rounded-lg px-2.5 py-1.5 text-xs text-muted-foreground/50">
+                                <span v-html="link.label" />
+                            </span>
                         </template>
                     </div>
                 </div>

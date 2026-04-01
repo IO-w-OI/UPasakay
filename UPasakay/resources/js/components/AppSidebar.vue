@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { LayoutGrid, Map, Bus, Users, ClipboardList, Bell, MessageSquare, Settings } from 'lucide-vue-next';
+import { LayoutGrid, Map, Users, ClipboardList, Bell, MessageSquare, Settings } from 'lucide-vue-next';
 import NavMain from '@/components/NavMain.vue';
 import {
     Sidebar,
@@ -10,12 +10,11 @@ import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
-    SidebarTrigger,
 } from '@/components/ui/sidebar';
-import { type NavItem } from '@/types';
-import AppLogo from './AppLogo.vue';
 import { dashboard } from '@/routes';
 import { edit as editAppearance } from '@/routes/appearance';
+import { type NavItem } from '@/types';
+import AppLogo from './AppLogo.vue';
 
 const mainNavItems: NavItem[] = [
     { title: 'Dashboard', href: dashboard(), icon: LayoutGrid },

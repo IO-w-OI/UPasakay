@@ -1,14 +1,14 @@
 ﻿<script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
-import { Map as MapIcon, Bus, MapPin, RefreshCw, ClipboardList, ArrowRight } from 'lucide-vue-next';
-import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
-import AppLayout from '@/layouts/AppLayout.vue';
-import { type BreadcrumbItem } from '@/types';
-import { dashboard } from '@/routes';
-import { useAppearance } from '@/composables/useAppearance';
 import L from 'leaflet';
+import { Map as MapIcon, Bus, MapPin, RefreshCw, ArrowRight } from 'lucide-vue-next';
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
+import { useAppearance } from '@/composables/useAppearance';
+import { liveMapRoutes, type RouteConfig } from '@/data/routeData';
+import AppLayout from '@/layouts/AppLayout.vue';
+import { dashboard } from '@/routes';
+import { type BreadcrumbItem } from '@/types';
 import 'leaflet/dist/leaflet.css';
-import { liveMapRoutes, type Landmark, type RouteConfig } from '@/data/routeData';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Home', href: dashboard().url },
@@ -67,14 +67,8 @@ const { resolvedAppearance } = useAppearance();
 const statusDot = (status: string) =>
     ({ active: 'bg-green-500', idle: 'bg-orange-400', offline: 'bg-gray-400' }[status] ?? 'bg-gray-400');
 
-const statusBadge = (status: string) =>
-    ({ active: 'bg-green-500/15 text-green-600 dark:text-green-400', idle: 'bg-orange-500/15 text-orange-600 dark:text-orange-400', offline: 'bg-muted text-muted-foreground' }[status] ?? 'bg-muted text-muted-foreground');
-
 const routeBadge = (route: string) =>
     ({ South: 'bg-green-500/15 text-green-600 dark:text-green-400', North: 'bg-blue-500/15 text-blue-600 dark:text-blue-400', 'Cebu City': 'bg-orange-500/15 text-orange-600 dark:text-orange-400' }[route] ?? 'bg-muted text-muted-foreground');
-
-const routeDot = (route: string) =>
-    ({ South: 'bg-green-500', North: 'bg-blue-500', 'Cebu City': 'bg-orange-500' }[route] ?? 'bg-gray-400');
 
 const activeCount = computed(() => props.shuttles.filter(s => s.status === 'active').length);
 

@@ -1,18 +1,18 @@
 ﻿<script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
+import L from 'leaflet';
 import {
     Bus, Users, ClipboardList, Star, Eye,
     Map, BarChart2, CheckCircle2,
-    MapPin, CheckCheck, Clock, Bell, UserCircle2, XCircle, Pin,
+    CheckCheck, Clock, Bell, UserCircle2, XCircle, Pin,
 } from 'lucide-vue-next';
 import { computed, onMounted, onUnmounted, ref, nextTick, watch } from 'vue';
-import AppLayout from '@/layouts/AppLayout.vue';
 import { useAppearance } from '@/composables/useAppearance';
-import { type BreadcrumbItem } from '@/types';
+import { dashboardRoutes, type RouteConfig } from '@/data/routeData';
+import AppLayout from '@/layouts/AppLayout.vue';
 import { dashboard } from '@/routes';
-import L from 'leaflet';
+import { type BreadcrumbItem } from '@/types';
 import 'leaflet/dist/leaflet.css';
-import { dashboardRoutes, type Landmark, type RouteConfig } from '@/data/routeData';
 
 // Props from DashboardController
 const props = defineProps<{
@@ -61,21 +61,12 @@ onUnmounted(() => {
     miniMap = null;
 });
 
-const currentDatetime = computed(() => {
-    const d = now.value;
-    return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })
-        + ' '
-        + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-});
-
 // Donut chart (SVG) 
 const RADIUS = 60;
 const CIRC   = 2 * Math.PI * RADIUS; // ≈ 377
 
 const successDash = computed(() => (props.successPct / 100) * CIRC);
 const failedDash  = computed(() => (props.failedPct  / 100) * CIRC);
-// Start failed arc after the success arc
-const failedOffset = computed(() => CIRC - successDash.value);
 
 // Helpers
 const statusColor = (status: string) =>

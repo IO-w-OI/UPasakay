@@ -42,7 +42,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v5
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -53,7 +53,7 @@ jobs:
           extensions: pdo_pgsql, pgsql
 
       - name: Setup Node
-        uses: actions/setup-node@v4.4.0
+        uses: actions/setup-node@v5
         with:
           node-version: "22"
 
@@ -72,11 +72,17 @@ jobs:
       - name: Configure Test Database
         run: |
           echo "DB_CONNECTION=pgsql" >> .env
-          echo "DB_HOST=postgres" >> .env
+          echo "DB_HOST=127.0.0.1" >> .env
           echo "DB_PORT=5432" >> .env
           echo "DB_DATABASE=upasakay_test" >> .env
           echo "DB_USERNAME=upasakay_user" >> .env
           echo "DB_PASSWORD=password" >> .env
+
+      - name: Wait for PostgreSQL
+        run: |
+          until pg_isready -h 127.0.0.1 -p 5432 -U upasakay_user -d upasakay_test; do
+            sleep 1
+          done
 
       - name: Run Migrations
         run: php artisan migrate --force

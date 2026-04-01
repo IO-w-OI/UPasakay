@@ -24,7 +24,7 @@ jobs:
       run:
         working-directory: ./UPasakay
     steps:
-      - uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@v5
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2

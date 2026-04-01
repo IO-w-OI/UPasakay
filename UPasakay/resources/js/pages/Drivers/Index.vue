@@ -7,8 +7,8 @@ import {
 } from 'lucide-vue-next';
 import { ref, computed, onBeforeUnmount } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { type BreadcrumbItem } from '@/types';
 import { dashboard } from '@/routes';
+import { type BreadcrumbItem } from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Home', href: dashboard().url },
@@ -454,9 +454,12 @@ const lastActiveClass = (d: DriverItem) => d.is_online ? 'text-green-600 dark:te
                             <template v-for="link in drivers.links" :key="link.label">
                                 <Link v-if="link.url" :href="link.url"
                                     class="rounded-lg px-2.5 py-1.5 text-xs font-medium"
-                                    :class="link.active ? 'bg-[#8B0000] text-white' : 'border border-border/70 text-muted-foreground hover:bg-accent'"
-                                    v-html="link.label" />
-                                <span v-else class="rounded-lg px-2.5 py-1.5 text-xs text-muted-foreground/50" v-html="link.label" />
+                                    :class="link.active ? 'bg-[#8B0000] text-white' : 'border border-border/70 text-muted-foreground hover:bg-accent'">
+                                    <span v-html="link.label" />
+                                </Link>
+                                <span v-else class="rounded-lg px-2.5 py-1.5 text-xs text-muted-foreground/50">
+                                    <span v-html="link.label" />
+                                </span>
                             </template>
                         </div>
                     </div>

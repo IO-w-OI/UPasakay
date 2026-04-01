@@ -7,8 +7,8 @@ import {
 } from 'lucide-vue-next';
 import { ref, computed } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { type BreadcrumbItem } from '@/types';
 import { dashboard } from '@/routes';
+import { type BreadcrumbItem } from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Home',          href: dashboard().url },
