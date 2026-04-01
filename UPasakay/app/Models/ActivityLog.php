@@ -3,6 +3,9 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
+use Throwable;
 
 class ActivityLog extends Model
 {
@@ -38,13 +41,29 @@ class ActivityLog extends Model
         ?Model $actor = null,
         array $metadata = [],
     ): static {
-        return static::create([
+        $payload = [
             'type' => $type,
             'description' => $description,
             'actor_type' => $actor ? get_class($actor) : null,
             'actor_id' => $actor?->getKey(),
             'metadata' => $metadata ?: null,
-        ]);
+        ];
+
+        try {
+            if (!Schema::hasTable((new static)->getTable())) {
+                return new static($payload);
+            }
+
+            return static::create($payload);
+        } catch (Throwable $exception) {
+            Log::warning('Failed to persist activity log entry.', [
+                'type' => $type,
+                'description' => $description,
+                'error' => $exception->getMessage(),
+            ]);
+
+            return new static($payload);
+        }
     }
 
     /**
