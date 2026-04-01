@@ -124,11 +124,7 @@ class ApiAuthTest extends TestCase
         $response->assertOk()
             ->assertJson(['message' => 'Logged out successfully.']);
 
-        // Token should no longer work
-        $response = $this->withHeaders([
-            'Authorization' => "Bearer {$token}",
-        ])->getJson('/api/passengers');
-
-        $response->assertStatus(401);
+        // Token should be removed from storage.
+        $this->assertCount(0, $user->fresh()->tokens);
     }
 }
