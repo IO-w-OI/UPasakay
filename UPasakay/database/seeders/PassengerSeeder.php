@@ -27,6 +27,7 @@ class PassengerSeeder extends Seeder
                 'passenger_number' => '2021-12345',
                 'department' => 'College of Science',
                 'passenger_type' => 'student',
+                'passenger_status' => 'active',
                 'updated_at' => now(),
             ]
         );
@@ -37,6 +38,7 @@ class PassengerSeeder extends Seeder
                 'passenger_number' => 'STAFF-001',
                 'department' => 'Office of the Registrar',
                 'passenger_type' => 'staff',
+                'passenger_status' => 'active',
                 'updated_at' => now(),
             ]
         );

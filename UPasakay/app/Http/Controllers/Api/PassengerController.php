@@ -43,6 +43,7 @@ class PassengerController extends Controller
             'passenger_number' => $validated['passenger_number'],
             'department' => $validated['department'] ?? null,
             'passenger_type' => $validated['passenger_type'] ?? 'student',
+            'passenger_status' => 'pending',
         ]);
 
         $passenger->load('user');
