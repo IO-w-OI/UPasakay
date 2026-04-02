@@ -54,8 +54,19 @@ const viewDetails = (log: any) => {
 };
 
 const formatDateDisplay = (dateStr: string | Date): string => {
-    const date = typeof dateStr === 'string' ? new Date(dateStr) : dateStr;
-    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    if (!dateStr) return '';
+    if (typeof dateStr === 'string') {
+        const trimmed = dateStr.trim();
+        if (trimmed === 'Today' || trimmed === 'Yesterday') return trimmed;
+        const parsed = Date.parse(trimmed);
+        if (!isNaN(parsed)) {
+            const d = new Date(parsed);
+            return d.toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        }
+        return trimmed;
+    } else {
+        return dateStr.toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
 };
 
 // ── Schedule Modal ─────────────────────────────────────────────────────────
@@ -604,7 +615,7 @@ const audienceOptions = [
                         </div>
                         <div>
                             <span class="text-muted-foreground block mb-1 text-xs font-medium">Date</span>
-                            <span class="font-medium">{{ selectedLog.date }}</span>
+                            <span class="font-medium">{{ formatDateDisplay((selectedLog.date ?? '') + ' ' + (selectedLog.time ?? '')) }}</span>
                         </div>
                         <div>
                             <span class="text-muted-foreground block mb-1 text-xs font-medium">Time</span>
@@ -697,7 +708,7 @@ const audienceOptions = [
             <div class="fixed inset-0 pointer-events-none">
                 <Transition enter-active-class="transition ease-out duration-300" enter-from-class="translate-x-full" enter-to-class="translate-x-0"
                             leave-active-class="transition ease-in duration-200" leave-from-class="translate-x-0" leave-to-class="translate-x-full">
-                    <div class="pointer-events-auto absolute inset-0 flex justify-end">
+                    <div v-if="isScheduleModalOpen" class="pointer-events-auto absolute inset-0 flex justify-end">
                         <div class="relative ml-auto w-full max-w-md rounded-l-2xl bg-card shadow-2xl overflow-y-auto z-[110]">
                     <div class="sticky top-0 bg-card border-b border-border/50 p-6 flex items-center justify-between">
                         <h2 class="text-xl font-semibold text-foreground">{{ isEditingSchedule ? 'Edit Schedule' : 'Create Schedule' }}</h2>

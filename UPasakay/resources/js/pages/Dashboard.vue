@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
 import L from 'leaflet';
-import { onMounted, onUnmounted, ref } from 'vue';
 import {
     BarChart2,
     Bell,
@@ -19,12 +18,13 @@ import {
     XCircle,
     CheckCheck,
 } from 'lucide-vue-next';
+import { onMounted, onUnmounted, ref } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { dashboard } from '@/routes';
 import { type BreadcrumbItem } from '@/types';
 import 'leaflet/dist/leaflet.css';
 
-const props = defineProps<{
+defineProps<{
     stats: {
         activeShuttles: number;
         driversOnline: number;
