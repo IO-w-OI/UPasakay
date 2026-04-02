@@ -2,7 +2,7 @@
 import { Head, Link, router } from '@inertiajs/vue3';
 import L from 'leaflet';
 import { Search, Download, ChevronRight, MapPin, Eye, Check, X, Map } from 'lucide-vue-next';
-import { ref, nextTick, onUnmounted } from 'vue';
+import { ref, nextTick, onMounted, onUnmounted } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { dashboard } from '@/routes';
 import { type BreadcrumbItem } from '@/types';
@@ -25,6 +25,7 @@ const props = defineProps<{
         links: Array<{ url: string | null; label: string; active: boolean }>;
     };
     routes: string[];
+    availableDrivers: Array<{ id: number; name: string }>;
     filters: { search?: string; route?: string; status?: string; date?: string };
     stats: { total: number; pending: number; completed: number; cancelled: number };
 }>();
@@ -34,6 +35,24 @@ const search       = ref(props.filters.search ?? '');
 const routeFilter  = ref(props.filters.route  ?? 'All');
 const statusFilter = ref(props.filters.status ?? 'All');
 const dateFilter   = ref(props.filters.date   ?? 'today');
+const liveUpdatesActive = ref(true);
+const lastUpdated = ref(new Date());
+let refreshTimer: ReturnType<typeof setInterval> | null = null;
+
+onMounted(() => {
+    refreshTimer = setInterval(() => {
+        if (!liveUpdatesActive.value) return;
+
+        router.reload({
+            only: ['requests', 'stats'],
+            preserveState: true,
+            preserveScroll: true,
+            onFinish: () => {
+                lastUpdated.value = new Date();
+            },
+        });
+    }, 25000);
+});
 
 const apply = () => {
     router.get('/pickup-requests', {
@@ -72,14 +91,44 @@ const initRequestMap = (id: number, lat: number, lng: number) => {
 onUnmounted(() => {
     requestMaps.forEach(m => m.remove());
     requestMaps.clear();
+
+    if (refreshTimer) {
+        clearInterval(refreshTimer);
+        refreshTimer = null;
+    }
 });
+
+const showAssignModal = ref(false);
+const assigningRequestId = ref<number | null>(null);
+const assignDriverId = ref<number | ''>('');
+const openAssignModal = (requestId: number) => {
+    assigningRequestId.value = requestId;
+    assignDriverId.value = '';
+    showAssignModal.value = true;
+};
+const submitAssign = () => {
+    if (!assigningRequestId.value || !assignDriverId.value) return;
+
+    router.patch(
+        `/pickup-requests/${assigningRequestId.value}/assign`,
+        { driver_id: Number(assignDriverId.value) },
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                showAssignModal.value = false;
+                assigningRequestId.value = null;
+                assignDriverId.value = '';
+            },
+        },
+    );
+};
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 const statusColor  = (s: string) =>
-    ({ pending: 'bg-yellow-500/15 text-yellow-600 dark:text-yellow-400', completed: 'bg-green-500/15 text-green-600 dark:text-green-400', cancelled: 'bg-red-500/15 text-red-600 dark:text-red-400' }[s] ?? 'bg-muted text-muted-foreground');
+    ({ pending: 'bg-yellow-500/15 text-yellow-700 dark:text-yellow-300', assigned: 'bg-blue-500/15 text-blue-700 dark:text-blue-300', completed: 'bg-green-500/15 text-green-600 dark:text-green-400', cancelled: 'bg-red-500/15 text-red-600 dark:text-red-400' }[s] ?? 'bg-muted text-muted-foreground');
 
 const statusIcon = (s: string) =>
-    ({ pending: Map, completed: Check, cancelled: X }[s] ?? Map);
+    ({ pending: Map, assigned: Check, completed: Check, cancelled: X }[s] ?? Map);
 
 const routeBadge = (r: string) =>
     ({ South: 'bg-green-500/15 text-green-600 dark:text-green-400', North: 'bg-blue-500/15 text-blue-600 dark:text-blue-400', 'Cebu City': 'bg-orange-500/15 text-orange-600 dark:text-orange-400' }[r] ?? 'bg-muted text-muted-foreground');
@@ -98,6 +147,14 @@ const statCards = [
         <div class="space-y-5 p-6">
 
             <h1 class="text-2xl font-bold text-foreground">Pickup Requests</h1>
+
+            <div class="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-300">
+                <span class="relative flex h-2.5 w-2.5">
+                    <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+                    <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
+                </span>
+                Live updates active • {{ lastUpdated.toLocaleTimeString() }}
+            </div>
 
             <!-- Stat cards -->
             <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -124,6 +181,7 @@ const statCards = [
                     class="rounded-lg border border-border/70 bg-card px-3 py-2 text-sm text-foreground focus:outline-none">
                     <option value="All">Status: All</option>
                     <option value="pending">Pending</option>
+                    <option value="assigned">Assigned</option>
                     <option value="completed">Completed</option>
                     <option value="cancelled">Cancelled</option>
                 </select>
@@ -158,7 +216,10 @@ const statCards = [
                         <tbody>
                             <template v-for="r in requests.data" :key="r.id">
                                 <tr class="border-b border-border/30 hover:bg-accent cursor-pointer"
-                                    :class="expanded === r.id ? 'bg-accent' : ''"
+                                    :class="[
+                                        r.status === 'pending' ? 'bg-amber-500/5 hover:bg-amber-500/10' : '',
+                                        expanded === r.id ? 'bg-accent' : '',
+                                    ]"
                                     @click="toggleExpand(r.id)">
                                     <td class="px-4 py-3 text-muted-foreground">
                                         <ChevronRight class="h-4 w-4 transition"
@@ -182,6 +243,13 @@ const statCards = [
                                     <td class="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">{{ r.completed_at ?? '—' }}</td>
                                     <td class="px-4 py-3">
                                         <div class="flex items-center gap-1" @click.stop>
+                                            <button
+                                                v-if="r.status === 'pending' || r.status === 'assigned'"
+                                                class="rounded-lg bg-[#8B0000] px-2.5 py-1 text-xs font-semibold text-white hover:bg-[#700000]"
+                                                @click="openAssignModal(r.id)"
+                                            >
+                                                Assign Shuttle
+                                            </button>
                                             <button class="rounded-lg border border-border/70 px-2.5 py-1 text-xs font-medium text-muted-foreground hover:bg-accent">
                                                 <Eye class="inline h-3 w-3 mr-0.5" /> View
                                             </button>
@@ -223,7 +291,12 @@ const statCards = [
                             </template>
 
                             <tr v-if="requests.data.length === 0">
-                                <td colspan="10" class="py-10 text-center text-sm text-muted-foreground">No requests found.</td>
+                                <td colspan="10" class="py-14 text-center text-sm text-muted-foreground">
+                                    <div class="mx-auto max-w-sm rounded-2xl border border-dashed border-border/70 bg-muted/40 p-6">
+                                        <p class="text-base font-medium text-foreground">All caught up!</p>
+                                        <p class="mt-2 text-sm text-muted-foreground">No pickup requests match your current filters.</p>
+                                    </div>
+                                </td>
                             </tr>
                         </tbody>
                     </table>
@@ -248,4 +321,30 @@ const statCards = [
             </div>
         </div>
     </AppLayout>
+
+    <Teleport to="body">
+        <div v-if="showAssignModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" @click.self="showAssignModal = false">
+            <div class="w-full max-w-md rounded-2xl border border-border/70 bg-card p-5 shadow-xl">
+                <h2 class="text-base font-semibold text-foreground">Assign Shuttle to Request</h2>
+                <p class="mt-1 text-sm text-muted-foreground">Pick an available driver for this pickup request.</p>
+
+                <div class="mt-4 space-y-2">
+                    <label class="text-sm font-medium text-foreground">Driver</label>
+                    <select v-model="assignDriverId" class="w-full rounded-lg border border-border/70 bg-card px-3 py-2 text-sm text-foreground focus:outline-none">
+                        <option value="">Select a driver...</option>
+                        <option v-for="driver in availableDrivers" :key="driver.id" :value="driver.id">{{ driver.name }}</option>
+                    </select>
+                </div>
+
+                <div class="mt-5 flex justify-end gap-2">
+                    <button type="button" class="rounded-lg border border-border/70 px-3 py-2 text-sm text-muted-foreground hover:bg-accent" @click="showAssignModal = false">
+                        Cancel
+                    </button>
+                    <button type="button" class="rounded-lg bg-[#8B0000] px-3 py-2 text-sm font-semibold text-white hover:bg-[#700000] disabled:opacity-50" :disabled="!assignDriverId" @click="submitAssign">
+                        Assign Now
+                    </button>
+                </div>
+            </div>
+        </div>
+    </Teleport>
 </template>
