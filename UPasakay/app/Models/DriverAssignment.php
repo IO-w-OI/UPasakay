@@ -8,7 +8,7 @@ class DriverAssignment extends Model
 
     public function driver()
     {
-        return $this->belongsTo(Driver::class, 'driver_id', 'user_id');
+        return $this->belongsTo(Driver::class, 'driver_id');
     }
     public function pickupRequest()
     {

@@ -12,6 +12,6 @@ class Driver extends Model
     }
     public function assignments()
     {
-        return $this->hasMany(DriverAssignment::class, 'driver_id', 'user_id');
+        return $this->hasMany(DriverAssignment::class, 'driver_id');
     }
 }
