@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\DriverController;
 use App\Http\Controllers\Api\PickupRequestController;
 use App\Http\Controllers\Api\DriverAssignmentController;
 use App\Http\Controllers\Api\ShuttleLocationController;
+use App\Http\Controllers\Api\NotificationController;
 
 Route::apiResource('routes', RouteController::class);
 Route::apiResource('stops', StopController::class);
@@ -18,3 +19,11 @@ Route::apiResource('drivers', DriverController::class);
 Route::apiResource('pickup-requests', PickupRequestController::class);
 Route::apiResource('driver-assignments', DriverAssignmentController::class);
 Route::apiResource('shuttle-locations', ShuttleLocationController::class);
+
+// Notification routes - specific routes must come before apiResource
+Route::get('notifications/stats', [NotificationController::class, 'stats'])->name('notifications.stats');
+Route::get('notifications/scheduled', [NotificationController::class, 'scheduled'])->name('notifications.scheduled');
+Route::post('notifications/process-scheduled', [NotificationController::class, 'processScheduledNotifications'])->name('notifications.process-scheduled');
+Route::apiResource('notifications', NotificationController::class);
+Route::post('notifications/{notification}/send', [NotificationController::class, 'send'])->name('notifications.send');
+Route::post('notifications/{notification}/schedule', [NotificationController::class, 'schedule'])->name('notifications.schedule');

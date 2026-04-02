@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Notification;
 use App\Models\Route;
 use Carbon\Carbon;
 use Inertia\Inertia;
@@ -12,19 +13,40 @@ class NotificationController extends Controller
     {
         $routes = Route::where('is_active', true)->pluck('name');
 
-        // Mock notification log — replace with a real model when available
-        $notificationLog = collect([
-            ['time' => '08:00 AM', 'type' => 'schedule', 'label' => 'Schedule', 'target' => 'All', 'status' => 'sent', 'date' => 'Today'],
-            ['time' => '07:55 AM', 'type' => 'delay', 'label' => 'Delay', 'target' => 'South', 'status' => 'sent', 'date' => 'Today'],
-            ['time' => '08:00 AM', 'type' => 'schedule', 'label' => 'Schedule', 'target' => 'All', 'status' => 'sent', 'date' => 'Yesterday'],
-            ['time' => '03:00 PM', 'type' => 'change', 'label' => 'Change', 'target' => 'North', 'status' => 'sent', 'date' => 'Yesterday'],
-            ['time' => '08:00 AM', 'type' => 'schedule', 'label' => 'Schedule', 'target' => 'All', 'status' => 'sent', 'date' => 'Mar 3'],
-        ]);
+        // Get real notification log from database, ordered newest first
+        $notificationLog = Notification::with('route')
+            ->orderBy('created_at', 'desc')
+            ->limit(50)
+            ->get()
+            ->map(function ($notification) {
+                return [
+                    'id' => $notification->id,
+                    'time' => $notification->created_at->format('h:i A'),
+                    'type' => $notification->type,
+                    'label' => ucfirst($notification->type),
+                    'target' => $notification->target,
+                    'status' => $notification->status,
+                    'date' => $notification->created_at->format('M d'),
+                    'title' => $notification->title,
+                    'message' => $notification->message,
+                ];
+            });
 
-        $scheduledNotifications = collect([
-            ['id' => 1, 'title' => 'Daily Schedule', 'schedule' => 'Every day 6:00 AM', 'target' => 'All', 'auto' => true, 'active' => true],
-            ['id' => 2, 'title' => 'End of Service', 'schedule' => 'Every day 8:00 PM', 'target' => 'All', 'auto' => true, 'active' => true],
-        ]);
+        $scheduledNotifications = Notification::scheduled()
+            ->orderBy('scheduled_at', 'asc')
+            ->get()
+            ->map(function ($notification) {
+                return [
+                    'id' => $notification->id,
+                    'title' => $notification->title,
+                    'schedule' => $notification->scheduled_at->format('M d, Y h:i A'),
+                    'target' => $notification->target,
+                    'auto' => false,
+                    'active' => true,
+                    'type' => $notification->type,
+                    'status' => $notification->status,
+                ];
+            });
 
         return Inertia::render('Notifications/Index', [
             'routes' => $routes,
