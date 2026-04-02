@@ -36,10 +36,107 @@ const form = ref({
     targetRoute: 'all',
     audience: 'all' as 'all' | 'passengers' | 'drivers',
     message: '',
+    delivery_type: 'now' as 'now' | 'scheduled',
+    schedule_date: '',
+    schedule_time: '',
 });
 const charCount = computed(() => form.value.message.length);
-const charLimitClass = computed(() => charCount.value > 140 ? 'text-red-500' : 'text-muted-foreground');
+const charLimitClass = computed(() => charCount.value > 160 ? 'text-red-500' : 'text-muted-foreground');
 const canSend = computed(() => form.value.title.trim() !== '' && form.value.message.trim() !== '');
+
+// ── View Details Modal ────────────────────────────────────────────────────
+const isViewModalOpen = ref(false);
+const selectedLog = ref<null | any>(null);
+
+const viewDetails = (log: any) => {
+    selectedLog.value = log;
+    isViewModalOpen.value = true;
+};
+
+const formatDateDisplay = (dateStr: string | Date): string => {
+    const date = typeof dateStr === 'string' ? new Date(dateStr) : dateStr;
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+};
+
+// ── Schedule Modal ─────────────────────────────────────────────────────────
+const isScheduleModalOpen = ref(false);
+const isEditingSchedule = ref(false);
+const scheduleForm = ref({
+    name: '',
+    frequency: 'daily' as 'daily' | 'weekdays' | 'weekends' | 'custom',
+    time: '08:00',
+    title: '',
+    type: 'Shuttle Availability',
+    message: '',
+    targetRoute: 'all',
+    audience: 'all' as 'all' | 'passengers' | 'drivers',
+    active: true,
+    days: [] as number[], // for custom days (0-6)
+});
+const selectedSchedule = ref<null | { id: number; title: string; schedule: string; target: string; auto: boolean; active: boolean }>(null);
+
+const toggleDay = (dayIndex: number) => {
+    if (scheduleForm.value.days.includes(dayIndex)) {
+        scheduleForm.value.days = scheduleForm.value.days.filter(d => d !== dayIndex);
+    } else {
+        scheduleForm.value.days.push(dayIndex);
+    }
+};
+
+const openScheduleModal = (schedule?: typeof selectedSchedule.value) => {
+    if (schedule) {
+        isEditingSchedule.value = true;
+        selectedSchedule.value = schedule;
+        scheduleForm.value = {
+            name: schedule.title,
+            frequency: 'daily',
+            time: '08:00',
+            title: '',
+            type: 'Shuttle Availability',
+            message: '',
+            targetRoute: schedule.target === 'All' ? 'all' : schedule.target,
+            audience: 'all',
+            active: schedule.active,
+            days: [],
+        };
+    } else {
+        isEditingSchedule.value = false;
+        selectedSchedule.value = null;
+        scheduleForm.value = {
+            name: '',
+            frequency: 'daily',
+            time: '08:00',
+            title: '',
+            type: 'Shuttle Availability',
+            message: '',
+            targetRoute: 'all',
+            audience: 'all',
+            active: true,
+            days: [],
+        };
+    }
+    isScheduleModalOpen.value = true;
+};
+
+const closeScheduleModal = () => {
+    isScheduleModalOpen.value = false;
+    scheduleForm.value = {
+        name: '',
+        frequency: 'daily',
+        time: '08:00',
+        title: '',
+        type: 'Shuttle Availability',
+        message: '',
+        targetRoute: 'all',
+        audience: 'all',
+        active: true,
+        days: [],
+    };
+};
+
+// ── Delete Confirmation ────────────────────────────────────────────────────
+const showDeleteConfirm = ref(false);
+const deletingItemIndex = ref<number | null>(null);
 
 const applyTemplate = (t: typeof templates[0]) => {
     form.value.type = t.type;
@@ -59,26 +156,67 @@ const showSuccess = ref(false);
 const showConfirmSend = ref(false);
 
 const openSendConfirm = () => { if (canSend.value) showConfirmSend.value = true; };
+
 const send = () => {
     showConfirmSend.value = false;
     isSending.value = true;
     setTimeout(() => {
         isSending.value = false;
         showSuccess.value = true;
-        form.value = { title: '', type: 'Shuttle Availability', targetRoute: 'all', audience: 'all', message: '' };
+        form.value = { 
+            title: '', 
+            type: 'Shuttle Availability', 
+            targetRoute: 'all', 
+            audience: 'all', 
+            message: '',
+            delivery_type: 'now',
+            schedule_date: '',
+            schedule_time: '',
+        };
         setTimeout(() => { showSuccess.value = false; }, 3000);
     }, 1200);
+};
+
+const resendNotification = (log: any) => {
+    form.value.title = log.label;
+    form.value.message = '';
+    form.value.type = log.type;
+    form.value.targetRoute = log.target === 'All Routes' ? 'all' : log.target;
+    form.value.delivery_type = 'now';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
+const confirmDelete = (index: number) => {
+    deletingItemIndex.value = index;
+    showDeleteConfirm.value = true;
+};
+
+const deleteNotification = () => {
+    if (deletingItemIndex.value !== null) {
+        const notificationToDelete = filteredLog.value[deletingItemIndex.value];
+        if (notificationToDelete) {
+            // In production, send API request: router.delete(`/notifications/${notificationToDelete.id}`)
+            console.log('Deleting notification:', notificationToDelete);
+        }
+    }
+    showDeleteConfirm.value = false;
+    deletingItemIndex.value = null;
 };
 
 // ── Log ────────────────────────────────────────────────────────────────────
 const logSearch = ref('');
 const typeFilter = ref('All');
+const statusFilter = ref('All');
+
 const filteredLog = computed(() =>
-    props.notificationLog.filter(n =>
-        (typeFilter.value === 'All' || n.type === typeFilter.value) &&
-        (!logSearch.value || n.label.toLowerCase().includes(logSearch.value.toLowerCase()) ||
-            n.target.toLowerCase().includes(logSearch.value.toLowerCase()))
-    )
+    props.notificationLog.filter(n => {
+        const typeMatch = typeFilter.value === 'All' || n.type === typeFilter.value;
+        const statusMatch = statusFilter.value === 'All' || n.status === statusFilter.value;
+        const searchMatch = !logSearch.value || 
+            n.label.toLowerCase().includes(logSearch.value.toLowerCase()) ||
+            n.target.toLowerCase().includes(logSearch.value.toLowerCase());
+        return typeMatch && statusMatch && searchMatch;
+    })
 );
 
 const typeIconComponent = (t: string) =>
@@ -229,27 +367,77 @@ const audienceOptions = [
                         </div>
                     </div>
 
+                    <!-- Delivery Option -->
+                    <div class="space-y-3">
+                        <label class="block text-sm font-medium text-foreground">Delivery *</label>
+                        <div class="flex gap-4">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="radio" v-model="form.delivery_type" value="now" class="text-[#8B0000] focus:ring-[#8B0000]">
+                                <span class="text-sm">Send Now</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="radio" v-model="form.delivery_type" value="scheduled" class="text-[#8B0000] focus:ring-[#8B0000]">
+                                <span class="text-sm">Schedule for Later</span>
+                            </label>
+                        </div>
+
+                        <div v-if="form.delivery_type === 'scheduled'" class="flex gap-3 mt-3">
+                            <div class="flex-1">
+                                <label class="mb-1 block text-xs font-medium text-muted-foreground">Date</label>
+                                <input type="date" v-model="form.schedule_date" class="w-full rounded-lg border border-border/70 bg-card px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-[#8B0000]">
+                            </div>
+                            <div class="flex-1">
+                                <label class="mb-1 block text-xs font-medium text-muted-foreground">Time</label>
+                                <input type="time" v-model="form.schedule_time" class="w-full rounded-lg border border-border/70 bg-card px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-[#8B0000]">
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Mobile Preview -->
                     <div>
                         <label class="mb-2 block text-xs font-medium uppercase tracking-wide text-muted-foreground">Mobile Preview</label>
-                        <div class="mx-auto w-72 rounded-2xl border border-border/70 bg-muted/30 p-3 shadow-inner">
-                            <div class="rounded-xl bg-card border border-border/50 p-3 shadow-sm">
-                                <div class="flex items-center gap-2 mb-1.5">
-                                    <div class="flex h-6 w-6 items-center justify-center rounded-md bg-[#8B0000]">
-                                        <Bell class="h-3 w-3 text-white" />
+                        <div class="mx-auto w-80 space-y-3">
+                            <!-- iOS-style notification -->
+                            <div class="rounded-2xl border border-border/70 bg-gradient-to-b from-slate-950 to-slate-900 dark:from-slate-900 dark:to-slate-950 p-3 shadow-xl">
+                                <div class="rounded-xl bg-white dark:bg-slate-800 p-3 shadow-lg">
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <div class="flex h-8 w-8 items-center justify-center rounded-md bg-[#8B0000] flex-shrink-0">
+                                            <Bell class="h-4 w-4 text-white" />
+                                        </div>
+                                        <div class="flex-1 min-w-0">
+                                            <p class="text-[11px] font-semibold text-slate-900 dark:text-white">UPasakay</p>
+                                            <p class="text-[10px] text-slate-500 dark:text-slate-400">just now</p>
+                                        </div>
                                     </div>
-                                    <span class="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">UPasakay</span>
-                                    <span class="ml-auto text-[10px] text-muted-foreground">now</span>
+                                    <div class="space-y-1">
+                                        <p class="text-sm font-semibold text-slate-900 dark:text-white leading-snug">{{ preview.title || 'Your notification title' }}</p>
+                                        <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed line-clamp-2">{{ preview.body || 'Your notification preview will appear here.' }}</p>
+                                    </div>
                                 </div>
-                                <p class="text-xs font-semibold text-foreground leading-snug">{{ preview.title }}</p>
-                                <p class="mt-0.5 text-[11px] text-muted-foreground leading-relaxed line-clamp-3">{{ preview.body }}</p>
+                            </div>
+                            
+                            <!-- Android-style notification -->
+                            <div class="rounded-lg border border-border/70 bg-white dark:bg-slate-900 p-4 shadow-lg">
+                                <div class="flex gap-3">
+                                    <div class="flex h-10 w-10 items-center justify-center rounded bg-[#8B0000] flex-shrink-0">
+                                        <Bell class="h-5 w-5 text-white" />
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center gap-1 mb-0.5">
+                                            <p class="text-sm font-semibold text-foreground">UPasakay</p>
+                                            <p class="text-xs text-muted-foreground">now</p>
+                                        </div>
+                                        <p class="text-sm text-foreground font-medium leading-snug">{{ preview.title || 'Your notification title' }}</p>
+                                        <p class="text-xs text-muted-foreground leading-relaxed line-clamp-2 mt-0.5">{{ preview.body || 'Your notification preview will appear here.' }}</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Actions -->
                     <div class="flex justify-end gap-3 pt-2">
-                        <button @click="form = { title: '', type: 'Shuttle Availability', targetRoute: 'all', audience: 'all', message: '' }"
+                        <button @click="form = { title: '', type: 'Shuttle Availability', targetRoute: 'all', audience: 'all', message: '', delivery_type: 'now', schedule_date: '', schedule_time: '' }"
                             class="rounded-xl border border-border/70 px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-accent">
                             Clear
                         </button>
@@ -257,7 +445,7 @@ const audienceOptions = [
                             class="flex items-center gap-2 rounded-xl bg-[#8B0000] px-4 py-2 text-sm font-semibold text-white hover:bg-[#700000] disabled:opacity-50">
                             <Send v-if="!isSending" class="h-4 w-4" />
                             <RefreshCw v-else class="h-4 w-4 animate-spin" />
-                            {{ isSending ? 'Sending...' : 'Send Now' }}
+                            {{ isSending ? 'Sending...' : (form.delivery_type === 'now' ? 'Send Now' : 'Schedule Notification') }}
                         </button>
                     </div>
                 </div>
@@ -267,7 +455,7 @@ const audienceOptions = [
                     <!-- Notification Log -->
                     <div class="rounded-2xl border border-border/70 bg-card p-6 shadow-sm shadow-black/5 dark:shadow-black/20">
                         <h2 class="mb-3 font-semibold text-foreground">Notification Log</h2>
-                        <div class="mb-3 flex gap-2">
+                        <div class="mb-3 flex flex-col sm:flex-row gap-2">
                             <div class="flex flex-1 items-center gap-2 rounded-lg border border-border/70 px-3 py-2">
                                 <Search class="h-4 w-4 text-muted-foreground shrink-0" />
                                 <input v-model="logSearch" placeholder="Search…"
@@ -275,61 +463,80 @@ const audienceOptions = [
                             </div>
                             <select v-model="typeFilter"
                                 class="rounded-lg border border-border/70 bg-card px-3 py-2 text-sm text-foreground focus:outline-none">
-                                <option value="All">Type: All</option>
-                                <option value="schedule">Schedule</option>
-                                <option value="delay">Delay</option>
-                                <option value="change">Change</option>
+                                <option value="All">All Types</option>
+                                <option value="availability">Shuttle Availability</option>
+                                <option value="delay">Route Delay</option>
+                                <option value="change">Route Change</option>
+                                <option value="announcement">Service Announcement</option>
+                            </select>
+                            <select v-model="statusFilter"
+                                class="rounded-lg border border-border/70 bg-card px-3 py-2 text-sm text-foreground focus:outline-none">
+                                <option value="All">All Status</option>
+                                <option value="sent">Sent</option>
+                                <option value="scheduled">Scheduled</option>
+                                <option value="failed">Failed</option>
                             </select>
                         </div>
 
-                        <table class="w-full text-sm">
-                            <thead>
-                                <tr class="text-left text-xs font-medium uppercase text-muted-foreground border-b border-border/50">
-                                    <th class="pb-2 pr-3">Time</th>
-                                    <th class="pb-2 pr-3">Type</th>
-                                    <th class="pb-2 pr-3">Target</th>
-                                    <th class="pb-2 pr-3">Status</th>
-                                    <th class="pb-2">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="(n, i) in filteredLog" :key="i"
-                                    class="border-b border-border/30 last:border-0">
-                                    <td class="py-2.5 pr-3 text-muted-foreground text-xs">
-                                        <div>{{ n.time }}</div>
-                                        <div class="text-muted-foreground/70">{{ n.date }}</div>
-                                    </td>
-                                    <td class="py-2.5 pr-3">
-                                        <span class="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium" :class="typeBadgeClass(n.type)">
-                                            <component :is="typeIconComponent(n.type)" class="h-3 w-3" />
-                                            {{ n.label }}
-                                        </span>
-                                    </td>
-                                    <td class="py-2.5 pr-3 text-muted-foreground text-sm">{{ n.target }}</td>
-                                    <td class="py-2.5 pr-3">
-                                        <span class="rounded-full bg-green-500/15 px-2 py-0.5 text-xs font-medium text-green-600 dark:text-green-400">
-                                            <Check class="inline-block h-3 w-3 mr-0.5" />Sent
-                                        </span>
-                                    </td>
-                                    <td class="py-2.5">
-                                        <div class="flex items-center gap-1">
-                                            <button class="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground" title="View">
-                                                <Eye class="h-3.5 w-3.5" />
-                                            </button>
-                                            <button class="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground" title="Resend">
-                                                <RefreshCw class="h-3.5 w-3.5" />
-                                            </button>
-                                            <button class="rounded p-1 text-muted-foreground hover:bg-red-500/10 hover:text-red-500" title="Delete">
-                                                <Trash2 class="h-3.5 w-3.5" />
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr v-if="filteredLog.length === 0">
-                                    <td colspan="5" class="py-8 text-center text-sm text-muted-foreground">No notifications found.</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead>
+                                    <tr class="text-left text-xs font-medium uppercase text-muted-foreground border-b border-border/50">
+                                        <th class="pb-2 pr-3">Date/Time</th>
+                                        <th class="pb-2 pr-3">Title & Message</th>
+                                        <th class="pb-2 pr-3">Type & Target</th>
+                                        <th class="pb-2 pr-3">Status</th>
+                                        <th class="pb-2">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="(n, i) in filteredLog" :key="i"
+                                        class="border-b border-border/30 last:border-0">
+                                        <td class="py-3 pr-3 text-muted-foreground text-xs whitespace-nowrap">
+                                            <div class="font-medium">{{ n.time }}</div>
+                                            <div class="text-muted-foreground/70">{{ n.date }}</div>
+                                        </td>
+                                        <td class="py-3 pr-3">
+                                            <div class="font-medium text-foreground text-sm line-clamp-1">{{ n.label }}</div>
+                                            <div class="text-xs text-muted-foreground line-clamp-1">{{ n.target }} · {{ n.type }}</div>
+                                        </td>
+                                        <td class="py-3 pr-3">
+                                            <span class="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium" :class="typeBadgeClass(n.type)">
+                                                <component :is="typeIconComponent(n.type)" class="h-3 w-3" />
+                                                {{ n.label }}
+                                            </span>
+                                        </td>
+                                        <td class="py-3 pr-3">
+                                            <span v-if="n.status === 'sent'" class="inline-flex items-center gap-1 rounded-full bg-green-500/15 px-2 py-0.5 text-xs font-medium text-green-600 dark:text-green-400">
+                                                <Check class="h-3 w-3" />Sent
+                                            </span>
+                                            <span v-else-if="n.status === 'scheduled'" class="inline-flex items-center gap-1 rounded-full bg-blue-500/15 px-2 py-0.5 text-xs font-medium text-blue-600 dark:text-blue-400">
+                                                <Clock class="h-3 w-3" />Scheduled
+                                            </span>
+                                            <span v-else class="inline-flex items-center gap-1 rounded-full bg-red-500/15 px-2 py-0.5 text-xs font-medium text-red-600 dark:text-red-400">
+                                                <AlertTriangle class="h-3 w-3" />Failed
+                                            </span>
+                                        </td>
+                                        <td class="py-3">
+                                            <div class="flex items-center gap-1">
+                                                <button @click="viewDetails(n)" class="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors" title="View Details">
+                                                    <Eye class="h-3.5 w-3.5" />
+                                                </button>
+                                                <button @click="resendNotification(n)" class="rounded p-1 text-muted-foreground hover:bg-blue-500/20 hover:text-blue-500 transition-colors" title="Resend" v-if="n.status !== 'scheduled'">
+                                                    <RefreshCw class="h-3.5 w-3.5" />
+                                                </button>
+                                                <button @click="confirmDelete(i)" class="rounded p-1 text-muted-foreground hover:bg-red-500/10 hover:text-red-500 transition-colors" title="Delete">
+                                                    <Trash2 class="h-3.5 w-3.5" />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr v-if="filteredLog.length === 0">
+                                        <td colspan="5" class="py-8 text-center text-sm text-muted-foreground">No notifications found.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
 
                     <!-- Scheduled Notifications -->
@@ -356,32 +563,88 @@ const audienceOptions = [
                                     {{ sn.schedule }} · Target: {{ sn.target }} · {{ sn.auto ? 'Auto' : 'Manual' }}
                                 </p>
                                 <div class="flex gap-2">
-                                    <button class="rounded-lg border border-border/70 px-2.5 py-1 text-xs text-muted-foreground hover:bg-accent">Edit</button>
+                                    <button @click="openScheduleModal(sn)" class="rounded-lg border border-border/70 px-2.5 py-1 text-xs text-muted-foreground hover:bg-accent transition-colors">Edit</button>
                                 </div>
                             </div>
                         </div>
-                        <button class="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-border/70 py-2.5 text-sm font-medium text-muted-foreground hover:bg-accent">
+                        <button @click="openScheduleModal()" class="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-border/70 py-2.5 text-sm font-medium text-muted-foreground hover:bg-accent transition-colors">
                             <Plus class="h-4 w-4" /> Create Schedule
                         </button>
                     </div>
                 </div>
             </div>
         </div>
-    </AppLayout>
+    </AppLayout>>
+
+    <!-- View Details Modal -->
+    <Teleport to="body">
+        <div v-if="isViewModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div class="fixed inset-0 bg-neutral-950/70 dark:bg-black/85 backdrop-blur-sm transition-opacity" @click="isViewModalOpen = false"></div>
+            
+            <div v-if="selectedLog" class="relative w-full max-w-lg transform overflow-hidden rounded-xl border bg-card p-6 shadow-2xl transition-all z-10">
+                <button @click="isViewModalOpen = false" class="absolute top-4 right-4 text-muted-foreground hover:text-foreground">
+                    <span class="text-2xl">×</span>
+                </button>
+                
+                <h3 class="text-lg font-semibold border-b pb-3 pr-8">{{ selectedLog.label }}</h3>
+                
+                <div class="space-y-4 mt-4 text-sm">
+                    <div>
+                        <span class="text-muted-foreground block mb-1 text-xs font-medium">Message</span>
+                        <p class="p-3 bg-muted rounded-lg text-foreground">{{ selectedLog.target }} · {{ selectedLog.type }}</p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <span class="text-muted-foreground block mb-1 text-xs font-medium">Target</span>
+                            <span class="font-medium">{{ selectedLog.target }}</span>
+                        </div>
+                        <div>
+                            <span class="text-muted-foreground block mb-1 text-xs font-medium">Type</span>
+                            <span class="font-medium">{{ selectedLog.type }}</span>
+                        </div>
+                        <div>
+                            <span class="text-muted-foreground block mb-1 text-xs font-medium">Date</span>
+                            <span class="font-medium">{{ selectedLog.date }}</span>
+                        </div>
+                        <div>
+                            <span class="text-muted-foreground block mb-1 text-xs font-medium">Time</span>
+                            <span class="font-medium">{{ selectedLog.time }}</span>
+                        </div>
+                        <div class="col-span-2">
+                            <span class="text-muted-foreground block mb-1 text-xs font-medium">Status</span>
+                            <span v-if="selectedLog.status === 'sent'" class="inline-flex items-center gap-1 rounded-full bg-green-500/15 px-2 py-0.5 text-xs font-medium text-green-600 dark:text-green-400">
+                                <Check class="h-3 w-3" />Sent
+                            </span>
+                            <span v-else-if="selectedLog.status === 'scheduled'" class="inline-flex items-center gap-1 rounded-full bg-blue-500/15 px-2 py-0.5 text-xs font-medium text-blue-600 dark:text-blue-400">
+                                <Clock class="h-3 w-3" />Scheduled
+                            </span>
+                            <span v-else class="inline-flex items-center gap-1 rounded-full bg-red-500/15 px-2 py-0.5 text-xs font-medium text-red-600 dark:text-red-400">
+                                <AlertTriangle class="h-3 w-3" />Failed
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-6 flex justify-end">
+                    <button @click="isViewModalOpen = false" class="rounded-lg border border-border/70 px-4 py-2 hover:bg-accent text-sm font-medium">Close</button>
+                </div>
+            </div>
+        </div>
+    </Teleport>
 
     <!-- Send Confirmation Modal -->
     <Teleport to="body">
-        <div v-if="showConfirmSend" class="fixed inset-0 z-50 flex items-center justify-center">
-            <div class="absolute inset-0 bg-black/40" @click="showConfirmSend = false"></div>
-            <div class="relative w-full max-w-sm rounded-2xl bg-card p-6 shadow-xl">
+        <div v-if="showConfirmSend" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div class="fixed inset-0 bg-neutral-950/70 dark:bg-black/85 backdrop-blur-sm transition-opacity" @click="showConfirmSend = false"></div>
+            <div class="relative w-full max-w-sm rounded-2xl bg-card p-6 shadow-2xl z-10">
                 <div class="mb-4 flex items-center gap-3">
                     <div class="flex h-10 w-10 items-center justify-center rounded-full bg-[#8B0000]/15">
                         <Send class="h-5 w-5 text-[#8B0000]" />
                     </div>
-                    <h3 class="text-lg font-semibold text-foreground">Send Notification?</h3>
+                    <h3 class="text-lg font-semibold text-foreground">{{ form.delivery_type === 'now' ? 'Send Notification?' : 'Schedule Notification?' }}</h3>
                 </div>
                 <p class="mb-6 text-sm text-muted-foreground">
-                    This will send "<strong class="text-foreground">{{ form.title }}</strong>" to
+                    This will {{ form.delivery_type === 'now' ? 'send immediately' : `schedule for ${form.schedule_date} at ${form.schedule_time}` }} "<strong class="text-foreground">{{ form.title }}</strong>" to
                     <strong class="text-foreground">{{ form.targetRoute === 'all' ? 'All Routes' : form.targetRoute }}</strong>
                     ({{ form.audience === 'all' ? 'all users' : form.audience }}).
                 </p>
@@ -392,9 +655,193 @@ const audienceOptions = [
                     </button>
                     <button @click="send"
                         class="rounded-lg bg-[#8B0000] px-4 py-2 text-sm font-semibold text-white hover:bg-[#700000]">
-                        Yes, Send
+                        {{ form.delivery_type === 'now' ? 'Yes, Send' : 'Yes, Schedule' }}
                     </button>
                 </div>
+            </div>
+        </div>
+    </Teleport>
+
+    <!-- Delete Confirmation Modal -->
+    <Teleport to="body">
+        <div v-if="showDeleteConfirm" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div class="fixed inset-0 bg-neutral-950/70 dark:bg-black/85 backdrop-blur-sm transition-opacity" @click="showDeleteConfirm = false"></div>
+            <div class="relative w-full max-w-sm rounded-2xl bg-card p-6 shadow-2xl z-10">
+                <div class="mb-4 flex items-center gap-3">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-full bg-red-500/15">
+                        <Trash2 class="h-5 w-5 text-red-600 dark:text-red-400" />
+                    </div>
+                    <h3 class="text-lg font-semibold text-foreground">Delete Notification?</h3>
+                </div>
+                <p class="mb-6 text-sm text-muted-foreground">
+                    This action cannot be undone. The notification will be permanently deleted from the log.
+                </p>
+                <div class="flex justify-end gap-3">
+                    <button @click="showDeleteConfirm = false"
+                        class="rounded-lg border border-border/70 px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-accent">
+                        Cancel
+                    </button>
+                    <button @click="deleteNotification"
+                        class="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700">
+                        Yes, Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    </Teleport>
+
+    <!-- Schedule Modal Drawer -->
+    <Teleport to="body">
+        <div v-if="isScheduleModalOpen" class="fixed inset-0 z-[100]">
+            <div class="fixed inset-0 bg-neutral-950/70 dark:bg-black/85 backdrop-blur-sm transition-opacity" @click="closeScheduleModal"></div>
+            <div class="fixed inset-0 pointer-events-none">
+                <Transition enter-active-class="transition ease-out duration-300" enter-from-class="translate-x-full" enter-to-class="translate-x-0"
+                            leave-active-class="transition ease-in duration-200" leave-from-class="translate-x-0" leave-to-class="translate-x-full">
+                    <div class="pointer-events-auto absolute inset-0 flex justify-end">
+                        <div class="relative ml-auto w-full max-w-md rounded-l-2xl bg-card shadow-2xl overflow-y-auto z-[110]">
+                    <div class="sticky top-0 bg-card border-b border-border/50 p-6 flex items-center justify-between">
+                        <h2 class="text-xl font-semibold text-foreground">{{ isEditingSchedule ? 'Edit Schedule' : 'Create Schedule' }}</h2>
+                        <button @click="closeScheduleModal" class="text-muted-foreground hover:text-foreground">
+                            <span class="text-2xl">×</span>
+                        </button>
+                    </div>
+
+                    <div class="p-6 space-y-4">
+                        <!-- Schedule Name -->
+                        <div>
+                            <label class="mb-1 block text-sm font-medium text-foreground">Schedule Name *</label>
+                            <input v-model="scheduleForm.name" type="text" placeholder="e.g. Morning Peak Hour"
+                                class="w-full rounded-lg border border-border/70 bg-transparent px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-[#8B0000] placeholder:text-muted-foreground" />
+                        </div>
+
+                        <!-- Frequency -->
+                        <div>
+                            <label class="mb-2 block text-sm font-medium text-foreground">Repeat</label>
+                            <select v-model="scheduleForm.frequency"
+                                class="w-full rounded-lg border border-border/70 bg-card px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-[#8B0000]">
+                                <option value="daily">Daily</option>
+                                <option value="weekdays">Weekdays</option>
+                                <option value="weekends">Weekends</option>
+                                <option value="custom">Custom Days</option>
+                            </select>
+                        </div>
+
+                        <!-- Custom Days Selector -->
+                        <div v-if="scheduleForm.frequency === 'custom'" class="space-y-2">
+                            <label class="block text-xs text-muted-foreground font-medium">Select Days *</label>
+                            <div class="flex justify-between gap-1">
+                                <button 
+                                    v-for="(day, index) in ['M','T','W','T','F','S','S']" 
+                                    :key="index"
+                                    type="button"
+                                    @click="toggleDay(index)"
+                                    :class="scheduleForm.days.includes(index) 
+                                        ? 'bg-[#8B0000] text-white border-[#8B0000]' 
+                                        : 'bg-muted text-muted-foreground border-border/70 hover:bg-accent'"
+                                    class="w-10 h-10 rounded-full border text-sm font-semibold transition-colors flex items-center justify-center">
+                                    {{ day }}
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Time -->
+                        <div>
+                            <label class="mb-1 block text-sm font-medium text-foreground">Time *</label>
+                            <input v-model="scheduleForm.time" type="time"
+                                class="w-full rounded-lg border border-border/70 bg-card px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-[#8B0000]" />
+                        </div>
+
+                        <div class="border-t border-border/50 pt-4">
+                            <h3 class="text-sm font-medium text-foreground mb-4">Notification Content</h3>
+
+                            <!-- Title -->
+                            <div class="mb-4">
+                                <label class="mb-1 block text-sm font-medium text-foreground">Title *</label>
+                                <input v-model="scheduleForm.title" type="text" placeholder="Notification title…"
+                                    class="w-full rounded-lg border border-border/70 bg-transparent px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-[#8B0000] placeholder:text-muted-foreground" />
+                            </div>
+
+                            <!-- Type -->
+                            <div class="mb-4">
+                                <label class="mb-2 block text-sm font-medium text-foreground">Type *</label>
+                                <select v-model="scheduleForm.type"
+                                    class="w-full rounded-lg border border-border/70 bg-card px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-[#8B0000]">
+                                    <option>Shuttle Availability</option>
+                                    <option>Route Delay</option>
+                                    <option>Route Change</option>
+                                    <option>Service Announcement</option>
+                                </select>
+                            </div>
+
+                            <!-- Message -->
+                            <div class="mb-4">
+                                <label class="mb-1 block text-sm font-medium text-foreground">Message *</label>
+                                <textarea v-model="scheduleForm.message" rows="3" maxlength="160"
+                                    placeholder="Notification message…"
+                                    class="w-full rounded-lg border border-border/70 bg-transparent px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-[#8B0000] resize-none placeholder:text-muted-foreground"></textarea>
+                            </div>
+
+                            <!-- Target Route -->
+                            <div class="mb-4">
+                                <label class="mb-2 block text-sm font-medium text-foreground">Target Route *</label>
+                                <div class="flex flex-wrap gap-2">
+                                    <button v-for="opt in [{ val: 'all', label: 'All Routes' }, ...props.routes.map(r => ({ val: r, label: r }))]"
+                                        :key="opt.val"
+                                        @click="scheduleForm.targetRoute = opt.val"
+                                        class="rounded-full px-3.5 py-1.5 text-xs font-medium border transition-colors"
+                                        :class="scheduleForm.targetRoute === opt.val
+                                            ? 'border-[#8B0000] bg-[#8B0000]/10 text-[#8B0000] dark:text-red-300'
+                                            : 'border-border/70 text-muted-foreground hover:bg-accent'">
+                                        {{ opt.label }}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Audience -->
+                            <div class="mb-4">
+                                <label class="mb-2 block text-sm font-medium text-foreground">Audience</label>
+                                <div class="flex flex-wrap gap-2">
+                                    <button v-for="a in audienceOptions" :key="a.val"
+                                        @click="scheduleForm.audience = a.val"
+                                        class="flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium border transition-colors"
+                                        :class="scheduleForm.audience === a.val
+                                            ? 'border-[#8B0000] bg-[#8B0000]/10 text-[#8B0000] dark:text-red-300'
+                                            : 'border-border/70 text-muted-foreground hover:bg-accent'">
+                                        <component :is="a.icon" class="h-3.5 w-3.5" />
+                                        {{ a.label }}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Active Toggle -->
+                            <div class="pt-4 border-t border-border/50">
+                                <label class="flex items-center gap-3 cursor-pointer">
+                                    <button @click="scheduleForm.active = !scheduleForm.active"
+                                        class="relative h-5 w-9 rounded-full transition-colors"
+                                        :class="scheduleForm.active ? 'bg-green-500' : 'bg-muted'">
+                                        <span class="absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform"
+                                            :class="scheduleForm.active ? 'translate-x-4' : 'translate-x-0'" />
+                                    </button>
+                                    <span class="text-sm font-medium text-foreground">Active</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="sticky bottom-0 bg-card border-t border-border/50 p-6 flex gap-3">
+                        <button @click="closeScheduleModal"
+                            class="flex-1 rounded-lg border border-border/70 px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-accent">
+                            Cancel
+                        </button>
+                        <button @click="closeScheduleModal"
+                            class="flex-1 rounded-lg bg-[#8B0000] px-4 py-2 text-sm font-semibold text-white hover:bg-[#700000]">
+                            {{ isEditingSchedule ? 'Update' : 'Create' }}
+                        </button>
+                    </div>
+                        </div>
+                    </div>
+                </Transition>
             </div>
         </div>
     </Teleport>
@@ -404,7 +851,7 @@ const audienceOptions = [
         <Transition enter-active-class="transition ease-out duration-300" enter-from-class="translate-y-4 opacity-0" enter-to-class="translate-y-0 opacity-100"
                     leave-active-class="transition ease-in duration-200" leave-from-class="translate-y-0 opacity-100" leave-to-class="translate-y-4 opacity-0">
             <div v-if="showSuccess"
-                class="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 rounded-xl bg-green-600 px-4 py-3 text-sm font-medium text-white shadow-lg">
+                class="fixed bottom-6 right-6 z-[110] flex items-center gap-2.5 rounded-xl bg-green-600 px-4 py-3 text-sm font-medium text-white shadow-lg">
                 <Check class="h-4 w-4" /> Notification sent successfully!
             </div>
         </Transition>
