@@ -18,7 +18,8 @@ import {
     XCircle,
     CheckCheck,
 } from 'lucide-vue-next';
-import { onMounted, onUnmounted, ref } from 'vue';
+import { onMounted, onUnmounted, ref, nextTick } from 'vue';
+import { liveMapRoutes, type RouteConfig } from '@/data/routeData';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { dashboard } from '@/routes';
 import { type BreadcrumbItem } from '@/types';
@@ -32,12 +33,26 @@ defineProps<{
         pendingApprovals: number;
         avgFeedback: string;
     };
+    // shuttles for table + mini map (includes coordinates)
     shuttles: Array<{
-        shuttle_code: string;
+        id?: number;
+        shuttle_code?: string;
+        code?: string;
         driver: string;
         route: string;
         status: string;
         last_seen: string;
+        speed?: number;
+        latitude?: number | null;
+        longitude?: number | null;
+    }>;
+    // small set of pending requests for map pins
+    pendingRequests?: Array<{
+        id: number;
+        passenger: string;
+        route: string;
+        stop: string;
+        time: string;
     }>;
     pickupsPerRoute: Array<{ name: string; count: number }>;
     maxPickups: number;
@@ -50,24 +65,132 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 const miniMapRef = ref<HTMLDivElement | null>(null);
 let miniMap: L.Map | null = null;
+let miniTileLayer: L.TileLayer | null = null;
+const shuttleMarkers = new Map<number, L.Marker>();
+const otherMarkers: L.Marker[] = [];
+
+const lightTileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+
+const statusColors: Record<string, string> = { active: '#16a34a', idle: '#fb923c', offline: '#9ca3af' };
+
+const makeShuttleIcon = (status: string) => L.divIcon({
+    className: '',
+    html: `<div style="background:${statusColors[status] ?? '#9ca3af'};width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 2px 6px rgba(0,0,0,.25);border:2px solid #fff;"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M8 6v6\"/><path d=\"M15 6v6\"/><path d=\"M2 12h19.6\"/><path d=\"M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.8 19.1 6 18 6H4a2 2 0 0 0-2 2v10h3\"/><circle cx=\"7\" cy=\"18\" r=\"2\"/><path d=\"M9 18h5\"/><circle cx=\"16\" cy=\"18\" r=\"2\"/></svg></div>`,
+    iconSize: [28, 28],
+    iconAnchor: [14, 14],
+});
+
+const passengerIcon = L.divIcon({
+    className: '',
+    html: '<div style="color:#ef4444;filter:drop-shadow(0 1px 2px rgba(0,0,0,.25));"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2" fill="white" stroke="white"/></svg></div>',
+    iconSize: [18, 18],
+    iconAnchor: [9, 18],
+});
+
+const routeStops: RouteConfig = liveMapRoutes;
+const routePolylines = new Map<string, L.Polyline>();
+const routeStopMarkers = new Map<string, L.CircleMarker[]>();
+
+async function fetchSegmentedRoute(stops: [number, number][]): Promise<[number, number][]> {
+    if (stops.length < 2) return stops;
+    const fullPath: [number, number][] = [];
+    for (let i = 0; i < stops.length - 1; i++) {
+        const from = stops[i];
+        const to = stops[i + 1];
+        try {
+            const coords = `${from[1]},${from[0]};${to[1]},${to[0]}`;
+            const url = `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`;
+            const res = await fetch(url);
+            const data = await res.json();
+            if (data.routes?.length) {
+                const seg = data.routes[0].geometry.coordinates.map(([lng, lat]: [number, number]) => [lat, lng] as [number, number]);
+                fullPath.push(...(i === 0 ? seg : seg.slice(1)));
+            } else {
+                if (i === 0) fullPath.push(from);
+                fullPath.push(to);
+            }
+        } catch {
+            if (i === 0) fullPath.push(from);
+            fullPath.push(to);
+        }
+    }
+    return fullPath;
+}
+
+async function drawRoutes(targetMap: L.Map) {
+    for (const key of Object.keys(routeStops)) {
+        const route = routeStops[key];
+        try {
+            const path = route.path ?? await fetchSegmentedRoute(route.stops);
+            const pl = L.polyline(path, { color: route.color, weight: 4, opacity: 0.7 }).addTo(targetMap);
+            routePolylines.set(key, pl);
+        } catch {
+            const pl = L.polyline(route.stops, { color: route.color, weight: 3, opacity: 0.7 }).addTo(targetMap);
+            routePolylines.set(key, pl);
+        }
+        const markers: L.CircleMarker[] = [];
+        route.landmarks.forEach((landmark) => {
+            const [lat, lng] = landmark.coord;
+            const cm = L.circleMarker([lat, lng], { radius: 4, color: route.color, fillColor: route.color, fillOpacity: 1, weight: 1 })
+                .bindTooltip(landmark.name, { permanent: false, direction: 'top', offset: [0, -5] })
+                .addTo(targetMap);
+            markers.push(cm);
+        });
+        routeStopMarkers.set(key, markers);
+    }
+}
+
+const syncMarkers = () => {
+    if (!miniMap) return;
+    shuttleMarkers.forEach(m => m.remove());
+    shuttleMarkers.clear();
+    otherMarkers.forEach(m => m.remove());
+    otherMarkers.length = 0;
+
+    // shuttles prop may contain either `id` or `shuttle_code` as identifier
+    (props.shuttles ?? []).forEach((s, i) => {
+        const lat = s.latitude ?? 10.3157 + (i * 0.004);
+        const lng = s.longitude ?? 123.8854 + (i * 0.005);
+        const marker = L.marker([lat, lng], { icon: makeShuttleIcon(s.status) })
+            .bindPopup(`<div style="font-size:13px;"><b>${s.code ?? s.shuttle_code}</b><br>Driver: ${s.driver}<br>Route: ${s.route}</div>`)
+            .addTo(miniMap!);
+        shuttleMarkers.set(s.id ?? i, marker);
+    });
+
+    (props.pendingRequests ?? []).slice(0, 6).forEach((r, i) => {
+        const lat = 10.3140 + (i * 0.003);
+        const lng = 123.8870 + (i * 0.004);
+        const m = L.marker([lat, lng], { icon: passengerIcon })
+            .bindPopup(`<div style="font-size:13px;"><b>#${r.id}</b> ${r.passenger}<br>${r.route} - ${r.stop}</div>`)
+            .addTo(miniMap!);
+        otherMarkers.push(m);
+    });
+};
 
 onMounted(() => {
-    if (!miniMapRef.value) return;
-
-    miniMap = L.map(miniMapRef.value, {
-        zoomControl: false,
-        attributionControl: false,
-    }).setView([10.3157, 123.8854], 13);
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-    }).addTo(miniMap);
-
-    L.marker([10.3113, 123.9180]).addTo(miniMap).bindTooltip('Pending stop');
-    L.marker([10.2987, 123.8942]).addTo(miniMap).bindTooltip('Shuttle SH-001');
+    nextTick(() => {
+        if (!miniMapRef.value) return;
+        miniMap = L.map(miniMapRef.value, { zoomControl: false, attributionControl: false }).setView([10.3157, 123.8900], 13);
+        // Force default/light tiles regardless of dark mode
+        miniTileLayer = L.tileLayer(lightTileUrl, { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }).addTo(miniMap);
+        syncMarkers();
+        setTimeout(() => miniMap?.invalidateSize(), 200);
+        // Draw routes (async)
+        drawRoutes(miniMap);
+    });
 });
 
 onUnmounted(() => {
+    shuttleMarkers.forEach(m => m.remove());
+    shuttleMarkers.clear();
+    otherMarkers.forEach(m => m.remove());
+    otherMarkers.length = 0;
+    routePolylines.forEach(pl => pl.remove());
+    routePolylines.clear();
+    routeStopMarkers.forEach(markers => markers.forEach(cm => cm.remove()));
+    routeStopMarkers.clear();
+    miniTileLayer?.remove();
+    miniTileLayer = null;
     miniMap?.remove();
     miniMap = null;
 });

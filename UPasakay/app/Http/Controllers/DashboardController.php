@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use App\Models\Driver;
 use App\Models\Passenger;
 use App\Models\PickupRequest;
@@ -54,32 +55,16 @@ class DashboardController extends Controller
         $successPct = round(($completed / $total) * 100);
         $failedPct = 100 - $successPct;
 
-        // ── Recent activity (last 5 events) ──────────────────────────────────
-        $recentRequests = PickupRequest::with(['route', 'user'])
-            ->whereIn('status', ['completed', 'pending', 'cancelled'])
-            ->latest('updated_at')
-            ->take(5)
+        // ── Recent activity (fully dynamic from activity_logs) ───────────────
+        $recentActivity = ActivityLog::query()
+            ->latest('created_at')
+            ->take(6)
             ->get()
-            ->map(fn($r) => [
-                'icon' => match ($r->status) {
-                    'completed' => 'check',
-                    'cancelled' => 'x',
-                    default => 'clock',
-                },
-                'text' => match ($r->status) {
-                    'completed' => "Pickup #{$r->id} completed",
-                    'cancelled' => "Pickup #{$r->id} cancelled",
-                    default => "Pickup Req #{$r->id} — {$r->user?->email}",
-                },
-                'time' => Carbon::parse($r->updated_at)->format('h:i A'),
+            ->map(fn($activity) => [
+                'icon' => $activity->icon,
+                'text' => $activity->description,
+                'time' => Carbon::parse($activity->created_at)->format('h:i A'),
             ]);
-
-        // Merge a couple of static system events at the top
-        $recentActivity = collect([
-            ['icon' => 'bus', 'text' => 'Shuttle SH-001 started South Route', 'time' => '08:30 AM'],
-            ['icon' => 'user', 'text' => 'Driver D. Cruz logged in', 'time' => '08:28 AM'],
-            ['icon' => 'bell', 'text' => 'Announcement sent — All routes', 'time' => '08:00 AM'],
-        ])->merge($recentRequests)->take(6);
 
         $notifications = collect([
             ['icon' => 'bell', 'text' => 'Schedule update: South Route delayed by 15 mins', 'time' => '09:15 AM'],
