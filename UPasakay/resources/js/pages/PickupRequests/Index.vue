@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import L from 'leaflet';
+import * as L from 'leaflet';
 import { Search, Download, ChevronRight, MapPin, Eye, Check, X, Map } from 'lucide-vue-next';
 import { ref, nextTick, onMounted, onUnmounted } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -45,12 +45,11 @@ onMounted(() => {
 
         router.reload({
             only: ['requests', 'stats'],
-            preserveState: true,
             preserveScroll: true,
             onFinish: () => {
                 lastUpdated.value = new Date();
             },
-        });
+        } as any);
     }, 25000);
 });
 

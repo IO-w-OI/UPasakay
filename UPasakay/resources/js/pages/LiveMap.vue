@@ -1,6 +1,6 @@
 ﻿<script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
-import L from 'leaflet';
+import * as L from 'leaflet';
 import { Map as MapIcon, Bus, MapPin, RefreshCw, ArrowRight } from 'lucide-vue-next';
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { useAppearance } from '@/composables/useAppearance';

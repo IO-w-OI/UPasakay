@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
-import L from 'leaflet';
+import * as L from 'leaflet';
 import {
     BarChart2,
     Bell,
@@ -8,7 +8,7 @@ import {
     ClipboardList,
     Eye,
     LayoutList,
-    Map,
+    Map as MapIcon,
     Star,
     UserCheck2,
     Users,
@@ -25,7 +25,7 @@ import { dashboard } from '@/routes';
 import { type BreadcrumbItem } from '@/types';
 import 'leaflet/dist/leaflet.css';
 
-defineProps<{
+const props = defineProps<{
     stats: {
         activeShuttles: number;
         driversOnline: number;
@@ -272,7 +272,7 @@ const attentionIcon = (icon: string) => attentionIconMap[icon] ?? Pin;
                 <div class="rounded-2xl border border-border/70 bg-card p-5 shadow-sm shadow-black/5 dark:shadow-black/20 lg:col-span-7">
                     <div class="mb-3 flex items-center justify-between">
                         <h2 class="flex items-center gap-2 text-sm font-semibold text-foreground">
-                            <Map class="h-4 w-4 text-muted-foreground" /> Live Map (Mini)
+                            <MapIcon class="h-4 w-4 text-muted-foreground" /> Live Map (Mini)
                         </h2>
                         <Link href="/live-map" class="text-xs font-medium text-primary hover:text-primary/80 hover:underline">View Full Map &rsaquo;</Link>
                     </div>
