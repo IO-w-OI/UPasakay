@@ -16,6 +16,7 @@ export const Colors = {
     base_page: '#F2F9F3', 
     top_loginsignup: '#8D1436', 
     bottom_loginsignup: '#400A19', 
+    cream: '#FEF3DC',
 
     // Buttons
     button_loginsignup: '#FFB61C',
@@ -101,8 +102,10 @@ export const BasePage = styled.View`
     width: 100%;
     background-color: ${Colors.base_page};
     border-radius: 16px;
-    padding: 20px;
-    align-items: center;
+    /* Use specific horizontal padding for more control */
+    padding-vertical: 20px;
+    padding-horizontal: 10px; 
+    align-items: flex-start;
 `;
 
 export const StyledButton = styled.TouchableOpacity`
@@ -244,16 +247,24 @@ export const Header = styled.Text`
     margin-top: 10px;
     font-size: 35px;
     color: ${Colors.text_active};
-    text-align: left; 
     font-family: 'Nunito-Bold';
-    
-    /* ADD THESE TWO LINES */
+
+    /* 1. Change width to auto so it only takes up as much space as the text */
+    width: auto;
+
+    /* 2. Force the component itself to the start of the flex container */
     align-self: flex-start;
-    width: 100%;
+
+    /* 3. Explicitly set text-align to left */
+    text-align: left;
+
+    /* 4. Use a negative margin to 'cheat' past any parent padding */
+    margin-left: -15px; 
 `;
 
 export const SubHeader = styled.Text`
     margin-top: 10px;
+    margin-left: -15px; 
     font-size: 20px;
     color: ${Colors.text_active};
     text-align: left; 

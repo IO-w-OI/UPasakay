@@ -1,5 +1,4 @@
 import { StatusBar } from 'expo-status-bar';
-import React from 'react';
 import {
     BasePage,
     ButtonText,
@@ -11,7 +10,7 @@ import {
     SubHeader,
 } from '../components/styles';
 
-const Home = () => {
+const UserHome = () => {
 
     const handleSubmit = () => {
             console.log("Button Pressed!");
@@ -26,9 +25,9 @@ const Home = () => {
                     resizeMode="contain" 
                     source={require('../assets/images/UPasakayBig.png')} 
                     style={{ 
-                        marginTop: 25, // Changed from padding-top to marginTop & camelCase
-                        width: 361.5,   // Calculated (723 * 0.5)
-                        height: 203     // Calculated (406 * 0.5)
+                        marginTop: 5, // Changed from padding-top to marginTop & camelCase
+                        width: (723*0.5),   // Calculated (723 * 0.5)
+                        height: (406*0.5)     // Calculated (406 * 0.5)
                     }} 
                 />
                 <Header>
@@ -74,4 +73,4 @@ const Home = () => {
     );
 };
 
-export default Home;
+export default UserHome;

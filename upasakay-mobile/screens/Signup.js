@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Formik } from 'formik';
 import { useState } from 'react';
-import { View } from 'react-native';
+import { Alert, View } from 'react-native'; // Added Alert here
 
 
 import {
@@ -49,9 +49,22 @@ const Signup = () => {
             />
 
                 <Formik
-                    initialValues={{ email: '', password: '' }}
+                    initialValues={{ email: '', password: '', confirmPassword: '' }}
                     onSubmit={(values) => {
-                        console.log(values);
+                        // Regex to check for @up.edu.ph
+                        const upEmailRegex = /^[a-zA-Z0-9._%+-]+@up\.edu\.ph$/;
+
+                        if (!upEmailRegex.test(values.email)) {
+                            Alert.alert("Invalid Email", "Please use your official @up.edu.ph email address.");
+                            return;
+                        }
+
+                        if (values.password !== values.confirmPassword) {
+                            Alert.alert("Error", "Passwords do not match.");
+                            return;
+                        }
+
+                        console.log("Form Proceeding:", values);
                     }}
                 >{({handleChange, handleBlur, handleSubmit, values}) => <StyledFormArea>
                     <MyTextInput
@@ -70,6 +83,8 @@ const Signup = () => {
                         placeholder="Enter your password"
                         placeholderTextColor={Colors.text_idle}
                         onChangeText={handleChange('password')}
+                        onBlur={handleBlur('password')}
+                        value={values.password}
                         secureTextEntry={hidePassword}
                         isPassword={true}
                         hidePassword={hidePassword}
@@ -81,17 +96,18 @@ const Signup = () => {
                         placeholder="Confirm your password"
                         placeholderTextColor={Colors.text_idle}
                         onChangeText={handleChange('confirmPassword')}
-                        secureTextEntry={hideConfirmPassword} // Use the new state
+                        onBlur={handleBlur('confirmPassword')}
+                        value={values.confirmPassword}
+                        secureTextEntry={hideConfirmPassword} 
                         isPassword={true}
-                        hidePassword={hideConfirmPassword}    // Use the new state
-                        setHidePassword={setHideConfirmPassword} // Use the new setter
+                        hidePassword={hideConfirmPassword}    
+                        setHidePassword={setHideConfirmPassword} 
                     />
 
                     <ExtraView>
                         <ExtraSmallText>
                             By clicking 'Sign Up', you have read and agreed to our{"\n"}
                             
-                            {/* We use Text instead of TouchableOpacity/View here */}
                             <ExtraSmallText 
                                 style={{ fontWeight: 'regular', color: Colors.button_loginsignup }} 
                                 onPress={() => router.push('/Login')}
@@ -124,13 +140,7 @@ const Signup = () => {
                                 <GoogleLogo source={require('../assets/images/google-logo.png')} /> 
                                 <ButtonText google={true}>Sign Up with Google</ButtonText>
                             </StyledButton>
-
-                            <StyledButton apple={true}>
-                                {/* Use Ionicons for the Apple Logo */}
-                                <GoogleLogo source={require('../assets/images/apple-logo.png')} />
-                                <ButtonText apple={true}>Sign Up with Apple</ButtonText>
-                            </StyledButton>
-
+                            
                             <ExtraView>
                                 <ExtraText>Already have an account? </ExtraText>
                                 <TextLink onPress={() => router.push('/Login')}> 
@@ -147,13 +157,11 @@ const Signup = () => {
     );
 }
 
-// Add 'InputWrapper' to your imports from '../components/styles'
 const MyTextInput = ({ label, icon, isPassword, hidePassword, setHidePassword, ...props }) => {
     return (
         <View style={{ marginBottom: 5 }}>
             <StyledInputLabel>{label}</StyledInputLabel>
             
-            {/* This wrapper is the secret sauce */}
             <View style={{ justifyContent: 'center' }}> 
                 <LeftIcon>
                     <Octicons name={icon} size={20} color={Colors.text_idle} />
@@ -176,4 +184,3 @@ const MyTextInput = ({ label, icon, isPassword, hidePassword, setHidePassword, .
 };
 
 export default Signup;
-

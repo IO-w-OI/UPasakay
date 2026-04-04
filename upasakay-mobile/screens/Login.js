@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Formik } from 'formik';
 import { useState } from 'react';
-import { View } from 'react-native';
+import { Alert, View } from 'react-native';
 
 import {
     ButtonText,
@@ -41,12 +41,20 @@ const Login = () => {
                 <Formik
                     initialValues={{ email: '', password: '' }}
                     onSubmit={(values) => {
-                        console.log(values);
+                        // Regex to check for @up.edu.ph
+                        const upEmailRegex = /^[a-zA-Z0-9._%+-]+@up\.edu\.ph$/;
+
+                        if (!upEmailRegex.test(values.email)) {
+                            Alert.alert("Invalid Email", "Please use your official @up.edu.ph email address.");
+                            return;
+                        }
+
+                        console.log("Form Proceeding:", values);
                     }}
                 >{({handleChange, handleBlur, handleSubmit, values}) => <StyledFormArea>
                     <MyTextInput
                         icon="mail"
-                        placeholder="Enter your email address"
+                        placeholder="Enter your UP email"
                         placeholderTextColor={Colors.text_idle}
                         onChangeText={handleChange('email')}
                         onBlur={handleBlur('email')}
@@ -78,11 +86,14 @@ const Login = () => {
                                 <ButtonText google={true}>Log In with Google</ButtonText>
                             </StyledButton>
 
-                            <StyledButton apple={true}>
-                                {/* Use Ionicons for the Apple Logo */}
-                                <GoogleLogo source={require('../assets/images/apple-logo.png')} /> 
-                                <ButtonText apple={true}>Log In with Apple</ButtonText>
-                            </StyledButton>
+                            {
+                                /*
+                                <StyledButton apple={true}>
+                                    <GoogleLogo source={require('../assets/images/apple-logo.png')} />
+                                    <ButtonText apple={true}>Log In with Apple</ButtonText>
+                                </StyledButton>
+                                */
+                            }   
                                 <ExtraView>
                                     <ExtraText>Don't have an account already? </ExtraText>
                                         <TextLink onPress={() => router.push('/Signup')}> 
