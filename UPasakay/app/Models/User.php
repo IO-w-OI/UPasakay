@@ -66,4 +66,12 @@ class User extends Authenticatable
     {
         return $this->hasOne(Passenger::class);
     }
+
+    /**
+     * Get the admin account associated with this user.
+     */
+    public function admin()
+    {
+        return $this->hasOne(Admin::class, 'user_id', 'id');
+    }
 }

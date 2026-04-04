@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DriverController;
 use App\Http\Controllers\FeedbackController;
@@ -18,6 +19,9 @@ Route::get('/', function () {
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('live-map', [LiveMapController::class, 'index'])->name('live-map');
+
+    // Admins
+    Route::resource('admins', AdminController::class)->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
 
     // Drivers
     Route::get('drivers', [DriverController::class, 'index'])->name('drivers.index');
