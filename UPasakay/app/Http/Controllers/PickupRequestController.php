@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Driver;
+use App\Models\DriverAssignment;
 use App\Models\PickupRequest;
 use App\Models\Route;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class PickupRequestController extends Controller
@@ -64,10 +66,18 @@ class PickupRequestController extends Controller
         });
 
         $routes = Route::where('is_active', true)->pluck('name');
+        $availableDrivers = Driver::whereIn('driver_status', ['active', 'idle'])
+            ->orderBy('full_name')
+            ->get()
+            ->map(fn($d) => [
+                'id' => $d->id,
+                'name' => $d->full_name,
+            ]);
 
         return Inertia::render('PickupRequests/Index', [
             'requests' => $requests,
             'routes' => $routes,
+            'availableDrivers' => $availableDrivers,
             'filters' => $request->only(['search', 'route', 'status', 'date']),
             'stats' => [
                 'total' => $totalToday,
@@ -76,5 +86,34 @@ class PickupRequestController extends Controller
                 'cancelled' => $cancelledToday,
             ],
         ]);
+    }
+
+    public function assign(Request $request, PickupRequest $pickupRequest)
+    {
+        $validated = $request->validate([
+            'driver_id' => 'required|integer|exists:drivers,id',
+        ]);
+
+        if (in_array($pickupRequest->status, ['completed', 'cancelled'], true)) {
+            return back()->with('error', 'Completed or cancelled requests cannot be reassigned.');
+        }
+
+        DB::transaction(function () use ($pickupRequest, $validated) {
+            DriverAssignment::updateOrCreate(
+                ['pickup_request_id' => $pickupRequest->id],
+                [
+                    'driver_id' => $validated['driver_id'],
+                    'status' => 'active',
+                    'assigned_at' => now(),
+                ]
+            );
+
+            $pickupRequest->update([
+                'status' => 'assigned',
+                'assigned_at' => now(),
+            ]);
+        });
+
+        return back()->with('success', 'Shuttle assigned successfully.');
     }
 }

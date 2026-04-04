@@ -10,7 +10,7 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; display: flex; height: 100vh; }
   #map { flex: 1; }
-  #sidebar { width: 400px; background: #1a1a2e; color: #e0e0e0; display: flex; flex-direction: column; overflow: hidden; }
+  #sidebar { width: 420px; background: #1a1a2e; color: #e0e0e0; display: flex; flex-direction: column; overflow: hidden; }
   .sidebar-header { padding: 16px; border-bottom: 1px solid #333; }
   .sidebar-header h1 { font-size: 16px; margin-bottom: 4px; color: #fff; }
   .sidebar-header p { font-size: 12px; color: #888; }
@@ -28,9 +28,60 @@
     border: none; background: transparent; color: #888; border-bottom: 2px solid transparent;
   }
   .route-tabs button.active { color: #fff; }
-  .route-tabs button[data-route="south"].active { color: #22c55e; border-bottom-color: #22c55e; }
-  .route-tabs button[data-route="north"].active { color: #3b82f6; border-bottom-color: #3b82f6; }
+  .route-tabs button[data-route="south"].active  { color: #22c55e; border-bottom-color: #22c55e; }
+  .route-tabs button[data-route="north"].active  { color: #3b82f6; border-bottom-color: #3b82f6; }
   .route-tabs button[data-route="cebuCity"].active { color: #f97316; border-bottom-color: #f97316; }
+
+  /* ── Input mode tabs ─────────────────────────────────────────── */
+  .input-mode-tabs { display: flex; border-bottom: 1px solid #333; background: #12122a; }
+  .input-mode-tabs button {
+    flex: 1; padding: 7px; font-size: 11px; font-weight: 600; cursor: pointer;
+    border: none; background: transparent; color: #666; border-bottom: 2px solid transparent;
+    transition: color .15s;
+  }
+  .input-mode-tabs button.active { color: #fff; border-bottom-color: #a78bfa; background: #1e1e3a; }
+  .input-mode-tabs button:hover:not(.active) { color: #ccc; background: #1a1a30; }
+
+  /* ── Coord input panel ───────────────────────────────────────── */
+  #coordPanel { border-bottom: 1px solid #333; background: #12122a; }
+  .coord-section { padding: 10px 16px; display: flex; flex-direction: column; gap: 8px; }
+  .coord-section label { font-size: 11px; color: #888; }
+
+  /* Single coord row */
+  .single-coord-row { display: flex; gap: 6px; align-items: center; }
+  .single-coord-row input {
+    flex: 1; padding: 6px 8px; border-radius: 6px; font-size: 11px; font-family: monospace;
+    background: #1e1e3a; border: 1px solid #3a3a5a; color: #e0e0e0; outline: none;
+  }
+  .single-coord-row input:focus { border-color: #a78bfa; }
+  .single-coord-row input::placeholder { color: #555; }
+  .single-coord-row button {
+    padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: 600;
+    cursor: pointer; border: none; background: #a78bfa; color: #fff; white-space: nowrap;
+  }
+  .single-coord-row button:hover { background: #9061f9; }
+
+  /* Bulk textarea */
+  .bulk-textarea {
+    width: 100%; height: 90px; background: #0d0d1a; color: #a78bfa; border: 1px solid #3a3a5a;
+    border-radius: 6px; padding: 8px; font-family: monospace; font-size: 10px; resize: vertical;
+    outline: none;
+  }
+  .bulk-textarea:focus { border-color: #a78bfa; }
+  .bulk-actions { display: flex; gap: 6px; }
+  .bulk-actions button {
+    flex: 1; padding: 6px; border-radius: 6px; font-size: 11px; font-weight: 600;
+    cursor: pointer; border: none;
+  }
+  .btn-bulk-add   { background: #a78bfa; color: #fff; }
+  .btn-bulk-add:hover   { background: #9061f9; }
+  .btn-bulk-clear { background: #2a2a4a; color: #ccc; border: 1px solid #444; }
+  .btn-bulk-clear:hover { background: #3a3a5a; }
+
+  .coord-hint { font-size: 10px; color: #555; font-family: monospace; }
+  .coord-error { font-size: 10px; color: #ef4444; min-height: 14px; }
+
+  /* ── Waypoints list ──────────────────────────────────────────── */
   .waypoints-list { flex: 1; overflow-y: auto; padding: 8px 16px; }
   .waypoint-item {
     display: flex; align-items: center; gap: 8px; padding: 6px 8px; margin-bottom: 4px;
@@ -40,10 +91,12 @@
   .waypoint-item .coords { flex: 1; font-family: monospace; font-size: 10px; }
   .waypoint-item .del { cursor: pointer; color: #888; padding: 2px 6px; border-radius: 4px; }
   .waypoint-item .del:hover { color: #ef4444; background: #3a3a5a; }
+
+  /* ── Output section ──────────────────────────────────────────── */
   .output-section { border-top: 1px solid #333; padding: 12px 16px; }
   .output-section h3 { font-size: 12px; color: #888; margin-bottom: 8px; }
   .output-section textarea {
-    width: 100%; height: 150px; background: #0d0d1a; color: #4ade80; border: 1px solid #333;
+    width: 100%; height: 130px; background: #0d0d1a; color: #4ade80; border: 1px solid #333;
     border-radius: 6px; padding: 8px; font-family: monospace; font-size: 10px; resize: vertical;
   }
   .output-section .btn-row { display: flex; gap: 8px; margin-top: 8px; }
@@ -51,10 +104,11 @@
     flex: 1; padding: 8px; border-radius: 6px; font-size: 12px; font-weight: 600;
     cursor: pointer; border: none;
   }
-  .btn-copy { background: #16a34a; color: #fff; }
-  .btn-copy:hover { background: #15803d; }
+  .btn-copy   { background: #16a34a; color: #fff; }
+  .btn-copy:hover   { background: #15803d; }
   .btn-export { background: #3b82f6; color: #fff; }
   .btn-export:hover { background: #2563eb; }
+
   .status-bar { padding: 8px 16px; border-top: 1px solid #333; font-size: 11px; color: #888; }
   .toast {
     position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
@@ -70,20 +124,62 @@
 <div id="sidebar">
   <div class="sidebar-header">
     <h1>UPasakay Route Drawer</h1>
-    <p>Click on the map to add waypoints. The path snaps to roads automatically.<br>
-    Export the pre-computed path and paste it into your Vue code.</p>
+    <p>Click the map or enter coordinates to add waypoints. Path snaps to roads automatically.</p>
   </div>
 
+  <!-- Route tabs -->
   <div class="route-tabs">
-    <button data-route="south" class="active" onclick="switchRoute('south')">South</button>
-    <button data-route="north" onclick="switchRoute('north')">North</button>
+    <button data-route="south"    class="active" onclick="switchRoute('south')">South</button>
+    <button data-route="north"    onclick="switchRoute('north')">North</button>
     <button data-route="cebuCity" onclick="switchRoute('cebuCity')">Cebu City</button>
   </div>
 
+  <!-- Input mode tabs -->
+  <div class="input-mode-tabs">
+    <button id="modeMapBtn"   class="active" onclick="setInputMode('map')">Click Map</button>
+    <button id="modeSingleBtn"             onclick="setInputMode('single')">Single Coord</button>
+    <button id="modeBulkBtn"               onclick="setInputMode('bulk')">Paste / Bulk</button>
+  </div>
+
+  <!-- Coord input panel (hidden when mode = map) -->
+  <div id="coordPanel" style="display:none;">
+
+    <!-- Single coord sub-panel -->
+    <div id="singlePanel" class="coord-section">
+      <label>Enter a coordinate to add as a waypoint</label>
+      <div class="single-coord-row">
+        <input id="latInput" type="text" placeholder="Latitude  e.g. 10.3701320" />
+        <input id="lngInput" type="text" placeholder="Longitude  e.g. 123.9192870" />
+        <button onclick="addSingleCoord()">Add</button>
+      </div>
+      <span class="coord-hint">Or paste as one field: "lat, lng"</span>
+      <div class="coord-error" id="singleError"></div>
+    </div>
+
+    <!-- Bulk sub-panel -->
+    <div id="bulkPanel" class="coord-section" style="display:none;">
+      <label>Paste an array or list of coordinates</label>
+      <textarea class="bulk-textarea" id="bulkInput" placeholder="Accepted formats:
+[10.3701320, 123.9192870],
+[10.3701500, 123.9192690],
+...
+or just:
+10.3701320, 123.9192870
+10.3701500, 123.9192690"></textarea>
+      <div class="bulk-actions">
+        <button class="btn-bulk-add"   onclick="addBulkCoords()">▶ Add All Points</button>
+        <button class="btn-bulk-clear" onclick="document.getElementById('bulkInput').value=''">Clear</button>
+      </div>
+      <div class="coord-error" id="bulkError"></div>
+    </div>
+
+  </div>
+
+  <!-- Controls -->
   <div class="controls">
-    <button id="btnDraw" class="active" onclick="toggleDraw()"> Drawing ON</button>
-    <button onclick="undoLast()"> Undo</button>
-    <button class="danger" onclick="clearRoute()">Clear Route</button>
+    <button id="btnDraw" class="active" onclick="toggleDraw()">Drawing ON</button>
+    <button onclick="undoLast()">↩ Undo</button>
+    <button class="danger" onclick="clearRoute()">✕ Clear Route</button>
   </div>
 
   <div class="waypoints-list" id="waypointsList"></div>
@@ -92,12 +188,12 @@
     <h3>Generated Code (pre-computed road geometry)</h3>
     <textarea id="output" readonly placeholder="Draw a route to see coordinates here..."></textarea>
     <div class="btn-row">
-      <button class="btn-copy" onclick="copyOutput()">Copy This Route</button>
+      <button class="btn-copy"   onclick="copyOutput()">Copy This Route</button>
       <button class="btn-export" onclick="exportAll()">Export All Routes</button>
     </div>
   </div>
 
-  <div class="status-bar" id="statusBar">Ready — click on the map to add waypoints</div>
+  <div class="status-bar" id="statusBar">Ready — click on the map or enter coordinates to add waypoints</div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -106,6 +202,7 @@
 const routeColors = { south: '#22c55e', north: '#3b82f6', cebuCity: '#f97316' };
 let currentRoute = 'south';
 let drawingEnabled = true;
+let inputMode = 'map'; // 'map' | 'single' | 'bulk'
 
 const routeData = {
   south:    { waypoints: [], markers: [], roadPath: [], polyline: null },
@@ -119,13 +216,133 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r
   attribution: '© <a href="https://carto.com/">CARTO</a> © <a href="https://www.openstreetmap.org/copyright">OSM</a>'
 }).addTo(map);
 
-// ── Click to add waypoint ────────────────────────────────────────────────
+// ── Input mode ────────────────────────────────────────────────────────────
+function setInputMode(mode) {
+  inputMode = mode;
+  document.getElementById('modeMapBtn').classList.toggle('active', mode === 'map');
+  document.getElementById('modeSingleBtn').classList.toggle('active', mode === 'single');
+  document.getElementById('modeBulkBtn').classList.toggle('active', mode === 'bulk');
+
+  const panel = document.getElementById('coordPanel');
+  panel.style.display = mode === 'map' ? 'none' : 'block';
+  document.getElementById('singlePanel').style.display = mode === 'single' ? 'flex' : 'none';
+  document.getElementById('bulkPanel').style.display   = mode === 'bulk'   ? 'flex' : 'none';
+
+  // Keep drawing toggle in sync: only enable map click when in map mode
+  drawingEnabled = mode === 'map';
+  const btn = document.getElementById('btnDraw');
+  btn.textContent = drawingEnabled ? '✏️ Drawing ON' : '✏️ Drawing OFF';
+  btn.classList.toggle('active', drawingEnabled);
+}
+
+// ── Parse a lat/lng pair from various string formats ──────────────────────
+function parseLatLng(str) {
+  // Strip brackets, parentheses, trailing commas
+  const clean = str.replace(/[\[\]()\,]/g, ' ').trim();
+  const parts = clean.split(/\s+/).filter(Boolean);
+  if (parts.length < 2) return null;
+  const lat = parseFloat(parts[0]);
+  const lng = parseFloat(parts[1]);
+  if (isNaN(lat) || isNaN(lng)) return null;
+  if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
+  return [lat, lng];
+}
+
+// ── Add single coordinate ─────────────────────────────────────────────────
+async function addSingleCoord() {
+  const latVal = document.getElementById('latInput').value.trim();
+  const lngVal = document.getElementById('lngInput').value.trim();
+  const errEl  = document.getElementById('singleError');
+  errEl.textContent = '';
+
+  let pair;
+  // If user pasted "lat, lng" into the lat field only
+  if (latVal.includes(',') && !lngVal) {
+    pair = parseLatLng(latVal);
+  } else {
+    pair = parseLatLng(latVal + ' ' + lngVal);
+  }
+
+  if (!pair) {
+    errEl.textContent = '⚠ Invalid coordinates. Check values and try again.';
+    return;
+  }
+
+  await addWaypoint(pair[0], pair[1]);
+
+  // Clear inputs
+  document.getElementById('latInput').value = '';
+  document.getElementById('lngInput').value = '';
+  document.getElementById('latInput').focus();
+}
+
+// Allow pressing Enter on the lng field to submit
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('lngInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') addSingleCoord();
+  });
+  document.getElementById('latInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') addSingleCoord();
+  });
+});
+
+// ── Add bulk coordinates ──────────────────────────────────────────────────
+async function addBulkCoords() {
+  const raw   = document.getElementById('bulkInput').value;
+  const errEl = document.getElementById('bulkError');
+  errEl.textContent = '';
+
+  // Split by lines or by "],["
+  const lines = raw.split(/\n|(?<=\])\s*,\s*(?=\[)/).map(l => l.trim()).filter(Boolean);
+  const pairs = [];
+  const bad   = [];
+
+  lines.forEach((line, i) => {
+    const p = parseLatLng(line);
+    if (p) pairs.push(p);
+    else if (line.length > 1) bad.push(i + 1); // skip blank lines silently
+  });
+
+  if (pairs.length === 0) {
+    errEl.textContent = '⚠ No valid coordinates found.';
+    return;
+  }
+  if (bad.length) {
+    errEl.textContent = '⚠ Skipped ' + bad.length + ' invalid line(s): ' + bad.slice(0, 6).join(', ') + (bad.length > 6 ? '…' : '');
+  }
+
+  setStatus('Adding ' + pairs.length + ' waypoints from bulk input…');
+
+  // Add markers instantly, then build road once
+  const rd = routeData[currentRoute];
+  for (const [lat, lng] of pairs) {
+    const idx = rd.waypoints.length;
+    const marker = L.circleMarker([lat, lng], {
+      radius: 7, color: '#fff', fillColor: routeColors[currentRoute], fillOpacity: 1, weight: 2,
+    }).addTo(map).bindTooltip('#' + (idx + 1), { permanent: true, direction: 'top', offset: [0, -10] });
+    rd.waypoints.push([lat, lng]);
+    rd.markers.push(marker);
+  }
+
+  await rebuildRoad(currentRoute);
+  updateUI();
+
+  // Fit map to new points
+  if (rd.polyline) map.fitBounds(rd.polyline.getBounds(), { padding: [40, 40] });
+
+  document.getElementById('bulkInput').value = '';
+}
+
+// ── Click to add waypoint ─────────────────────────────────────────────────
 map.on('click', async (e) => {
   if (!drawingEnabled) return;
   const { lat, lng } = e.latlng;
-  const rd = routeData[currentRoute];
-  const idx = rd.waypoints.length;
+  await addWaypoint(lat, lng);
+});
 
+async function addWaypoint(lat, lng) {
+  const rd  = routeData[currentRoute];
+  const idx = rd.waypoints.length;
   const marker = L.circleMarker([lat, lng], {
     radius: 7, color: '#fff', fillColor: routeColors[currentRoute], fillOpacity: 1, weight: 2,
   }).addTo(map).bindTooltip('#' + (idx + 1), { permanent: true, direction: 'top', offset: [0, -10] });
@@ -136,7 +353,7 @@ map.on('click', async (e) => {
   setStatus('Added waypoint #' + rd.waypoints.length + ' — computing road path…');
   await rebuildRoad(currentRoute);
   updateUI();
-});
+}
 
 // ── Build road path segment-by-segment ───────────────────────────────────
 async function rebuildRoad(routeKey) {
@@ -155,7 +372,7 @@ async function rebuildRoad(routeKey) {
     try {
       const coords = from[1] + ',' + from[0] + ';' + to[1] + ',' + to[0];
       const url = 'https://router.project-osrm.org/route/v1/driving/' + coords + '?overview=full&geometries=geojson';
-      const res = await fetch(url);
+      const res  = await fetch(url);
       const data = await res.json();
       if (data.routes && data.routes.length) {
         const seg = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
@@ -179,7 +396,7 @@ async function rebuildRoad(routeKey) {
   setStatus('Route "' + routeKey + '" — ' + fullPath.length + ' road points from ' + rd.waypoints.length + ' waypoints');
 }
 
-// ── UI ───────────────────────────────────────────────────────────────────
+// ── UI helpers ────────────────────────────────────────────────────────────
 function updateUI() {
   const rd = routeData[currentRoute];
   document.getElementById('waypointsList').innerHTML = rd.waypoints.map((wp, i) =>
@@ -252,14 +469,12 @@ function exportAll() {
   code += '// Paste this into LiveMap.vue and Dashboard.vue\n';
   code += '// Replace the existing routeStops + fetchSegmentedRoute with this\n\n';
   code += 'const routePaths: Record<string, { color: string; path: [number, number][] }> = {\n';
-
   for (const [key, rd] of Object.entries(routeData)) {
     if (!rd.roadPath.length) continue;
     const lines = rd.roadPath.map(p => '        [' + p[0].toFixed(7) + ', ' + p[1].toFixed(7) + '],').join('\n');
     code += '    ' + key + ': {\n        color: \'' + routeColors[key] + '\',\n        path: [\n' + lines + '\n        ],\n    },\n';
   }
   code += '};\n';
-
   document.getElementById('output').value = code;
   navigator.clipboard.writeText(code).then(() => showToast('All routes exported & copied!'));
 }

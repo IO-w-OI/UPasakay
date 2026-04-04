@@ -8,7 +8,7 @@ class Route extends Model
 
     public function stops()
     {
-        return $this->hasMany(Stop::class);
+        return $this->hasMany(Stop::class)->orderBy('sequence', 'asc');
     }
     public function pickupRequests()
     {

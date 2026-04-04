@@ -11,33 +11,36 @@ class PassengerSeeder extends Seeder
 {
     public function run(): void
     {
-        $user1 = User::create([
-            'email' => 'juan@up.edu.ph',
-            'password_hash' => Hash::make('password'),
-        ]);
+        $user1 = User::updateOrCreate(
+            ['email' => 'juan@up.edu.ph'],
+            ['password_hash' => Hash::make('password')]
+        );
 
-        $user2 = User::create([
-            'email' => 'maria@up.edu.ph',
-            'password_hash' => Hash::make('password'),
-        ]);
+        $user2 = User::updateOrCreate(
+            ['email' => 'maria@up.edu.ph'],
+            ['password_hash' => Hash::make('password')]
+        );
 
-        Passenger::insert([
+        Passenger::updateOrCreate(
+            ['user_id' => $user1->id],
             [
-                'user_id' => $user1->id,
                 'passenger_number' => '2021-12345',
                 'department' => 'College of Science',
                 'passenger_type' => 'student',
-                'created_at' => now(),
+                'passenger_status' => 'active',
                 'updated_at' => now(),
-            ],
+            ]
+        );
+
+        Passenger::updateOrCreate(
+            ['user_id' => $user2->id],
             [
-                'user_id' => $user2->id,
                 'passenger_number' => 'STAFF-001',
                 'department' => 'Office of the Registrar',
                 'passenger_type' => 'staff',
-                'created_at' => now(),
+                'passenger_status' => 'active',
                 'updated_at' => now(),
-            ],
-        ]);
+            ]
+        );
     }
 }
