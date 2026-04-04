@@ -10,6 +10,17 @@ use App\Http\Controllers\Api\PickupRequestController;
 use App\Http\Controllers\Api\DriverAssignmentController;
 use App\Http\Controllers\Api\ShuttleLocationController;
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\AuthController;
+
+// Public auth routes
+Route::post('register', [AuthController::class, 'register']);
+Route::post('login', [AuthController::class, 'login']);
+
+// Protected auth routes
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('logout', [AuthController::class, 'logout']);
+    Route::post('revoke-all-tokens', [AuthController::class, 'revokeAllTokens']);
+});
 
 Route::apiResource('routes', RouteController::class);
 Route::apiResource('stops', StopController::class);
