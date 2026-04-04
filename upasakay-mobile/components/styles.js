@@ -37,11 +37,7 @@ export const Colors = {
 };
 
 const { top_loginsignup, bottom_loginsignup } = Colors;
-
-// We use .attrs to pass the 'colors' prop to LinearGradient
-// Add (props) logic to the colors array
 export const StyledContainer = styled(LinearGradient).attrs((props) => ({
-    // It will look for a 'colors' prop first, otherwise use defaults
     colors: props.colors || [top_loginsignup, bottom_loginsignup],
 }))`
     flex: 1;
@@ -273,4 +269,102 @@ export const SubHeader = styled.Text`
     /* ADD THESE TWO LINES */
     align-self: flex-start;
     width: 120%;
+`;
+
+//Recents Page Card Settings
+
+export const TripCard = styled.View`
+    width: 355px;
+    height: 143px;
+    align-self: center;
+    margin-bottom: 20px;
+    shadow-color: rgba(0, 0, 0, 0.25);
+    shadow-offset: 0px 4px;
+    shadow-opacity: 1;
+    shadow-radius: 1px;
+    elevation: 4;
+`;
+
+export const CardTop = styled.View`
+    width: 355px;
+    height: 95px;
+    background-color: #FEF3DC;
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    padding: 15px;
+    flex-direction: row;
+    align-items: flex-start;
+`;
+
+export const CardBottom = styled.TouchableOpacity`
+    width: 355px;
+    height: 46px;
+    background-color: #FEF3DC;
+    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 20px;
+    border-top-width: 1px;
+    border-top-color: rgba(0, 0, 0, 0.05);
+    justify-content: center;
+    padding-left: 20px;
+    margin-top: 2px; /* <--- Adds a tiny physical gap between the sections */
+`;
+
+export const BusIconContainer = styled.View`
+    width: 40px;
+    height: 40px;
+    justify-content: center;
+    align-items: center;
+`;
+
+export const TripInfo = styled.View`
+    flex: 1;
+    margin-left: 10px;
+`;
+
+export const TripTitle = styled.Text`
+    font-size: 16px;
+    color: ${Colors.text_active};
+    font-family: 'Nunito-Bold';
+`;
+
+export const TripDate = styled.Text`
+    font-size: 13px;
+    color: ${Colors.text_active};
+    margin-top: 8px;
+    font-family: 'Nunito-Regular';
+`;
+
+export const StatusPill = styled.View`
+    padding-horizontal: 8px;
+    padding-vertical: 4px;
+    border-radius: 10px;
+    background-color: ${props => props.completed ? '#55975C' : '#ADADAD'};
+`;
+
+export const StatusText = styled.Text`
+    color: ${Colors.white};
+    font-size: 10px;
+    font-family: 'Nunito-Bold';
+`;
+
+export const ParaUlitText = styled.Text`
+    color: ${Colors.para_ulit};
+    font-family: 'Nunito-Bold';
+    font-size: 14px;
+`;
+
+export const FloatingNavContainer = styled.View`
+    position: absolute;
+    bottom: 30px;
+    left: 20px;
+    right: 20px;
+    height: 70px;
+    background-color: rgba(255, 255, 255, 0.4);
+    border-radius: 35px;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.5);
+    overflow: hidden;
 `;
