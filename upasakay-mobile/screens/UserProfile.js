@@ -1,6 +1,7 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { router } from 'expo-router'; // Added router for navigation
 import { StatusBar } from 'expo-status-bar';
-import React from 'react';
+import { Alert } from 'react-native'; // Added Alert
 
 import {
     AvatarContainer,
@@ -21,6 +22,27 @@ import {
 } from '../components/styles';
 
 const UserProfile = () => {
+
+    // --- LOGOUT LOGIC ---
+    const handleLogout = () => {
+        Alert.alert(
+            "Sign Out",
+            "Are you sure you want to log out of UPasakay?",
+            [
+                { text: "Cancel", style: "cancel" },
+                { 
+                    text: "Log Out", 
+                    style: "destructive", 
+                    onPress: () => {
+                        // 1. You could add AsyncStorage.clear() here later
+                        // 2. Redirect to the welcome/login screen
+                        router.replace('/'); 
+                    } 
+                }
+            ]
+        );
+    };
+
     return (
         <StyledContainer style={{ flex: 1, paddingHorizontal: 0 }} colors={[Colors.base_page, Colors.base_page]}>
             <StatusBar style="dark" />
@@ -35,7 +57,7 @@ const UserProfile = () => {
                 <UserEmail>kdolmedo@up.edu.ph</UserEmail>
                 <UserRole>Student</UserRole>
 
-                {/* My Account Section - 322px wide */}
+                {/* My Account Section */}
                 <SectionHeader style={{ width: 322 }}>My Account</SectionHeader>
                 <SingleMenuItem activeOpacity={0.7}>
                     <IconBox color="#B4DEC0">
@@ -45,7 +67,7 @@ const UserProfile = () => {
                     <Ionicons name="chevron-forward" size={20} color="#1A2E1A" />
                 </SingleMenuItem>
 
-                {/* General Section - 345px wide */}
+                {/* General Section */}
                 <SectionHeader style={{ width: 322 }}>General</SectionHeader>
                 <MenuGroup>
                     <MenuItem activeOpacity={0.7}>
@@ -73,7 +95,8 @@ const UserProfile = () => {
                     </MenuItem>
                 </MenuGroup>
 
-                <LogOutButton activeOpacity={0.8}>
+                {/* Connected Logout Button */}
+                <LogOutButton activeOpacity={0.8} onPress={handleLogout}>
                     <LogOutText>Log Out</LogOutText>
                 </LogOutButton>
 
