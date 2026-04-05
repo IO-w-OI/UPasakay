@@ -3,21 +3,27 @@ import React from 'react';
 
 export default function TabLayout() {
   return (
-    <NativeTabs>
+    <NativeTabs
+      tintColor="#004420"          // active icon + label color (green)
+   // optional background
+    >
       <NativeTabs.Trigger name="UserHome">
-        <Icon sf={"house.fill"} drawable="ic_menu_mylocation" />
+        <Icon sf="house.fill" drawable="ic_menu_home" />
         <Label>Home</Label>
       </NativeTabs.Trigger>
+
       <NativeTabs.Trigger name="UserRecents">
-        <Icon sf={"house.fill"} drawable="ic_menu_mylocation" />
+        <Icon sf="clock.fill" drawable="ic_menu_recent_history" />
         <Label>Recents</Label>
       </NativeTabs.Trigger>
-            <NativeTabs.Trigger name="UserMap">
-        <Icon sf={"house.fill"} drawable="ic_menu_mylocation" />
+
+      <NativeTabs.Trigger name="UserMap">
+        <Icon sf="map.fill" drawable="ic_menu_mapmode" />
         <Label>Map</Label>
       </NativeTabs.Trigger>
-            <NativeTabs.Trigger name="UserProfile">
-        <Icon sf={"house.fill"} drawable="ic_menu_mylocation" />
+
+      <NativeTabs.Trigger name="UserProfile">
+        <Icon sf="person.crop.circle.fill" drawable="ic_menu_edit" />
         <Label>Profile</Label>
       </NativeTabs.Trigger>
     </NativeTabs>
