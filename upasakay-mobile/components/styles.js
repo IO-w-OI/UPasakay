@@ -8,6 +8,7 @@ const StatusBarHeight = Constants.statusBarHeight;
 export const Colors = {
     //Font Colors
     text_idle: '#8D8D8D',
+
     text_active: '#000000',
     golden_brown: '#7A4A00',
 
@@ -99,7 +100,7 @@ export const BasePage = styled.View`
     background-color: ${Colors.base_page};
     border-radius: 16px;
     /* Use specific horizontal padding for more control */
-    padding-vertical: 20px;
+    padding-vertical: 10px;
     padding-horizontal: 10px; 
     align-items: flex-start;
 `;
@@ -274,21 +275,33 @@ export const SubHeader = styled.Text`
 //Recents Page Card Settings
 
 export const TripCard = styled.View`
-    width: 355px;
+    width: 92%; 
     height: 143px;
     align-self: center;
-    margin-bottom: 20px;
-    shadow-color: rgba(0, 0, 0, 0.25);
+    margin-bottom: 10px;
+    
+    /* 1. Add the radius to the parent too */
+    background-color: #FEF3DC; 
+    border-radius: 20px; 
+
+    /* 2. Elevation for Android Shadow */
+    elevation: 8; 
+
+    /* 3. iOS Shadow */
+    shadow-color: #000;
     shadow-offset: 0px 4px;
-    shadow-opacity: 1;
-    shadow-radius: 1px;
-    elevation: 4;
+    shadow-opacity: 0.15;
+    shadow-radius: 8px;
+
+    /* 4. DO NOT USE overflow: hidden here, it will kill the shadow! */
+    overflow: visible; 
 `;
 
 export const CardTop = styled.View`
-    width: 355px;
+    width: 100%;
     height: 95px;
     background-color: #FEF3DC;
+    /* 5. Keep these to match the parent */
     border-top-left-radius: 20px;
     border-top-right-radius: 20px;
     padding: 15px;
@@ -297,16 +310,25 @@ export const CardTop = styled.View`
 `;
 
 export const CardBottom = styled.TouchableOpacity`
-    width: 355px;
+    width: 100%;
     height: 46px;
     background-color: #FEF3DC;
     border-bottom-left-radius: 20px;
     border-bottom-right-radius: 20px;
-    border-top-width: 1px;
-    border-top-color: rgba(0, 0, 0, 0.05);
+
+    /* --- THE EMPHASIZED LINE --- */
+    /* 1. Remove any margin so they touch perfectly */
+    margin-top: 0px; 
+    
+    /* 2. Make the line thicker (try 1px or 1.5px) */
+    border-top-width: 1.5px; 
+    
+    /* 3. Darken the color so it's visible (Using a semi-transparent black) */
+    border-top-color: rgba(0, 0, 0, 0.1); 
+    /* ---------------------------- */
+
     justify-content: center;
     padding-left: 20px;
-    margin-top: 2px; /* <--- Adds a tiny physical gap between the sections */
 `;
 
 export const BusIconContainer = styled.View`
@@ -322,7 +344,7 @@ export const TripInfo = styled.View`
 `;
 
 export const TripTitle = styled.Text`
-    font-size: 16px;
+    font-size: 17px;
     color: ${Colors.text_active};
     font-family: 'Nunito-Bold';
 `;
@@ -368,3 +390,167 @@ export const FloatingNavContainer = styled.View`
     border-color: rgba(255, 255, 255, 0.5);
     overflow: hidden;
 `;
+
+// Profile Specifics
+export const AvatarContainer = styled.View`
+    margin-bottom: 5px;
+`;
+
+export const UserName = styled.Text`
+    font-family: 'Nunito-Bold';
+    font-size: 24px;
+    color: #1A2E1A;
+`;
+
+export const UserEmail = styled.Text`
+    font-family: 'Nunito-SemiBold';
+    font-size: 14px;
+    color: #1A2E1A;
+    text-decoration-line: underline;
+`;
+
+export const UserRole = styled.Text`
+    font-family: 'Nunito-Regular';
+    font-size: 14px;
+    color: #1A2E1A;
+    margin-top: 4px;
+    margin-bottom: 3px;
+`;
+
+export const SectionHeader = styled.Text`
+    /* CHANGE THIS: Match CARD_WIDTH so it starts exactly where the card starts */
+    width: ${CARD_WIDTH}; 
+    align-self: center;
+    
+    font-family: 'Nunito-Bold';
+    font-size: 20px;
+    color: #1A2E1A;
+    margin-bottom: 10px;
+    padding-left: 5px; /* Tiny nudge to match the text alignment in Figma */
+`;
+
+// Single Item Container
+const CARD_WIDTH = '90%';
+
+export const SingleMenuItem = styled.TouchableOpacity`
+    width: ${CARD_WIDTH}; 
+    height: 70px;
+    background-color: #FFFFFF;
+    /* CHANGE THIS: 20px is too sharp, 35px matches Figma's roundness */
+    border-radius: 20px; 
+    
+    flex-direction: row;
+    align-items: center;
+    padding-horizontal: 20px;
+    margin-bottom: 20px;
+    align-self: center;
+
+    shadow-color: #000;
+    shadow-offset: 0px 4px;
+    shadow-opacity: 0.15;
+    shadow-radius: 8px;
+    elevation: 5;
+`;
+
+export const MenuGroup = styled.View`
+    width: ${CARD_WIDTH}; 
+    background-color: #FFFFFF;
+    /* CHANGE THIS: Matches the top card */
+    border-radius: 20px; 
+    
+    margin-bottom: 15px;
+    align-self: center;
+    overflow: hidden; /* This is vital to keep the inner items rounded */
+
+    shadow-color: #000;
+    shadow-offset: 0px 4px;
+    shadow-opacity: 0.15;
+    shadow-radius: 8px;
+    elevation: 5;
+`;
+
+// Items inside General - Height 83px
+export const MenuItem = styled.TouchableOpacity`
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    
+    /* CHANGE ONLY THIS: From 18.5% to 70px */
+    /* This matches your SingleMenuItem height of 70px */
+    height: 70px; 
+    
+    padding-horizontal: 20px;
+    
+    border-bottom-width: ${props => props.last ? '0px' : '1px'};
+    border-bottom-color: #F3F3F3;
+`;
+
+// Icon Box - Exact Color #B4DEC0
+export const IconBox = styled.View`
+    width: 36px;
+    height: 36px;
+    background-color: #B4DEC0; 
+    border-radius: 12px;
+    justify-content: center;
+    align-items: center;
+    margin-right: 12px;
+`;
+
+export const LogOutButton = styled.TouchableOpacity`
+    /* 1. Force the width to match your cards */
+    width: 88%; 
+    height: 8%;
+    background-color: #8D1436; 
+    border-radius: 20px;
+    
+    /* 2. This is the fix: it forces the button to center and respect the width */
+    align-self: center; 
+
+    justify-content: center;
+    align-items: center;
+    
+    /* Space from the General group */
+    margin-top: 20px;
+    
+    /* Shadow for consistent 'pop' */
+    shadow-color: #000;
+    shadow-offset: 0px 4px;
+    shadow-opacity: 0.3;
+    shadow-radius: 5px;
+    elevation: 8;
+`;
+
+/*
+--
+export const StyledButton = styled.TouchableOpacity`
+    padding: 5px;
+    background-color: ${Colors.button_loginsignup};
+    justify-content: center;
+    align-items: center;
+    border-radius: 16px;
+    margin-vertical: 7px;
+    height: 49px;
+
+    shadow-color: #000;
+    shadow-offset: 0px 4px;
+    shadow-opacity: 0.25;
+    shadow-radius: 4px;
+    elevation: 5;
+`;
+--
+*/
+
+export const MenuLabel = styled.Text`
+    flex: 1;
+    font-family: 'Nunito-SemiBold';
+    font-size: 16px;
+    color: #1A2E1A;
+`;
+
+export const LogOutText = styled.Text`
+    color: ${Colors.base_page}; 
+    font-size: 20px;
+    font-family: 'Nunito-Bold';
+    text-align: center;
+`;
+
