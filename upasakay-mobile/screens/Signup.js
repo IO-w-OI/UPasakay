@@ -57,7 +57,7 @@ const Signup = () => {
                         // Bypass to Tabs if using test account
                         if (values.email === TEST_USER && values.password === TEST_PASS) {
                             console.log("Test Signup Successful! Entering Tabs...");
-                            router.replace('/(tabs)'); 
+                            router.replace('/(tabs)/UserHome'); 
                             return;
                         }
 
