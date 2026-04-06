@@ -61,7 +61,7 @@ class PassengerController extends Controller
     {
         $passenger = Passenger::with('user')->where('user_id', $id)->first();
 
-        if (! $passenger) {
+        if (!$passenger) {
             return response()->json(['message' => 'Passenger not found.'], 404);
         }
 
@@ -75,7 +75,7 @@ class PassengerController extends Controller
     {
         $passenger = Passenger::with('user')->where('user_id', $id)->first();
 
-        if (! $passenger) {
+        if (!$passenger) {
             return response()->json(['message' => 'Passenger not found.'], 404);
         }
 
@@ -83,7 +83,9 @@ class PassengerController extends Controller
 
         // Update passenger fields
         $passenger->update(array_intersect_key($validated, array_flip([
-            'passenger_number', 'department', 'passenger_type',
+            'passenger_number',
+            'department',
+            'passenger_type',
         ])));
 
         // Update user email if provided
@@ -106,7 +108,7 @@ class PassengerController extends Controller
     {
         $passenger = Passenger::where('user_id', $id)->first();
 
-        if (! $passenger) {
+        if (!$passenger) {
             return response()->json(['message' => 'Passenger not found.'], 404);
         }
 
