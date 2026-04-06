@@ -3,8 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\Passenger;
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class PassengerApiTest extends TestCase
@@ -16,24 +16,36 @@ class PassengerApiTest extends TestCase
      */
     private function authHeaders(): array
     {
-        $user = User::factory()->create();
-        $token = $user->createToken('test')->plainTextToken;
+        $passenger = Passenger::create([
+            'full_name' => 'Auth Passenger',
+            'email' => 'auth-passenger@example.com',
+            'password_hash' => Hash::make('password123'),
+            'passenger_number' => 'AUTH-001',
+            'department' => 'Engineering',
+            'passenger_type' => 'student',
+            'passenger_status' => 'active',
+        ]);
+        $token = $passenger->createToken('test')->plainTextToken;
 
         return ['Authorization' => "Bearer {$token}"];
     }
 
     /**
-     * Helper: create a passenger with its user.
+     * Helper: create a passenger.
      */
     private function createPassenger(array $overrides = []): Passenger
     {
-        $user = User::factory()->create();
+        static $sequence = 0;
+        $sequence++;
 
         return Passenger::create(array_merge([
-            'user_id' => $user->id,
-            'passenger_number' => 'P-' . str_pad($user->id, 4, '0', STR_PAD_LEFT),
+            'full_name' => 'Passenger ' . $sequence,
+            'email' => "passenger{$sequence}@example.com",
+            'password_hash' => Hash::make('password123'),
+            'passenger_number' => 'P-' . str_pad($sequence, 4, '0', STR_PAD_LEFT),
             'department' => 'Engineering',
             'passenger_type' => 'student',
+            'passenger_status' => 'active',
         ], $overrides));
     }
 
@@ -49,7 +61,7 @@ class PassengerApiTest extends TestCase
 
         $response->assertOk()
             ->assertJsonStructure([
-                'data' => [['user_id', 'passenger_number', 'department', 'passenger_type']],
+                'data' => [['id', 'email', 'passenger_number', 'department', 'passenger_type']],
                 'current_page',
                 'last_page',
             ]);
@@ -57,10 +69,11 @@ class PassengerApiTest extends TestCase
 
     // ── STORE ────────────────────────────────────────────────────────────
 
-    public function test_store_creates_passenger_and_user(): void
+    public function test_store_creates_passenger(): void
     {
         $response = $this->withHeaders($this->authHeaders())
             ->postJson('/api/passengers', [
+                'full_name' => 'Student One',
                 'email' => 'student@test.com',
                 'password' => 'password123',
                 'passenger_number' => 'STU-001',
@@ -71,7 +84,7 @@ class PassengerApiTest extends TestCase
         $response->assertStatus(201)
             ->assertJsonPath('data.passenger_number', 'STU-001');
 
-        $this->assertDatabaseHas('users', ['email' => 'student@test.com']);
+        $this->assertDatabaseHas('passengers', ['email' => 'student@test.com']);
         $this->assertDatabaseHas('passengers', ['passenger_number' => 'STU-001']);
     }
 
@@ -81,7 +94,7 @@ class PassengerApiTest extends TestCase
             ->postJson('/api/passengers', []);
 
         $response->assertStatus(422)
-            ->assertJsonValidationErrors(['email', 'password', 'passenger_number']);
+            ->assertJsonValidationErrors(['full_name', 'email', 'password', 'passenger_number']);
     }
 
     public function test_store_rejects_duplicate_passenger_number(): void
@@ -90,6 +103,7 @@ class PassengerApiTest extends TestCase
 
         $response = $this->withHeaders($this->authHeaders())
             ->postJson('/api/passengers', [
+                'full_name' => 'Duplicate Number',
                 'email' => 'new@test.com',
                 'password' => 'password123',
                 'passenger_number' => 'DUP-001',
@@ -103,6 +117,7 @@ class PassengerApiTest extends TestCase
     {
         $response = $this->withHeaders($this->authHeaders())
             ->postJson('/api/passengers', [
+                'full_name' => 'Invalid Type',
                 'email' => 'type@test.com',
                 'password' => 'password123',
                 'passenger_number' => 'TYPE-001',
@@ -120,10 +135,10 @@ class PassengerApiTest extends TestCase
         $passenger = $this->createPassenger();
 
         $response = $this->withHeaders($this->authHeaders())
-            ->getJson("/api/passengers/{$passenger->user_id}");
+            ->getJson("/api/passengers/{$passenger->id}");
 
         $response->assertOk()
-            ->assertJsonPath('data.user_id', $passenger->user_id);
+            ->assertJsonPath('data.id', $passenger->id);
     }
 
     public function test_show_returns_404_for_missing_passenger(): void
@@ -141,7 +156,7 @@ class PassengerApiTest extends TestCase
         $passenger = $this->createPassenger(['department' => 'Old Dept']);
 
         $response = $this->withHeaders($this->authHeaders())
-            ->putJson("/api/passengers/{$passenger->user_id}", [
+            ->patchJson("/api/passengers/{$passenger->id}", [
                 'department' => 'New Department',
             ]);
 
@@ -149,7 +164,7 @@ class PassengerApiTest extends TestCase
             ->assertJsonPath('data.department', 'New Department');
 
         $this->assertDatabaseHas('passengers', [
-            'user_id' => $passenger->user_id,
+            'id' => $passenger->id,
             'department' => 'New Department',
         ]);
     }
@@ -157,7 +172,7 @@ class PassengerApiTest extends TestCase
     public function test_update_returns_404_for_missing_passenger(): void
     {
         $response = $this->withHeaders($this->authHeaders())
-            ->putJson('/api/passengers/99999', ['department' => 'X']);
+            ->patchJson('/api/passengers/99999', ['department' => 'X']);
 
         $response->assertStatus(404);
     }
@@ -169,13 +184,13 @@ class PassengerApiTest extends TestCase
         $passenger = $this->createPassenger();
 
         $response = $this->withHeaders($this->authHeaders())
-            ->deleteJson("/api/passengers/{$passenger->user_id}");
+            ->deleteJson("/api/passengers/{$passenger->id}");
 
         $response->assertOk()
             ->assertJson(['message' => 'Passenger deleted successfully.']);
 
         $this->assertDatabaseMissing('passengers', [
-            'user_id' => $passenger->user_id,
+            'id' => $passenger->id,
         ]);
     }
 
