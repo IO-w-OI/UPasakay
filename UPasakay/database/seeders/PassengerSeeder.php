@@ -11,36 +11,56 @@ class PassengerSeeder extends Seeder
 {
     public function run(): void
     {
-        $user1 = User::updateOrCreate(
-            ['email' => 'juan@up.edu.ph'],
-            ['password_hash' => Hash::make('password')]
-        );
-
-        $user2 = User::updateOrCreate(
-            ['email' => 'maria@up.edu.ph'],
-            ['password_hash' => Hash::make('password')]
-        );
-
-        Passenger::updateOrCreate(
-            ['user_id' => $user1->id],
+        $seedPassengers = [
             [
+                'name' => 'Juan Dela Cruz',
+                'email' => 'juan@up.edu.ph',
                 'passenger_number' => '2021-12345',
                 'department' => 'College of Science',
                 'passenger_type' => 'student',
-                'passenger_status' => 'active',
-                'updated_at' => now(),
-            ]
-        );
-
-        Passenger::updateOrCreate(
-            ['user_id' => $user2->id],
+            ],
             [
+                'name' => 'Maria Santos',
+                'email' => 'maria@up.edu.ph',
                 'passenger_number' => 'STAFF-001',
                 'department' => 'Office of the Registrar',
                 'passenger_type' => 'staff',
-                'passenger_status' => 'active',
-                'updated_at' => now(),
-            ]
-        );
+            ],
+            [
+                'name' => 'Student Three',
+                'email' => 'student3@up.edu.ph',
+                'passenger_number' => 'STU-003',
+                'department' => 'College of Engineering',
+                'passenger_type' => 'student',
+            ],
+            [
+                'name' => 'Student Four',
+                'email' => 'student4@up.edu.ph',
+                'passenger_number' => 'STU-004',
+                'department' => 'College of Arts and Letters',
+                'passenger_type' => 'student',
+            ],
+        ];
+
+        foreach ($seedPassengers as $seedPassenger) {
+            $user = User::updateOrCreate(
+                ['email' => $seedPassenger['email']],
+                [
+                    'name' => $seedPassenger['name'],
+                    'password_hash' => Hash::make('password'),
+                ]
+            );
+
+            Passenger::updateOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'passenger_number' => $seedPassenger['passenger_number'],
+                    'department' => $seedPassenger['department'],
+                    'passenger_type' => $seedPassenger['passenger_type'],
+                    'passenger_status' => 'active',
+                    'updated_at' => now(),
+                ]
+            );
+        }
     }
 }
