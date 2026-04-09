@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
+use App\Models\Passenger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -18,22 +18,28 @@ class AuthController extends Controller
     public function register(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'email' => 'required|email|unique:users,email',
+            'full_name' => 'required|string|max:255',
+            'email' => 'required|email|unique:passengers,email',
             'password' => 'required|string|min:8|confirmed',
+            'passenger_number' => 'required|string|unique:passengers,passenger_number',
         ]);
 
-        $user = User::create([
+        $passenger = Passenger::create([
+            'full_name' => $validated['full_name'],
             'email' => $validated['email'],
             'password_hash' => Hash::make($validated['password']),
+            'passenger_number' => $validated['passenger_number'],
+            'passenger_type' => $request->input('passenger_type', 'student'),
+            'passenger_status' => 'active',
         ]);
 
-        $token = $user->createToken('api-token')->plainTextToken;
+        $token = $passenger->createToken('api-token')->plainTextToken;
 
         return response()->json([
             'message' => 'Registration successful.',
-            'user' => [
-                'id' => $user->id,
-                'email' => $user->email,
+            'passenger' => [
+                'id' => $passenger->id,
+                'email' => $passenger->email,
             ],
             'token' => $token,
         ], 201);
@@ -48,22 +54,21 @@ class AuthController extends Controller
             'email' => 'required|email',
             'password' => 'required|string',
         ]);
+        $passenger = Passenger::where('email', $request->email)->first();
 
-        $user = User::where('email', $request->email)->first();
-
-        if (!$user || !Hash::check($request->password, $user->password_hash)) {
+        if (!$passenger || !Hash::check($request->password, $passenger->password_hash)) {
             throw ValidationException::withMessages([
                 'email' => ['The provided credentials are incorrect.'],
             ]);
         }
 
-        $token = $user->createToken('api-token')->plainTextToken;
+        $token = $passenger->createToken('api-token')->plainTextToken;
 
         return response()->json([
             'message' => 'Login successful.',
-            'user' => [
-                'id' => $user->id,
-                'email' => $user->email,
+            'passenger' => [
+                'id' => $passenger->id,
+                'email' => $passenger->email,
             ],
             'token' => $token,
         ]);
