@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 use App\Models\Driver;
 use App\Models\Route;
 use App\Models\Shuttle;
@@ -12,7 +11,7 @@ class ShuttleSeeder extends Seeder
 {
     public function run(): void
     {
-        DB::statement('TRUNCATE TABLE shuttles RESTART IDENTITY CASCADE');
+        Shuttle::query()->delete();
 
         $south = Route::where('name', 'South')->first();
         $north = Route::where('name', 'North')->first();
