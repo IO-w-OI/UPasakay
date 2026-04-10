@@ -86,6 +86,49 @@ UPasakay is a shuttle management system (mobile + web) that provides:
 >   php artisan migrate:fresh --seed
 >   ```
 
+> [!IMPORTANT]
+>
+> ## Recent README Update (2026-04-01)
+>
+> - If your CLI `php` lacks the `pdo_pgsql` driver on Windows, use Herd's PHP for artisan commands that interact with PostgreSQL. Example (PowerShell):
+>
+> ```powershell
+> & "C:/Users/DELL/.config/herd/bin/php.bat" artisan migrate --force
+> & "C:/Users/DELL/.config/herd/bin/php.bat" artisan db:seed --no-interaction
+> ```
+>
+> - What changed (2026-04-01):
+>   - ActivityLog now fails gracefully if the table is absent.
+>   - Seeders made idempotent; migrations and seeders applied locally.
+>   - Vite/Wayfinder config updated to prefer Herd PHP when available.
+
+> ### Where to find verification URLs (when `MAIL_MAILER=log`)
+>
+> If your local `.env` uses the `log` mailer (the default in `.env.example`), verification emails are written to the application log instead of being sent.
+>
+> - Log file path: `storage/logs/laravel.log`.
+> - To search the most recent verification links (PowerShell):
+>
+> ```powershell
+> Get-Content storage/logs/laravel.log -Tail 400 | Select-String "Verify Email Address"
+> ```
+>
+> - Or on macOS / WSL / Git Bash:
+>
+> ```bash
+> tail -n 400 storage/logs/laravel.log | grep "Verify Email Address"
+> ```
+>
+> - The log contains a line starting with `Verify Email Address:` followed by the full verification URL (e.g. `https://upasakay.test/email/verify/1/<hash>?expires=...&signature=...`). Copy that URL into your browser to verify the account.
+> - Alternative: run MailHog locally and point `MAIL_MAILER=smtp` to `127.0.0.1:1025` to view messages at `http://localhost:8025`.
+> - Quick resend via Tinker (Herd PHP example):
+>
+> ```powershell
+> & "C:/Users/DELL/.config/herd/bin/php.bat" artisan tinker
+> >>> $user = App\Models\User::where('email', 'you@example.com')->first();
+> >>> $user->sendEmailVerificationNotification();
+> ```
+
 # 📥 Repository Access
 
 Clone the repository:

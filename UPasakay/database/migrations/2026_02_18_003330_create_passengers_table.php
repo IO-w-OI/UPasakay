@@ -12,9 +12,20 @@ return new class extends Migration {
     {
         Schema::create('passengers', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            // Link to users when applicable, but allow passengers to exist without a user
+            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
+
+            $table->string('full_name')->nullable();
+            $table->string('email')->unique()->nullable();
+            $table->string('password_hash')->nullable();
+
             $table->string('passenger_number')->unique();
-            $table->string('course')->nullable();
+            $table->string('department')->nullable();
+            $table->string('passenger_type')->default('student');
+            $table->string('passenger_status')->default('active');
+            $table->string('proof_document_path')->nullable();
+            $table->timestamp('reviewed_at')->nullable();
+
             $table->timestamps();
         });
     }

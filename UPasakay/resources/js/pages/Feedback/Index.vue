@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { Search, Download, Star, BarChart2, X, MessageSquare, ChevronRight, Check, CheckCircle2, Bus } from 'lucide-vue-next';
 import { Head, router } from '@inertiajs/vue3';
-import { ref, computed, onMounted } from 'vue';
+import { Search, Download, Star, BarChart2, X, MessageSquare, ChevronRight, Check, CheckCircle2, Bus } from 'lucide-vue-next';
+import { ref, computed } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { type BreadcrumbItem } from '@/types';
 import { dashboard } from '@/routes';
+import { type BreadcrumbItem } from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Home',     href: dashboard().url },
@@ -66,7 +66,6 @@ const RADIUS = 54;
 const CIRC   = 2 * Math.PI * RADIUS;
 const successDash = computed(() => (props.stats.boardedPct / 100) * CIRC);
 const failedDash  = computed(() => (props.stats.failedPct  / 100) * CIRC);
-const failedOffset = computed(() => CIRC - successDash.value);
 
 // Helpers
 const statusBadge = (s: string) =>

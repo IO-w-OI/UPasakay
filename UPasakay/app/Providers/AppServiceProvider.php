@@ -4,10 +4,17 @@ namespace App\Providers;
 
 use App\Models\Admin;
 use App\Policies\AdminPolicy;
+use App\Listeners\LogSuccessfulLogin;
+use App\Models\DriverAssignment;
+use App\Models\PickupRequest;
+use App\Observers\DriverAssignmentObserver;
+use App\Observers\PickupRequestObserver;
 use Carbon\CarbonImmutable;
+use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -37,6 +44,13 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->registerPolicies();
         $this->configureDefaults();
+
+        // Register model observers for activity logging
+        PickupRequest::observe(PickupRequestObserver::class);
+        DriverAssignment::observe(DriverAssignmentObserver::class);
+
+        // Register event listener for login activity
+        Event::listen(Login::class, LogSuccessfulLogin::class);
     }
 
     /**

@@ -4,10 +4,16 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\DriverAssignment;
+use App\Services\DriverAssignmentService;
 use Illuminate\Http\Request;
+use InvalidArgumentException;
 
 class DriverAssignmentController extends Controller
 {
+    public function __construct(private readonly DriverAssignmentService $assignmentService)
+    {
+    }
+
     public function index()
     {
         return response()->json(
@@ -18,12 +24,21 @@ class DriverAssignmentController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'driver_id' => 'required|exists:drivers,user_id',
+            'driver_id' => 'required|exists:drivers,id',
             'pickup_request_id' => 'required|exists:pickup_requests,id',
-            'status' => 'in:active,completed,cancelled',
+            'status' => 'sometimes|in:active,completed,cancelled',
         ]);
 
-        $assignment = DriverAssignment::create($validated);
+        try {
+            $assignment = $this->assignmentService->assignByIds(
+                $validated['driver_id'],
+                $validated['pickup_request_id'],
+                $validated['status'] ?? 'active',
+            );
+        } catch (InvalidArgumentException $exception) {
+            return response()->json(['message' => $exception->getMessage()], 422);
+        }
+
         return response()->json($assignment, 201);
     }
 
@@ -38,13 +53,19 @@ class DriverAssignmentController extends Controller
             'status' => 'sometimes|in:active,completed,cancelled',
         ]);
 
-        $driverAssignment->update($validated);
+        if (array_key_exists('status', $validated)) {
+            $driverAssignment = $this->assignmentService->updateStatus($driverAssignment, $validated['status']);
+        } else {
+            $driverAssignment = $driverAssignment->fresh(['driver', 'pickupRequest']);
+        }
+
         return response()->json($driverAssignment);
     }
 
     public function destroy(DriverAssignment $driverAssignment)
     {
-        $driverAssignment->delete();
+        $this->assignmentService->delete($driverAssignment);
+
         return response()->json(['message' => 'Assignment deleted successfully']);
     }
 }

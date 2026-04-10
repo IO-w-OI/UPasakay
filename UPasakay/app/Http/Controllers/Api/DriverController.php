@@ -33,7 +33,7 @@ class DriverController extends Controller
     public function update(Request $request, Driver $driver)
     {
         $validated = $request->validate([
-            'license_number' => 'sometimes|string|unique:drivers,license_number,' . $driver->user_id . ',user_id',
+            'license_number' => 'sometimes|string|unique:drivers,license_number,' . $driver->id,
             'is_available' => 'boolean',
         ]);
 

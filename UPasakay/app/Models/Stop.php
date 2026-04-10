@@ -4,7 +4,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Stop extends Model
 {
-    protected $fillable = ['route_id', 'name', 'latitude', 'longitude', 'is_active'];
+    protected $fillable = ['route_id', 'name', 'sequence', 'latitude', 'longitude', 'is_active'];
 
     public function route()
     {

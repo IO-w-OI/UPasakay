@@ -39,7 +39,7 @@ class PasswordUpdateTest extends TestCase
             ->assertSessionHasNoErrors()
             ->assertRedirect(route('user-password.edit'));
 
-        $this->assertTrue(Hash::check('new-password', $user->refresh()->password));
+        $this->assertTrue(Hash::check('new-password', $user->refresh()->password_hash));
     }
 
     public function test_correct_password_must_be_provided_to_update_password()

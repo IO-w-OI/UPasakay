@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import {
-    Mail, Key, Bus, ChevronLeft, Star, Edit, Trash2, Archive,
+    Mail, Key, ChevronLeft, Star, Edit, Trash2, Archive,
     AlertTriangle, Eye, EyeOff, RefreshCw, Shuffle,
 } from 'lucide-vue-next';
 import { ref, onBeforeUnmount } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { type BreadcrumbItem } from '@/types';
 import { dashboard } from '@/routes';
+import { type BreadcrumbItem } from '@/types';
 
 const props = defineProps<{
     driver: {

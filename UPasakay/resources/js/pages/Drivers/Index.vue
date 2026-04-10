@@ -7,8 +7,8 @@ import {
 } from 'lucide-vue-next';
 import { ref, computed, onBeforeUnmount } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { type BreadcrumbItem } from '@/types';
 import { dashboard } from '@/routes';
+import { type BreadcrumbItem } from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Home', href: dashboard().url },
@@ -39,6 +39,8 @@ const props = defineProps<{
     routes: string[];
     filters: { search?: string; status?: string; route?: string };
 }>();
+
+const activeManagementTab = ref<'drivers' | 'shuttles'>('drivers');
 
 // ── Filters ────────────────────────────────────────────────────────────────
 const search       = ref(props.filters.search ?? '');
@@ -265,6 +267,18 @@ const setShuttleStatus = (s: ShuttleItem, status: string) => {
     shuttleMenu.value = null;
 };
 
+const quickAssignDriver = ref<Record<number, number | ''>>({});
+const quickAssignToShuttle = (s: ShuttleItem) => {
+    const driverId = quickAssignDriver.value[s.id];
+    if (!driverId) return;
+
+    router.patch(
+        `/shuttles/${s.id}/assign-driver`,
+        { driver_id: Number(driverId) },
+        { preserveScroll: true },
+    );
+};
+
 // ── Helpers ───────────────────────────────────────────────────────────────
 const statusDot = (s: string) => ({
     active: 'bg-green-500', idle: 'bg-yellow-400', offline: 'bg-gray-400', suspended: 'bg-red-500',
@@ -310,12 +324,39 @@ const lastActiveClass = (d: DriverItem) => d.is_online ? 'text-green-600 dark:te
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="space-y-8 p-6">
 
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <h1 class="text-2xl font-bold text-foreground">Drivers &amp; Shuttles</h1>
+
+                <div class="inline-flex rounded-xl border border-border/70 bg-card p-1">
+                    <button
+                        type="button"
+                        class="rounded-lg px-3 py-1.5 text-sm font-medium"
+                        :class="activeManagementTab === 'drivers'
+                            ? 'bg-[#8B0000] text-white'
+                            : 'text-muted-foreground hover:bg-accent'"
+                        @click="activeManagementTab = 'drivers'"
+                    >
+                        Drivers
+                    </button>
+                    <button
+                        type="button"
+                        class="rounded-lg px-3 py-1.5 text-sm font-medium"
+                        :class="activeManagementTab === 'shuttles'
+                            ? 'bg-[#8B0000] text-white'
+                            : 'text-muted-foreground hover:bg-accent'"
+                        @click="activeManagementTab = 'shuttles'"
+                    >
+                        Shuttles
+                    </button>
+                </div>
+            </div>
+
             <!-- ═══════════════════════════════════════════
                  DRIVER MANAGEMENT
                  ═══════════════════════════════════════════ -->
-            <section class="space-y-5">
+            <section v-show="activeManagementTab === 'drivers'" class="space-y-5">
                 <div class="flex items-center justify-between">
-                    <h1 class="text-2xl font-bold text-foreground">Driver Management</h1>
+                    <h2 class="text-2xl font-bold text-foreground">Driver Management</h2>
                     <button @click="showCreateDrawer = true"
                         class="flex items-center gap-2 rounded-xl bg-[#8B0000] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#700000]">
                         <UserPlus class="h-4 w-4" /> Create New Driver
@@ -454,9 +495,12 @@ const lastActiveClass = (d: DriverItem) => d.is_online ? 'text-green-600 dark:te
                             <template v-for="link in drivers.links" :key="link.label">
                                 <Link v-if="link.url" :href="link.url"
                                     class="rounded-lg px-2.5 py-1.5 text-xs font-medium"
-                                    :class="link.active ? 'bg-[#8B0000] text-white' : 'border border-border/70 text-muted-foreground hover:bg-accent'"
-                                    v-html="link.label" />
-                                <span v-else class="rounded-lg px-2.5 py-1.5 text-xs text-muted-foreground/50" v-html="link.label" />
+                                    :class="link.active ? 'bg-[#8B0000] text-white' : 'border border-border/70 text-muted-foreground hover:bg-accent'">
+                                    <span v-html="link.label" />
+                                </Link>
+                                <span v-else class="rounded-lg px-2.5 py-1.5 text-xs text-muted-foreground/50">
+                                    <span v-html="link.label" />
+                                </span>
                             </template>
                         </div>
                     </div>
@@ -474,7 +518,7 @@ const lastActiveClass = (d: DriverItem) => d.is_online ? 'text-green-600 dark:te
             <!-- ═══════════════════════════════════════════
                  SHUTTLE MANAGEMENT
                  ═══════════════════════════════════════════ -->
-            <section class="space-y-5">
+              <section v-show="activeManagementTab === 'shuttles'" class="space-y-5">
                 <h2 class="text-2xl font-bold text-foreground">Shuttle Management</h2>
 
                 <!-- Shuttle Filter bar -->
@@ -539,7 +583,26 @@ const lastActiveClass = (d: DriverItem) => d.is_online ? 'text-green-600 dark:te
                                     <td class="px-4 py-3">
                                         <span class="rounded-full px-2.5 py-0.5 text-xs font-medium" :class="routeBadge(s.route)">{{ s.route }}</span>
                                     </td>
-                                    <td class="px-4 py-3 text-muted-foreground">{{ s.driver }}</td>
+                                    <td class="px-4 py-3 text-muted-foreground">
+                                        <div v-if="s.status === 'idle' || !s.driver_id" class="flex flex-wrap items-center gap-2">
+                                            <select
+                                                v-model="quickAssignDriver[s.id]"
+                                                class="rounded-md border border-border/70 bg-card px-2 py-1 text-xs text-foreground focus:outline-none"
+                                            >
+                                                <option value="">Assign driver...</option>
+                                                <option v-for="d in allDrivers" :key="d.id" :value="d.id">{{ d.full_name }}</option>
+                                            </select>
+                                            <button
+                                                type="button"
+                                                class="rounded-md bg-[#8B0000] px-2.5 py-1 text-xs font-semibold text-white hover:bg-[#700000]"
+                                                :disabled="!quickAssignDriver[s.id]"
+                                                @click="quickAssignToShuttle(s)"
+                                            >
+                                                Assign
+                                            </button>
+                                        </div>
+                                        <span v-else>{{ s.driver }}</span>
+                                    </td>
                                     <td class="px-4 py-3">
                                         <span class="flex items-center gap-1.5">
                                             <span :class="['h-2 w-2 rounded-full', shuttleStatusDot(s.status)]" />

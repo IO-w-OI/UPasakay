@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 use App\Models\PickupRequest;
 use App\Models\Route;
 use App\Models\Stop;
@@ -13,7 +12,7 @@ class PickupRequestSeeder extends Seeder
 {
     public function run(): void
     {
-        DB::statement('TRUNCATE TABLE pickup_requests RESTART IDENTITY CASCADE');
+        PickupRequest::query()->delete();
 
         $north = Route::where('name', 'North')->first();
         $south = Route::where('name', 'South')->first();
@@ -30,14 +29,15 @@ class PickupRequestSeeder extends Seeder
             $cebu->id => $cebuStops,
         ];
 
-        // Pull passenger user IDs
-        $users = User::whereNotIn('email', [
-            'admin@upasakay.edu.ph',
-            'juan@upasakay.com',
-            'maria@upasakay.com',
-            'pedro@upasakay.com',
-            'ana@upasakay.com',
-        ])->pluck('id')->take(5)->toArray();
+        // Only pull user IDs that have an associated active Passenger record.
+        $users = User::whereHas('passenger', function ($query) {
+            $query->where('passenger_status', 'active');
+        })->pluck('id')->toArray();
+
+        // Fallback safety; PassengerSeeder should provide active passengers.
+        if (empty($users)) {
+            $users = [1];
+        }
 
         $uid = fn(int $i) => $users[$i % count($users)] ?? 1;
 
