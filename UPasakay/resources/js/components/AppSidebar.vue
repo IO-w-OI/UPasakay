@@ -5,14 +5,13 @@ import NavMain from '@/components/NavMain.vue';
 import {
     Sidebar,
     SidebarContent,
-    SidebarFooter,
     SidebarHeader,
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
-import { edit as editAppearance } from '@/routes/appearance';
+import { edit as editProfile } from '@/routes/profile';
 import { type NavItem } from '@/types';
 import AppLogo from './AppLogo.vue';
 
@@ -27,7 +26,7 @@ const mainNavItems: NavItem[] = [
     { title: 'Passengers', href: '/passengers', icon: UserCheck2, badge: pendingPassengers || undefined },
     { title: 'Notifications', href: '/notifications', icon: Bell },
     { title: 'Feedback & Reports', href: '/feedback', icon: MessageSquare },
-    { title: 'Settings', href: editAppearance(), icon: Settings },
+    { title: 'Settings', href: editProfile(), icon: Settings },
 ];
 </script>
 
@@ -49,12 +48,6 @@ const mainNavItems: NavItem[] = [
             <NavMain :items="mainNavItems" />
         </SidebarContent>
 
-        <SidebarFooter>
-            <SidebarMenu>
-                <SidebarMenuItem>
-                </SidebarMenuItem>
-            </SidebarMenu>
-        </SidebarFooter>
     </Sidebar>
     <slot />
 </template>

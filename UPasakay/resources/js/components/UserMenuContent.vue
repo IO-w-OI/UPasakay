@@ -7,6 +7,7 @@ import {
     DropdownMenuLabel,
     DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
+import { Badge } from '@/components/ui/badge';
 import UserInfo from '@/components/UserInfo.vue';
 import { logout } from '@/routes';
 import { edit } from '@/routes/profile';
@@ -14,6 +15,7 @@ import type { User } from '@/types';
 
 type Props = {
     user: User;
+    role?: string;
 };
 
 const handleLogout = () => {
@@ -27,6 +29,11 @@ defineProps<Props>();
     <DropdownMenuLabel class="p-0 font-normal">
         <div class="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
             <UserInfo :user="user" :show-email="true" />
+        </div>
+        <div v-if="role" class="px-1 pb-1.5">
+            <Badge variant="secondary" class="text-[10px] uppercase tracking-wide">
+                {{ role }}
+            </Badge>
         </div>
     </DropdownMenuLabel>
     <DropdownMenuSeparator />

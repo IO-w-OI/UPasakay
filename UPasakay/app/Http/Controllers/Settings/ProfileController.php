@@ -19,9 +19,22 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): Response
     {
+        $user = $request->user()->loadMissing(['admin:id,user_id', 'driver:id,user_id', 'passenger:id,user_id']);
+
+        $role = null;
+
+        if ($user->admin) {
+            $role = 'Admin';
+        } elseif ($user->driver) {
+            $role = 'Driver';
+        } elseif ($user->passenger) {
+            $role = 'Passenger';
+        }
+
         return Inertia::render('settings/Profile', [
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => $request->session()->get('status'),
+            'role' => $role,
         ]);
     }
 
