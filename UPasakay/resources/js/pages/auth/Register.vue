@@ -8,7 +8,6 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import AuthBase from '@/layouts/AuthLayout.vue';
 import { login } from '@/routes';
-import { store } from '@/routes/register';
 </script>
 
 <template>
@@ -19,7 +18,8 @@ import { store } from '@/routes/register';
         <Head title="Register" />
 
         <Form
-            v-bind="store.form()"
+            action="/register"
+            method="post"
             :reset-on-success="['password', 'password_confirmation']"
             v-slot="{ errors, processing }"
             class="flex flex-col gap-6"
