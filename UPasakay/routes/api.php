@@ -15,7 +15,6 @@ use App\Http\Controllers\Api\PickupRequestController;
 use App\Http\Controllers\Api\DriverAssignmentController;
 use App\Http\Controllers\Api\ShuttleLocationController;
 use App\Http\Controllers\Api\NotificationController;
-use App\Http\Controllers\Api\AuthController;
 
 // Public auth routes
 Route::post('register', [AuthController::class, 'register']);
@@ -69,7 +68,7 @@ Route::prefix('mobile')->group(function () {
 
         $passenger = Passenger::where('email', $request->email)->first();
 
-        if (! $passenger || ! Hash::check($request->password, $passenger->password_hash)) {
+        if (!$passenger || !Hash::check($request->password, $passenger->password_hash)) {
             return response()->json(['message' => 'Invalid credentials.'], 401);
         }
 
