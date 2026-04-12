@@ -19,7 +19,7 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): Response
     {
-        $user = $request->user()->loadMissing(['admin:id,user_id', 'driver:id,user_id', 'passenger:id,user_id']);
+        $user = $request->user()->loadMissing(['adminRelation:id,user_id', 'driver:id,user_id', 'passenger:id,user_id']);
 
         $role = null;
 

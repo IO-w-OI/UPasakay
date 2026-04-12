@@ -35,12 +35,15 @@ class NotificationController extends Controller
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'type' => 'required|string|in:schedule,delay,change,alert,custom',
+            'type' => 'required|string|in:schedule,delay,change,alert,custom,availability,announcement',
             'message' => 'nullable|string',
             'target' => 'required|string',
             'route_id' => 'nullable|exists:routes,id',
             'status' => 'sometimes|string|in:pending,sent,scheduled,failed',
         ]);
+
+        $validated['target_route'] = $validated['target'] ?? 'all';
+        $validated['audience'] = 'all';
 
         $notification = Notification::create($validated);
 
@@ -56,12 +59,16 @@ class NotificationController extends Controller
     {
         $validated = $request->validate([
             'title' => 'sometimes|string|max:255',
-            'type' => 'sometimes|string|in:schedule,delay,change,alert,custom',
+            'type' => 'sometimes|string|in:schedule,delay,change,alert,custom,availability,announcement',
             'message' => 'nullable|string',
             'target' => 'sometimes|string',
             'route_id' => 'nullable|exists:routes,id',
             'status' => 'sometimes|string|in:pending,sent,scheduled,failed',
         ]);
+
+        if (array_key_exists('target', $validated)) {
+            $validated['target_route'] = $validated['target'];
+        }
 
         $notification->update($validated);
 

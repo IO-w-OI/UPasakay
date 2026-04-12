@@ -39,7 +39,7 @@ class HandleInertiaRequests extends Middleware
         $user = $request->user();
 
         if ($user) {
-            $user->loadMissing(['admin:id,user_id', 'driver:id,user_id', 'passenger:id,user_id']);
+            $user->loadMissing(['adminRelation:id,user_id', 'driver:id,user_id', 'passenger:id,user_id']);
         }
 
         $role = null;
