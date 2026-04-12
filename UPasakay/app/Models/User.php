@@ -14,7 +14,6 @@ use Laravel\Sanctum\HasApiTokens;
 class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, TwoFactorAuthenticatable, HasApiTokens;
     use HasApiTokens, HasFactory, Notifiable, TwoFactorAuthenticatable;
 
     /**
@@ -75,12 +74,25 @@ class User extends Authenticatable implements MustVerifyEmail
     /**
      * Get the admin account associated with this user.
      */
-    public function admin()
+    public function admin(): ?Admin
     {
-        return $this->hasOne(Admin::class, 'user_id', 'id');
-    public function admin(): HasOne
+        return $this->adminRelation()->first();
+    }
+
+    /**
+     * Relationship builder for the user's admin account.
+     */
+    public function adminRelation(): HasOne
     {
         return $this->hasOne(Admin::class);
+    }
+
+    /**
+     * Provide property-style access for `$user->admin`.
+     */
+    public function getAdminAttribute(): ?Admin
+    {
+        return $this->admin();
     }
 
     public function driver(): HasOne

@@ -1,9 +1,12 @@
 <?php
 namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class PickupRequest extends Model
 {
+    use HasFactory;
+
     protected $fillable = ['user_id', 'route_id', 'pickup_stop_id', 'dropoff_stop_id', 'status', 'assigned_at', 'completed_at'];
 
     public function user()
