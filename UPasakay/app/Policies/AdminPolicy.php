@@ -12,7 +12,7 @@ class AdminPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->admin() && $user->admin->isSuperAdmin();
+        return $user->admin?->isSuperAdmin() ?? false;
     }
 
     /**
@@ -20,7 +20,7 @@ class AdminPolicy
      */
     public function view(User $user, Admin $admin): bool
     {
-        return $user->admin() && $user->admin->isSuperAdmin();
+        return $user->admin?->isSuperAdmin() ?? false;
     }
 
     /**
@@ -28,7 +28,7 @@ class AdminPolicy
      */
     public function create(User $user): bool
     {
-        return $user->admin() && $user->admin->isSuperAdmin();
+        return $user->admin?->isSuperAdmin() ?? false;
     }
 
     /**
@@ -37,7 +37,7 @@ class AdminPolicy
     public function update(User $user, Admin $admin): bool
     {
         // Super admin can update anyone except cannot downgrade themselves
-        if ($user->admin() && $user->admin->isSuperAdmin()) {
+        if ($user->admin?->isSuperAdmin()) {
             if ($user->id === $admin->user_id) {
                 // Prevent downgrading oneself
                 return false;
@@ -54,7 +54,7 @@ class AdminPolicy
     public function delete(User $user, Admin $admin): bool
     {
         // Super admin can delete anyone except themselves
-        if ($user->admin() && $user->admin->isSuperAdmin()) {
+        if ($user->admin?->isSuperAdmin()) {
             return $user->id !== $admin->user_id;
         }
 
