@@ -43,7 +43,7 @@ class NotificationFactory extends Factory
      */
     public function pending(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn(array $attributes) => [
             'status' => 'pending',
             'sent_at' => null,
             'scheduled_at' => null,
@@ -55,7 +55,7 @@ class NotificationFactory extends Factory
      */
     public function sent(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn(array $attributes) => [
             'status' => 'sent',
             'sent_at' => now(),
         ]);
@@ -66,7 +66,7 @@ class NotificationFactory extends Factory
      */
     public function scheduled(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn(array $attributes) => [
             'status' => 'scheduled',
             'sent_at' => null,
             'scheduled_at' => now()->addHours(fake()->numberBetween(1, 48)),
@@ -78,7 +78,7 @@ class NotificationFactory extends Factory
      */
     public function failed(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn(array $attributes) => [
             'status' => 'failed',
         ]);
     }
@@ -88,7 +88,7 @@ class NotificationFactory extends Factory
      */
     public function schedule(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn(array $attributes) => [
             'type' => 'schedule',
         ]);
     }
@@ -98,7 +98,7 @@ class NotificationFactory extends Factory
      */
     public function delay(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn(array $attributes) => [
             'type' => 'delay',
         ]);
     }
@@ -108,7 +108,7 @@ class NotificationFactory extends Factory
      */
     public function change(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn(array $attributes) => [
             'type' => 'change',
         ]);
     }
