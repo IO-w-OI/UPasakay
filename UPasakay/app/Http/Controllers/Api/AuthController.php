@@ -18,7 +18,7 @@ class AuthController extends Controller
     {
         $passwordRules = ['required', 'confirmed'];
 
-        if (! $request->filled('passenger_number')) {
+        if (!$request->filled('passenger_number')) {
             $passwordRules[] = Password::min(8)
                 ->mixedCase()
                 ->numbers()
@@ -83,7 +83,7 @@ class AuthController extends Controller
 
         $passenger = Passenger::where('email', $request->email)->first();
         if ($passenger) {
-            if (! Hash::check($request->password, (string) $passenger->password_hash)) {
+            if (!Hash::check($request->password, (string) $passenger->password_hash)) {
                 throw ValidationException::withMessages([
                     'email' => ['The provided credentials are incorrect.'],
                 ]);
@@ -111,7 +111,7 @@ class AuthController extends Controller
         }
 
         $user = User::where('email', $request->email)->first();
-        if (! $user || ! Hash::check($request->password, (string) $user->password_hash)) {
+        if (!$user || !Hash::check($request->password, (string) $user->password_hash)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid credentials',
