@@ -28,10 +28,13 @@ class NotificationFactory extends Factory
             'message' => fake()->paragraph(),
             'status' => fake()->randomElement($statuses),
             'target' => fake()->randomElement($targets),
+            'target_route' => 'all',
+            'audience' => 'all',
             'route_id' => fake()->randomElement([null, null, Route::factory()]),
             'scheduled_at' => fake()->dateTimeBetween('-7 days', '+30 days'),
             'sent_at' => fake()->optional()->dateTime(),
             'metadata' => null,
+            'failed_reason' => null,
         ];
     }
 
