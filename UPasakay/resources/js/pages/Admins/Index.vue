@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { Head, Link, router, useForm } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import { Search, UserPlus, Edit, Trash2, MoreHorizontal, AlertTriangle } from 'lucide-vue-next';
-import { ref, computed, onBeforeUnmount } from 'vue';
+import { ref, onBeforeUnmount } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { type BreadcrumbItem } from '@/types';
 import { dashboard } from '@/routes';
+import { type BreadcrumbItem } from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Home', href: dashboard().url },
@@ -225,8 +225,9 @@ const toggleMenu = (id: number) => {
                                     'bg-blue-600 text-white': link.active,
                                     'text-gray-700 hover:bg-gray-100': !link.active,
                                 }"
-                                v-html="link.label"
-                            />
+                            >
+                                <span v-html="link.label"></span>
+                            </Link>
                             <span
                                 v-else
                                 :class="{
