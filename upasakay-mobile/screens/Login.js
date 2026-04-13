@@ -69,27 +69,23 @@ const Login = () => {
                     initialValues={{ email: '', password: '' }}
                     // Inside your Login.tsx Formik onSubmit:
                     onSubmit={(values) => {
-                        // 1. REGEX Check first
+                        // 1. REGEX Check
                         const upEmailRegex = /^[a-zA-Z0-9._%+-]+@up\.edu\.ph$/;
                         if (!upEmailRegex.test(values.email)) {
                             Alert.alert("Invalid Email", "Please use your official @up.edu.ph email address.");
                             return;
                         }
 
-                        // 2. THE CHECK
-                        // This is where the magic happens. We ask UserStore to find a match.
-                        const userMatch = validateUser(values.email, values.password);
+                        // 2. THE CHECK (Updated to handle the object response)
+                        const result = validateUser(values.email, values.password);
 
-                        if (userMatch) {
-                            // SUCCESS: The array had a match!
-                            console.log("Login Success! Name:", userMatch.name);
+                        if (result.success) {
+                            // SUCCESS: result.user contains the data
+                            console.log("Login Success! Name:", result.user.name);
                             router.replace('/(tabs)/UserHome'); 
                         } else {
-                            // FAIL: The email/password didn't exist in the array
-                            Alert.alert(
-                                "Login Failed", 
-                                "We couldn't find an account with that email/password. Sign up now!"
-                            );
+                            // FAIL: result.message contains "Invalid credentials."
+                            Alert.alert("Login Failed", result.message);
                         }
                     }}
                 >
