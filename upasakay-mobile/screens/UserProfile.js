@@ -1,7 +1,10 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { router } from 'expo-router'; // Added router for navigation
+import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { Alert } from 'react-native'; // Added Alert
+import { Alert } from 'react-native';
+
+// 1. IMPORT THE CURRENT USER DATA
+import { currentUser } from '../services/UserStore';
 
 import {
     AvatarContainer,
@@ -34,8 +37,7 @@ const UserProfile = () => {
                     text: "Log Out", 
                     style: "destructive", 
                     onPress: () => {
-                        // 1. You could add AsyncStorage.clear() here later
-                        // 2. Redirect to the welcome/login screen
+                        // Redirect to the welcome/login screen
                         router.replace('/'); 
                     } 
                 }
@@ -53,9 +55,11 @@ const UserProfile = () => {
                     <MaterialCommunityIcons name="account-circle" size={85} color="#1A2E1A" />
                 </AvatarContainer>
                 
-                <UserName>Kyle Dominic D. Olmedo</UserName>
-                <UserEmail>kdolmedo@up.edu.ph</UserEmail>
-                <UserRole>Student</UserRole>
+                {/* 2. REFERENCE DYNAMIC DATA */}
+                {/* We use ?. to prevent crashing if currentUser is temporarily null */}
+                <UserName>{currentUser?.name || "User Name"}</UserName>
+                <UserEmail>{currentUser?.email || "email@up.edu.ph"}</UserEmail>
+                <UserRole>{currentUser?.role || "Student"}</UserRole>
 
                 {/* My Account Section */}
                 <SectionHeader style={{ width: 322 }}>My Account</SectionHeader>
