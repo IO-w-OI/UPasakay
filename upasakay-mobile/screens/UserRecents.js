@@ -1,5 +1,4 @@
 import { StatusBar } from 'expo-status-bar';
-import React from 'react';
 import { Image, ScrollView, View } from 'react-native';
 
 import {
@@ -33,8 +32,8 @@ const TripItem = ({ status, route, destination, date }) => {
         </BusIconContainer>
         
         <TripInfo>
-          <TripTitle>{route}</TripTitle>
-          <TripTitle style={{ fontFamily: 'Nunito-Bold', fontSize: 15 }}>{destination}</TripTitle>
+          <TripTitle style={{ fontFamily: 'Nunito-Bold', fontSize: 13 }}>{route}</TripTitle>
+          <TripTitle style={{ fontFamily: 'Nunito-Bold', fontSize: 13 }}>{destination}</TripTitle>
           <TripDate>{date}</TripDate>
         </TripInfo>
 

@@ -8,7 +8,11 @@ import {
     StyledButton,
     StyledContainer,
     SubHeader,
+    UserName,
 } from '../components/styles';
+
+//database
+import { currentUser } from '../services/UserStore';
 
 const UserHome = () => {
 
@@ -31,7 +35,9 @@ const UserHome = () => {
                     }} 
                 />
                 <Header>
-                    Welcome, Jang!
+                    Welcome, <UserName style={{ fontSize: 30 }}>
+                        {currentUser?.name ? currentUser.name.split(' ')[0] : "User"}
+                    </UserName>!
                 </Header>
                 <SubHeader style={{ marginBottom: 10 }}>
                     Select one of the buses to preview:
@@ -40,21 +46,21 @@ const UserHome = () => {
                 <StyledButton onPress={handleSubmit}
                     style={{width: '100%', height: 54}}
                     >
-                    <ButtonText style={{ fontSize:21, color: Colors.golden_brown, fontFamily: 'Nunito-Bold'}}> {/* Adjust 16 to your preferred size */}
+                    <ButtonText style={{ fontSize:20, color: Colors.golden_brown, fontFamily: 'Nunito-Bold'}}> {/* Adjust 16 to your preferred size */}
                             UPC Cebu City Bus Route
                     </ButtonText>
                 </StyledButton>
 
                 <StyledButton onPress={handleSubmit}
                     style={{width: '100%', height: 54}}>
-                    <ButtonText style={{ fontSize: 22 , color: Colors.golden_brown, fontFamily: 'Nunito-Bold' }}> {/* Adjust 16 to your preferred size */}  
+                    <ButtonText style={{ fontSize: 20 , color: Colors.golden_brown, fontFamily: 'Nunito-Bold' }}> {/* Adjust 16 to your preferred size */}  
                         UP Cebu North Bus Route
                     </ButtonText>
                 </StyledButton>
 
                 <StyledButton onPress={handleSubmit}
                     style={{ width: '100%', height: 54}}>
-                    <ButtonText style={{ fontSize: 22 , color: Colors.golden_brown, fontFamily: 'Nunito-Bold' }}> {/* Adjust 16 to your preferred size */}
+                    <ButtonText style={{ fontSize: 20 , color: Colors.golden_brown, fontFamily: 'Nunito-Bold' }}> {/* Adjust 16 to your preferred size */}
                         UP Cebu South Bus Route
                     </ButtonText>
                 </StyledButton>
@@ -63,7 +69,7 @@ const UserHome = () => {
                     onPress={handleSubmit} 
                     style={{ backgroundColor: Colors.unavailable_idle, width: '100%', height: 54}}
                 >
-                    <ButtonText style={{ fontSize: 22 , color: Colors.white, fontFamily: 'Nunito-Bold' }}> {/* Adjust 16 to your preferred size */}
+                    <ButtonText style={{ fontSize: 20 , color: Colors.white, fontFamily: 'Nunito-Bold' }}> {/* Adjust 16 to your preferred size */}
                         UPC SRP Bus Route
                     </ButtonText>
                 </StyledButton>          

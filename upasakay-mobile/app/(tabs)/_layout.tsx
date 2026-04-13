@@ -4,7 +4,7 @@ import React from 'react';
 export default function TabLayout() {
   return (
     <NativeTabs
-      tintColor="#004420"          // active icon + label color (green)
+      tintColor="#0b7a3f"          // active icon + label color (green)
    // optional background
     >
       <NativeTabs.Trigger name="UserHome">
