@@ -2,20 +2,27 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Notification extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'title',
         'message',
         'type',
+        'target',
         'target_route',
         'audience',
         'status',
+        'route_id',
         'scheduled_at',
         'sent_at',
         'failed_reason',
+        'metadata',
     ];
 
     protected function casts(): array
@@ -23,101 +30,49 @@ class Notification extends Model
         return [
             'scheduled_at' => 'datetime',
             'sent_at' => 'datetime',
+            'metadata' => 'array',
         ];
     }
 
-    /**
-     * Get the type badge class for this notification
-     */
-    public function getTypeBadgeClass(): string
+    public function route(): BelongsTo
     {
-        return match ($this->type) {
-            'availability' => 'bg-blue-500/15 text-blue-600 dark:text-blue-400',
-            'delay' => 'bg-orange-500/15 text-orange-600 dark:text-orange-400',
-            'change' => 'bg-purple-500/15 text-purple-600 dark:text-purple-400',
-            'announcement' => 'bg-teal-500/15 text-teal-600 dark:text-teal-400',
-            default => 'bg-muted text-muted-foreground',
-        };
+        return $this->belongsTo(Route::class);
     }
 
-    /**
-     * Get the type label
-     */
-    public function getTypeLabel(): string
+    public function scopePending($query)
     {
-        return match ($this->type) {
-            'availability' => 'Shuttle Availability',
-            'delay' => 'Route Delay',
-            'change' => 'Route Change',
-            'announcement' => 'Service Announcement',
-            default => 'Unknown',
-        };
+        return $query->where('status', 'pending');
     }
 
-    /**
-     * Format date/time for display
-     */
-    public function getFormattedTime(): string
+    public function scopeScheduled($query)
     {
-        $time = $this->sent_at ?? $this->scheduled_at ?? $this->created_at;
-        return $time->format('h:i A');
+        return $query->where('status', 'scheduled');
     }
 
-    /**
-     * Get formatted date label
-     */
-    public function getFormattedDate(): string
+    public function scopeSent($query)
     {
-        $date = $this->sent_at ?? $this->scheduled_at ?? $this->created_at;
-
-        if ($date->isToday()) {
-            return 'Today';
-        } elseif ($date->isYesterday()) {
-            return 'Yesterday';
-        } else {
-            return $date->format('M d');
-        }
+        return $query->where('status', 'sent');
     }
 
-    /**
-     * Get target route label
-     */
-    public function getTargetLabel(): string
+    public function scopeReadyToSend($query)
     {
-        return $this->target_route === 'all' ? 'All Routes' : $this->target_route;
+        return $query->where('status', 'scheduled')
+            ->where('scheduled_at', '<=', now());
     }
 
-    /**
-     * Scope: filter by type
-     */
-    public function scopeByType($query, $type)
+    public function markAsSent(): void
     {
-        if ($type && $type !== 'All') {
-            return $query->where('type', $type);
-        }
-        return $query;
+        $this->update([
+            'status' => 'sent',
+            'sent_at' => now(),
+        ]);
     }
 
-    /**
-     * Scope: filter by status
-     */
-    public function scopeByStatus($query, $status)
+    public function scheduleFor($dateTime): void
     {
-        if ($status && $status !== 'All') {
-            return $query->where('status', $status);
-        }
-        return $query;
-    }
-
-    /**
-     * Scope: search by title or target
-     */
-    public function scopeSearch($query, $term)
-    {
-        if ($term) {
-            return $query->where('title', 'like', "%{$term}%")
-                ->orWhere('target_route', 'like', "%{$term}%");
-        }
-        return $query;
+        $this->update([
+            'status' => 'scheduled',
+            'scheduled_at' => $dateTime,
+        ]);
     }
 }

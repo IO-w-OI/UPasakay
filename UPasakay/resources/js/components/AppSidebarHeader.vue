@@ -2,8 +2,10 @@
 import { Link, router, usePage } from '@inertiajs/vue3';
 import { CircleHelp, LogOut, UserCircle } from 'lucide-vue-next';
 import Breadcrumbs from '@/components/Breadcrumbs.vue';
+import { Badge } from '@/components/ui/badge';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { logout } from '@/routes';
+import { edit as editProfile } from '@/routes/profile';
 import type { BreadcrumbItem } from '@/types';
 
 withDefaults(
@@ -17,6 +19,7 @@ withDefaults(
 
 const page = usePage();
 const user = page.props.auth?.user;
+const role = (page.props as any)?.auth?.role as string | undefined;
 
 const handleLogout = () => {
     router.flushAll();
@@ -46,10 +49,16 @@ const handleLogout = () => {
             <div class="h-6 w-px bg-border"></div>
 
             <!-- User -->
-            <div class="flex items-center gap-2">
+            <Link
+                :href="editProfile()"
+                class="flex items-center gap-2 rounded-md px-2 py-1 transition-colors hover:bg-accent"
+            >
                 <UserCircle class="h-7 w-7 text-muted-foreground" />
                 <span class="text-sm font-medium text-foreground">{{ user?.name ?? 'Admin' }}</span>
-            </div>
+                <Badge v-if="role" variant="secondary" class="text-[10px] uppercase tracking-wide">
+                    {{ role }}
+                </Badge>
+            </Link>
 
             <!-- Logout -->
             <Link

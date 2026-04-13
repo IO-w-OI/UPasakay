@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
@@ -68,5 +69,34 @@ class User extends Authenticatable implements MustVerifyEmail
     public function passenger()
     {
         return $this->hasOne(Passenger::class);
+    }
+
+    /**
+     * Get the admin account associated with this user.
+     */
+    public function admin(): ?Admin
+    {
+        return $this->adminRelation()->first();
+    }
+
+    /**
+     * Relationship builder for the user's admin account.
+     */
+    public function adminRelation(): HasOne
+    {
+        return $this->hasOne(Admin::class);
+    }
+
+    /**
+     * Provide property-style access for `$user->admin`.
+     */
+    public function getAdminAttribute(): ?Admin
+    {
+        return $this->admin();
+    }
+
+    public function driver(): HasOne
+    {
+        return $this->hasOne(Driver::class);
     }
 }

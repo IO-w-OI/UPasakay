@@ -8,7 +8,6 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import AuthBase from '@/layouts/AuthLayout.vue';
 import { login } from '@/routes';
-import { store } from '@/routes/register';
 </script>
 
 <template>
@@ -19,7 +18,8 @@ import { store } from '@/routes/register';
         <Head title="Register" />
 
         <Form
-            v-bind="store.form()"
+            action="/register"
+            method="post"
             :reset-on-success="['password', 'password_confirmation']"
             v-slot="{ errors, processing }"
             class="flex flex-col gap-6"
@@ -49,9 +49,51 @@ import { store } from '@/routes/register';
                         :tabindex="2"
                         autocomplete="email"
                         name="email"
-                        placeholder="email@example.com"
+                        placeholder="email@up.edu.ph"
                     />
                     <InputError :message="errors.email" />
+                </div>
+
+                <div class="grid gap-2">
+                    <Label for="passenger_number">Student / Employee Number</Label>
+                    <Input
+                        id="passenger_number"
+                        type="text"
+                        required
+                        :tabindex="3"
+                        name="passenger_number"
+                        placeholder="e.g. 2020-12345"
+                    />
+                    <InputError :message="errors.passenger_number" />
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="grid gap-2">
+                        <Label for="passenger_type">Role</Label>
+                        <select
+                            id="passenger_type"
+                            name="passenger_type"
+                            :tabindex="4"
+                            class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                        >
+                            <option value="student">Student</option>
+                            <option value="faculty">Faculty</option>
+                            <option value="staff">Staff</option>
+                        </select>
+                        <InputError :message="errors.passenger_type" />
+                    </div>
+
+                    <div class="grid gap-2">
+                        <Label for="department">Department</Label>
+                        <Input
+                            id="department"
+                            type="text"
+                            :tabindex="5"
+                            name="department"
+                            placeholder="e.g. CAS, CEAT"
+                        />
+                        <InputError :message="errors.department" />
+                    </div>
                 </div>
 
                 <div class="grid gap-2">
@@ -60,7 +102,7 @@ import { store } from '@/routes/register';
                         id="password"
                         type="password"
                         required
-                        :tabindex="3"
+                        :tabindex="6"
                         autocomplete="new-password"
                         name="password"
                         placeholder="Password"
@@ -74,7 +116,7 @@ import { store } from '@/routes/register';
                         id="password_confirmation"
                         type="password"
                         required
-                        :tabindex="4"
+                        :tabindex="7"
                         autocomplete="new-password"
                         name="password_confirmation"
                         placeholder="Confirm password"
@@ -85,7 +127,7 @@ import { store } from '@/routes/register';
                 <Button
                     type="submit"
                     class="mt-2 w-full"
-                    tabindex="5"
+                    tabindex="8"
                     :disabled="processing"
                     data-test="register-user-button"
                 >
@@ -99,7 +141,7 @@ import { store } from '@/routes/register';
                 <TextLink
                     :href="login()"
                     class="underline underline-offset-4"
-                    :tabindex="6"
+                    :tabindex="9"
                     >Log in</TextLink
                 >
             </div>

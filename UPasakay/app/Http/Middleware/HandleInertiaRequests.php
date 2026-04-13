@@ -36,18 +36,35 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $user = $request->user();
+
+        if ($user) {
+            $user->loadMissing(['adminRelation:id,user_id', 'driver:id,user_id', 'passenger:id,user_id']);
+        }
+
+        $role = null;
+
+        if ($user?->admin) {
+            $role = 'Admin';
+        } elseif ($user?->driver) {
+            $role = 'Driver';
+        } elseif ($user?->passenger) {
+            $role = 'Passenger';
+        }
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
             'auth' => [
-                'user' => $request->user(),
+                'user' => $user,
+                'role' => $role,
             ],
             'approval' => [
                 'pendingPassengers' => $request->user()
                     ? Passenger::where('passenger_status', 'pending')->count()
                     : 0,
             ],
-            'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            'sidebarOpen' => !$request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }
 }

@@ -3,13 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Driver;
-use App\Models\DriverAssignment;
 use App\Models\PickupRequest;
 use App\Models\Route;
+use App\Services\DriverAssignmentService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use InvalidArgumentException;
 
 class PickupRequestController extends Controller
 {
@@ -88,31 +88,21 @@ class PickupRequestController extends Controller
         ]);
     }
 
-    public function assign(Request $request, PickupRequest $pickupRequest)
+    public function assign(Request $request, PickupRequest $pickupRequest, DriverAssignmentService $assignmentService)
     {
         $validated = $request->validate([
             'driver_id' => 'required|integer|exists:drivers,id',
         ]);
 
-        if (in_array($pickupRequest->status, ['completed', 'cancelled'], true)) {
-            return back()->with('error', 'Completed or cancelled requests cannot be reassigned.');
-        }
-
-        DB::transaction(function () use ($pickupRequest, $validated) {
-            DriverAssignment::updateOrCreate(
-                ['pickup_request_id' => $pickupRequest->id],
-                [
-                    'driver_id' => $validated['driver_id'],
-                    'status' => 'active',
-                    'assigned_at' => now(),
-                ]
+        try {
+            $assignmentService->assignToPickupRequest(
+                $validated['driver_id'],
+                $pickupRequest,
+                'active',
             );
-
-            $pickupRequest->update([
-                'status' => 'assigned',
-                'assigned_at' => now(),
-            ]);
-        });
+        } catch (InvalidArgumentException $exception) {
+            return back()->with('error', $exception->getMessage());
+        }
 
         return back()->with('success', 'Shuttle assigned successfully.');
     }

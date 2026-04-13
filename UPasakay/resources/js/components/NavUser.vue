@@ -17,6 +17,7 @@ import UserMenuContent from './UserMenuContent.vue';
 
 const page = usePage();
 const user = page.props.auth.user;
+const role = (page.props as any)?.auth?.role as string | undefined;
 const { isMobile, state } = useSidebar();
 </script>
 
@@ -46,7 +47,7 @@ const { isMobile, state } = useSidebar();
                     align="end"
                     :side-offset="4"
                 >
-                    <UserMenuContent :user="user" />
+                    <UserMenuContent :user="user" :role="role" />
                 </DropdownMenuContent>
             </DropdownMenu>
         </SidebarMenuItem>

@@ -4,6 +4,7 @@ import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileCo
 import DeleteUser from '@/components/DeleteUser.vue';
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,9 +17,10 @@ import { type BreadcrumbItem } from '@/types';
 type Props = {
     mustVerifyEmail: boolean;
     status?: string;
+    role?: string | null;
 };
 
-defineProps<Props>();
+const props = defineProps<Props>();
 
 const breadcrumbItems: BreadcrumbItem[] = [
     {
@@ -44,6 +46,12 @@ const user = page.props.auth.user;
                     title="Profile information"
                     description="Update your name and email address"
                 />
+
+                <div v-if="props.role" class="-mt-3">
+                    <Badge variant="secondary" class="text-[10px] uppercase tracking-wide">
+                        {{ props.role }}
+                    </Badge>
+                </div>
 
                 <Form
                     v-bind="ProfileController.update.form()"

@@ -3,14 +3,13 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 use App\Models\Route;
 
 class RouteSeeder extends Seeder
 {
     public function run(): void
     {
-        DB::statement('TRUNCATE TABLE routes RESTART IDENTITY CASCADE');
+        Route::query()->delete();
 
         Route::insert([
             [

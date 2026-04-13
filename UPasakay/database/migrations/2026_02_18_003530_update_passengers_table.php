@@ -10,11 +10,24 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::table('passengers', function (Blueprint $table) {
-            $table->dropColumn('course');
-            $table->string('department')->nullable();
-            $table->string('passenger_type')->default('student'); // student | staff | faculty
-        });
+        if (Schema::hasTable('passengers')) {
+            // Only drop the old 'course' column if it exists (keeps migrations idempotent
+            // for environments where the original migration was adjusted).
+            if (Schema::hasColumn('passengers', 'course')) {
+                Schema::table('passengers', function (Blueprint $table) {
+                    $table->dropColumn('course');
+                });
+            }
+
+            Schema::table('passengers', function (Blueprint $table) {
+                if (!Schema::hasColumn('passengers', 'department')) {
+                    $table->string('department')->nullable();
+                }
+                if (!Schema::hasColumn('passengers', 'passenger_type')) {
+                    $table->string('passenger_type')->default('student'); // student | staff | faculty
+                }
+            });
+        }
     }
 
     /**
@@ -22,9 +35,18 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::table('passengers', function (Blueprint $table) {
-            $table->dropColumn(['department', 'passenger_type']);
-            $table->string('course')->nullable();
-        });
+        if (Schema::hasTable('passengers')) {
+            Schema::table('passengers', function (Blueprint $table) {
+                if (Schema::hasColumn('passengers', 'department')) {
+                    $table->dropColumn('department');
+                }
+                if (Schema::hasColumn('passengers', 'passenger_type')) {
+                    $table->dropColumn('passenger_type');
+                }
+                if (!Schema::hasColumn('passengers', 'course')) {
+                    $table->string('course')->nullable();
+                }
+            });
+        }
     }
 };

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Link, router } from '@inertiajs/vue3';
 import { LogOut, Settings } from 'lucide-vue-next';
+import { Badge } from '@/components/ui/badge';
 import {
     DropdownMenuGroup,
     DropdownMenuItem,
@@ -14,6 +15,7 @@ import type { User } from '@/types';
 
 type Props = {
     user: User;
+    role?: string;
 };
 
 const handleLogout = () => {
@@ -27,6 +29,11 @@ defineProps<Props>();
     <DropdownMenuLabel class="p-0 font-normal">
         <div class="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
             <UserInfo :user="user" :show-email="true" />
+        </div>
+        <div v-if="role" class="px-1 pb-1.5">
+            <Badge variant="secondary" class="text-[10px] uppercase tracking-wide">
+                {{ role }}
+            </Badge>
         </div>
     </DropdownMenuLabel>
     <DropdownMenuSeparator />

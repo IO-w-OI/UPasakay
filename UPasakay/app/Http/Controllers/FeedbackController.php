@@ -23,7 +23,7 @@ class FeedbackController extends Controller
         // Time range filter
         if ($request->filled('range')) {
             $days = match ($request->range) {
-                '7'  => 7,
+                '7' => 7,
                 '30' => 30,
                 'month' => Carbon::now()->day,
                 default => null,
@@ -60,14 +60,14 @@ class FeedbackController extends Controller
             $rating = $ratings[$i % count($ratings)];
             $commentList = $comments[$rating];
             return [
-                'id'        => $r->id,
+                'id' => $r->id,
                 'passenger' => $r->user?->email ?? 'Passenger ' . ($i + 1),
-                'rating'    => $rating,
-                'comment'   => $commentList[$i % count($commentList)],
-                'route'     => $r->route?->name ?? '—',
-                'status'    => $statuses[$i % count($statuses)],
-                'date'      => Carbon::parse($r->created_at)->format('M j'),
-                'replied'   => $i % 4 === 0,
+                'rating' => $rating,
+                'comment' => $commentList[$i % count($commentList)],
+                'route' => $r->route?->name ?? '—',
+                'status' => $statuses[$i % count($statuses)],
+                'date' => Carbon::parse($r->created_at)->format('M j'),
+                'replied' => $i % 4 === 0,
             ];
         });
 
@@ -75,7 +75,7 @@ class FeedbackController extends Controller
         $rangeDays = 7;
         if ($request->filled('range')) {
             $rangeDays = match ($request->range) {
-                '7'  => 7,
+                '7' => 7,
                 '30' => 30,
                 'month' => Carbon::now()->day,
                 default => 7,
@@ -109,7 +109,7 @@ class FeedbackController extends Controller
         }
 
         $routePerformance = $rpQuery->get()->map(fn($r) => [
-            'name'  => $r->name,
+            'name' => $r->name,
             'count' => $r->pickups_count,
         ]);
 
@@ -124,32 +124,33 @@ class FeedbackController extends Controller
                         ->whereDate('created_at', $date)
                         ->where('status', 'completed')
                         ->count();
-                    if ($pickups === 0) return null;
+                    if ($pickups === 0)
+                        return null;
                     return [
-                        'date'    => $date->format('M j'),
+                        'date' => $date->format('M j'),
                         'shuttle' => $shuttle->shuttle_code,
-                        'driver'  => $shuttle->driver?->full_name ? mb_substr($shuttle->driver->full_name, 0, 1) . '. ' . explode(' ', $shuttle->driver->full_name)[1] ?? '' : '—',
-                        'route'   => $shuttle->route?->name ?? '—',
-                        'start'   => '05:30',
-                        'end'     => $date->isToday() ? '—' : '17:00',
+                        'driver' => $shuttle->driver?->full_name ? mb_substr($shuttle->driver->full_name, 0, 1) . '. ' . explode(' ', $shuttle->driver->full_name)[1] ?? '' : '—',
+                        'route' => $shuttle->route?->name ?? '—',
+                        'start' => '05:30',
+                        'end' => $date->isToday() ? '—' : '17:00',
                         'pickups' => $pickups,
                     ];
                 })->filter();
             })->values();
 
         return Inertia::render('Feedback/Index', [
-            'routes'           => $routes,
-            'feedback'         => $feedback,
-            'stats'            => [
-                'total'      => $total,
-                'avgRating'  => $avgRating,
+            'routes' => $routes,
+            'feedback' => $feedback,
+            'stats' => [
+                'total' => $total,
+                'avgRating' => $avgRating,
                 'boardedPct' => $boardedPct,
-                'failedPct'  => $failedPct,
+                'failedPct' => $failedPct,
             ],
-            'dailyPickups'     => $dailyPickups,
+            'dailyPickups' => $dailyPickups,
             'routePerformance' => $routePerformance,
-            'shuttleActivity'  => $shuttleActivity,
-            'filters'          => $request->only(['range', 'reportRoute']),
+            'shuttleActivity' => $shuttleActivity,
+            'filters' => $request->only(['range', 'reportRoute']),
         ]);
     }
 }

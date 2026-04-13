@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 use App\Models\Route;
 use App\Models\Stop;
 
@@ -11,7 +10,7 @@ class StopSeeder extends Seeder
 {
     public function run(): void
     {
-        DB::statement('TRUNCATE TABLE stops RESTART IDENTITY CASCADE');
+        Stop::query()->delete();
 
         $north = Route::where('name', 'North')->first();
         $south = Route::where('name', 'South')->first();
