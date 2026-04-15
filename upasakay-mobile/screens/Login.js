@@ -5,7 +5,7 @@ import { Formik } from 'formik';
 import { useState } from 'react';
 import { Alert, View } from 'react-native';
 
-// 1. IMPORT THE SERVICE (Temporary Database)
+// Import the Service
 import { validateUser } from '../services/UserStore';
 
 import {
@@ -31,7 +31,6 @@ import {
 } from '../components/styles';
 
 // --- SUB-COMPONENT: MyTextInput ---
-// Defined here so it's recognized by the Login component
 const MyTextInput = ({ label, icon, isPassword, hidePassword, setHidePassword, ...props }) => {
     return (
         <View style={{ marginBottom: 7 }}>
@@ -67,24 +66,24 @@ const Login = () => {
 
                 <Formik
                     initialValues={{ email: '', password: '' }}
-                    // Inside your Login.tsx Formik onSubmit:
                     onSubmit={(values) => {
-                        // 1. REGEX Check
+                        // 1. REGEX Check for UP Email
                         const upEmailRegex = /^[a-zA-Z0-9._%+-]+@up\.edu\.ph$/;
                         if (!upEmailRegex.test(values.email)) {
                             Alert.alert("Invalid Email", "Please use your official @up.edu.ph email address.");
                             return;
                         }
 
-                        // 2. THE CHECK (Updated to handle the object response)
+                        // 2. THE CHECK
+                        // This calls your updated UserStore logic
                         const result = validateUser(values.email, values.password);
 
                         if (result.success) {
-                            // SUCCESS: result.user contains the data
-                            console.log("Login Success! Name:", result.user.name);
+                            // SUCCESS: Navigate to Home
+                            console.log("Login Success! Welcome:", result.user.name);
                             router.replace('/(tabs)/UserHome'); 
                         } else {
-                            // FAIL: result.message contains "Invalid credentials."
+                            // FAIL: Shows either "Account not found" or "Password is invalid"
                             Alert.alert("Login Failed", result.message);
                         }
                     }}
@@ -99,6 +98,7 @@ const Login = () => {
                                 onBlur={handleBlur('email')}
                                 value={values.email}
                                 keyboardType="email-address"
+                                autoCapitalize="none"
                             />
                             <MyTextInput
                                 icon="lock"
@@ -112,6 +112,7 @@ const Login = () => {
                                 setHidePassword={setHidePassword}
                                 value={values.password}
                             />
+                            
                             <StyledButton onPress={handleSubmit}>
                                 <ButtonText>Log In</ButtonText>
                             </StyledButton>

@@ -51,12 +51,11 @@ export const addUser = (name, email, password) => {
  * LOGIN: Validates credentials against the array
  */
 export const validateUser = (email, password) => {
-    const user = usersArray.find(u => u.email === email && u.password === password);
+    const user = usersArray.find(u => u.email === email);
     
-    if (user) {
-        currentUser = user; // Store who is logged in
-        return { success: true, user };
-    }
+    if (!user) return { success: false, code: 'AUTH_NO_ACCOUNT' };
+    if (user.password !== password) return { success: false, code: 'AUTH_WRONG_PASSWORD' };
     
-    return { success: false, message: "Invalid credentials." };
+    currentUser = user; 
+    return { success: true, user };
 };
