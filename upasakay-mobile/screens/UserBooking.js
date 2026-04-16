@@ -169,7 +169,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     // Border matches the fill to look seamless
     borderWidth: 1, 
-    borderColor: '#F2F9F3',
+    borderRadius: 40,
+    borderColor: '#3e5141',
     // Optional shadow for depth
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 19 },
