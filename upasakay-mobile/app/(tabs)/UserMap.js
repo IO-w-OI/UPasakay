@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
-import UserMapScreen from '../../screens/UserMap';
+import UserMapScreen from '../../screens/Users/UserMap';
 
 export default function TabMap() {
   return (
