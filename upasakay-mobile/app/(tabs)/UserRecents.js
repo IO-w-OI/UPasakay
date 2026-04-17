@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
-import UserRecents from '../../screens/UserRecents';
+import UserRecents from '../../screens/Users/UserRecents';
 
 export default function TabRecents() {
   return (
