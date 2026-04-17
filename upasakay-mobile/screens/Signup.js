@@ -5,6 +5,9 @@ import { Formik } from 'formik';
 import { useState } from 'react';
 import { Alert, View } from 'react-native';
 
+// 1. IMPORT YOUR SERVICE (Temporary Database)
+import { addUser } from '../services/UserStore';
+
 import {
     ButtonText,
     Colors,
@@ -48,21 +51,16 @@ const Signup = () => {
                 />
 
                 <Formik
-                    initialValues={{ email: '', password: '', confirmPassword: '' }}
+                    // Added 'name' to initialValues
+                    initialValues={{ name: '', email: '', password: '', confirmPassword: '' }}
                     onSubmit={(values) => {
-                        // 1. TEST CREDENTIALS (Matches Login for fast testing)
-                        const TEST_USER = "domdom@up.edu.ph";
-                        const TEST_PASS = "admin123";
+                        // 1. VALIDATION LOGIC
+                        const upEmailRegex = /^[a-zA-Z0-9._%+-]+@up\.edu\.ph$/;
 
-                        // Bypass to Tabs if using test account
-                        if (values.email === TEST_USER && values.password === TEST_PASS) {
-                            console.log("Test Signup Successful! Entering Tabs...");
-                            router.replace('/(tabs)/UserHome'); 
+                        if (!values.name || !values.email || !values.password) {
+                            Alert.alert("Missing Info", "Please fill out all fields.");
                             return;
                         }
-
-                        // 2. VALIDATION LOGIC
-                        const upEmailRegex = /^[a-zA-Z0-9._%+-]+@up\.edu\.ph$/;
 
                         if (!upEmailRegex.test(values.email)) {
                             Alert.alert("Invalid Email", "Please use your official @up.edu.ph email address.");
@@ -74,14 +72,33 @@ const Signup = () => {
                             return;
                         }
 
-                        // 3. SUCCESS (For non-test accounts)
-                        console.log("Form Proceeding:", values);
-                        Alert.alert("Success", "Account created! Redirecting to Login.");
-                        router.replace('/Login');
+                        // 2. SAVE TO ARRAY (The Service Call)
+                        // This pushes the values into your UserStore array like "Recents"
+                        const result = addUser(values.name, values.email, values.password);
+
+                        if (result.success) {
+                            console.log("Signup Successful! Redirecting to Tabs...");
+                            
+                            /* MAGIC FIX: Pushes straight to the Map/Home tabs */
+                            router.replace('/(tabs)/UserHome'); 
+                        } else {
+                            // Handles cases where the email is already in the array
+                            Alert.alert("Signup Failed", result.message);
+                        }
                     }}
                 >
                     {({handleChange, handleBlur, handleSubmit, values}) => (
                         <StyledFormArea>
+                            {/* --- FULL NAME INPUT --- */}
+                            <MyTextInput
+                                icon="person"
+                                placeholder="Full Name"
+                                placeholderTextColor={Colors.text_idle}
+                                onChangeText={handleChange('name')}
+                                onBlur={handleBlur('name')}
+                                value={values.name}
+                            />
+
                             <MyTextInput
                                 icon="mail"
                                 placeholder="Enter your email address"
