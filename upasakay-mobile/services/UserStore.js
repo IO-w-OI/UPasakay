@@ -6,6 +6,12 @@ export let usersArray = [
         email: "kdolmedo@up.edu.ph",
         password: "password123",
         role: "Student"
+    },
+    {
+        name: "Norvel Lawrence P. Roxas",
+        email:"nlproxas@up.edu.ph",
+        password: "password123",
+        role: "Driver"
     }
 ];
 
