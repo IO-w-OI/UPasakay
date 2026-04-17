@@ -35,7 +35,7 @@ const UserHome = () => {
             <BasePage style={{ padding: 20, alignItems: 'center' }}>
                 <PageLogo 
                     resizeMode="contain" 
-                    source={require('../assets/images/UPasakayBig.png')} 
+                    source={require('../../assets/images/UPasakayBig.png')} 
                     style={{ 
                         marginTop: 5,
                         width: (723 * 0.5),
