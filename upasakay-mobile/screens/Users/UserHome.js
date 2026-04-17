@@ -9,11 +9,11 @@ import {
     StyledContainer,
     SubHeader,
     UserName,
-} from '../components/styles';
+} from '../../components/styles';
 import { useRouter } from 'expo-router';
 
 //database
-import { currentUser } from '../services/UserStore';
+import { currentUser } from '../../services/UserStore';
 
 const UserHome = () => {
     const router = useRouter();

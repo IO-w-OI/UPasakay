@@ -4,7 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { Alert } from 'react-native';
 
 // 1. IMPORT THE CURRENT USER DATA
-import { currentUser } from '../services/UserStore';
+import { currentUser } from '../../services/UserStore';
 
 import {
     AvatarContainer,
@@ -22,7 +22,7 @@ import {
     UserEmail,
     UserName,
     UserRole,
-} from '../components/styles';
+} from '../../components/styles';
 
 const UserProfile = () => {
 

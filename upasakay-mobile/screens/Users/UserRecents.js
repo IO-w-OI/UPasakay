@@ -16,7 +16,7 @@ import {
   TripDate,
   TripInfo,
   TripTitle
-} from '../components/styles';
+} from '../../components/styles';
 
 const TripItem = ({ status, route, destination, date }) => {
   const isCompleted = status === 'Completed';
