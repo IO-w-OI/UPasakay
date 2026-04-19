@@ -2,12 +2,31 @@
 namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Builder;
 
 class PickupRequest extends Model
 {
     use HasFactory;
 
     protected $fillable = ['user_id', 'route_id', 'pickup_stop_id', 'dropoff_stop_id', 'status', 'assigned_at', 'completed_at'];
+
+    /**
+     * Scope: Filter only active pickup requests.
+     * Active statuses: pending, accepted, in_progress
+     */
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->whereIn('status', ['pending', 'accepted', 'in_progress']);
+    }
+
+    /**
+     * Scope: Filter only completed or cancelled pickup requests.
+     * Inactive statuses: completed, cancelled
+     */
+    public function scopeInactive(Builder $query): Builder
+    {
+        return $query->whereIn('status', ['completed', 'cancelled']);
+    }
 
     public function user()
     {
