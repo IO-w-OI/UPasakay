@@ -7,6 +7,7 @@ use App\Models\Passenger;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -35,7 +36,7 @@ class AuthController extends Controller
             'password' => $passwordRules,
             'full_name' => ['nullable', 'string', 'max:255'],
             'passenger_number' => ['nullable', 'string', 'unique:passengers,passenger_number'],
-            'passenger_type' => ['nullable', 'string'],
+            'passenger_type' => ['nullable', 'string', Rule::in(Passenger::PASSENGER_TYPES)],
         ]);
 
         $user = User::create([
@@ -52,25 +53,20 @@ class AuthController extends Controller
             'passenger_number' => $validated['passenger_number'] ?? $this->generatePassengerNumber(),
             'passenger_type' => $validated['passenger_type'] ?? 'student',
             'passenger_status' => 'active',
+            'verification_status' => 'pending',
         ]);
 
         $token = $user->createToken('mobile-app')->plainTextToken;
 
+        $payload = $this->buildAuthPayload($user, $passenger, $token);
+
         return response()->json([
             'success' => true,
             'message' => 'Passenger account created successfully',
-            'data' => [
-                'user' => [
-                    'id' => $user->id,
-                    'email' => $user->email,
-                ],
-                'token' => $token,
-            ],
-            'passenger' => [
-                'id' => $passenger->id,
-                'email' => $passenger->email,
-            ],
-            'token' => $token,
+            'data' => $payload,
+            'passenger' => $payload['passenger'],
+            'onboarding' => $payload['onboarding'],
+            'token' => $payload['token'],
         ], 201);
     }
 
@@ -92,21 +88,16 @@ class AuthController extends Controller
             $passenger->tokens()->delete();
             $token = $passenger->createToken('api-token')->plainTextToken;
 
+            $linkedUser = $passenger->user;
+            $payload = $this->buildAuthPayload($linkedUser ?? $passenger, $passenger, $token);
+
             return response()->json([
                 'success' => true,
                 'message' => 'Login successful',
-                'data' => [
-                    'user' => [
-                        'id' => $passenger->id,
-                        'email' => $passenger->email,
-                    ],
-                    'token' => $token,
-                ],
-                'passenger' => [
-                    'id' => $passenger->id,
-                    'email' => $passenger->email,
-                ],
-                'token' => $token,
+                'data' => $payload,
+                'passenger' => $payload['passenger'],
+                'onboarding' => $payload['onboarding'],
+                'token' => $payload['token'],
             ], 200);
         }
 
@@ -123,22 +114,15 @@ class AuthController extends Controller
 
         $user->tokens()->delete();
         $token = $user->createToken('mobile-app')->plainTextToken;
+        $payload = $this->buildAuthPayload($user, $user->passenger, $token);
 
         return response()->json([
             'success' => true,
             'message' => 'Login successful',
-            'data' => [
-                'user' => [
-                    'id' => $user->id,
-                    'email' => $user->email,
-                ],
-                'token' => $token,
-            ],
-            'passenger' => [
-                'id' => $user->id,
-                'email' => $user->email,
-            ],
-            'token' => $token,
+            'data' => $payload,
+            'passenger' => $payload['passenger'],
+            'onboarding' => $payload['onboarding'],
+            'token' => $payload['token'],
         ], 200);
     }
 
@@ -170,5 +154,59 @@ class AuthController extends Controller
         } while (Passenger::where('passenger_number', $passengerNumber)->exists());
 
         return $passengerNumber;
+    }
+
+    private function buildAuthPayload(Model $authUser, ?Passenger $passenger, string $token): array
+    {
+        return [
+            'user' => [
+                'id' => $authUser->getKey(),
+                'email' => $authUser->email,
+            ],
+            'passenger' => $this->formatPassenger($passenger),
+            'onboarding' => [
+                'required' => !$passenger?->profile_completed,
+                'profile_completed' => (bool) ($passenger?->profile_completed ?? false),
+                'next_route' => !$passenger?->profile_completed
+                    ? 'ProfileOnboarding'
+                    : $this->routeForPassengerType($passenger?->passenger_type),
+            ],
+            'token' => $token,
+        ];
+    }
+
+    private function formatPassenger(?Passenger $passenger): ?array
+    {
+        if (!$passenger) {
+            return null;
+        }
+
+        return [
+            'id' => $passenger->id,
+            'user_id' => $passenger->user_id,
+            'full_name' => $passenger->full_name,
+            'email' => $passenger->email,
+            'phone_number' => $passenger->phone_number,
+            'passenger_number' => $passenger->passenger_number,
+            'passenger_type' => $passenger->passenger_type,
+            'department_office' => $passenger->department_office,
+            'student_id' => $passenger->student_id,
+            'employee_id' => $passenger->employee_id,
+            'verification_status' => $passenger->verification_status,
+            'passenger_status' => $passenger->passenger_status,
+            'profile_completed' => (bool) $passenger->profile_completed,
+            'proof_document_path' => $passenger->proof_document_path,
+            'reviewed_at' => $passenger->reviewed_at,
+        ];
+    }
+
+    private function routeForPassengerType(?string $passengerType): string
+    {
+        return match ($passengerType) {
+            'student' => 'UserHome',
+            'faculty' => 'UserRecents',
+            'employee' => 'UserMap',
+            default => 'UserProfile',
+        };
     }
 }
