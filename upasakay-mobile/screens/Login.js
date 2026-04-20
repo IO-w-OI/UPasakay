@@ -81,7 +81,7 @@ const Login = () => {
                         if (result.success) {
                             // SUCCESS: Navigate to Home
                             console.log("Login Success! Welcome:", result.user.name);
-                            router.replace('/(tabs)/UserHome'); 
+                            router.replace('/(tabs)/Users/UserHome'); 
                         } else {
                             // FAIL: Shows either "Account not found" or "Password is invalid"
                             Alert.alert("Login Failed", result.message);
