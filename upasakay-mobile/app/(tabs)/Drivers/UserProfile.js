@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
-import UserProfile from '../../screens/Users/UserProfile';
+import UserProfile from '../../../screens/Users/UserProfile';
 
 export default function TabProfile() {
   return (
