@@ -77,7 +77,7 @@ class PassengerProfileController extends Controller
         }
 
         if ($authUser instanceof User) {
-            $existing = $authUser->passenger;
+            $existing = $authUser->passenger()->first();
             if ($existing) {
                 return $existing;
             }

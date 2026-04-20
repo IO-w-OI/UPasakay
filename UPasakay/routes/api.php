@@ -54,7 +54,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('shuttles', ShuttleController::class);
     Route::apiResource('passengers', PassengerController::class);
     Route::apiResource('drivers', DriverController::class);
-    Route::apiResource('pickup-requests', PickupRequestController::class);
+    Route::apiResource('pickup-requests', PickupRequestController::class)
+        ->middleware('ensure.passenger.approved');
     Route::apiResource('driver-assignments', DriverAssignmentController::class);
     Route::apiResource('shuttle-locations', ShuttleLocationController::class);
 });

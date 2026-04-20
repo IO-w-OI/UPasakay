@@ -35,6 +35,12 @@ class PickupRequestService
             ]);
         }
 
+        if ($passenger->verification_status !== 'approved') {
+            throw ValidationException::withMessages([
+                'verification_status' => 'Passenger account is not verified yet.',
+            ]);
+        }
+
         // Check for duplicate active booking
         $existingActiveBooking = PickupRequest::where('user_id', $user->id)
             ->where('route_id', $data['route_id'])

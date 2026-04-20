@@ -153,8 +153,26 @@ class PickupRequestApiTest extends TestCase
                 'dropoff_stop_id' => $testData['dropoff_stop']->id,
             ]);
 
-        $response->assertStatus(422)
-            ->assertJsonPath('errors.passenger_status', ['Passenger account is not active.']);
+        $response->assertStatus(403)
+            ->assertJsonPath('message', 'Your passenger account is not active.')
+            ->assertJsonPath('passenger_status', 'inactive');
+    }
+
+    public function test_create_booking_requires_verified_passenger_status(): void
+    {
+        $user = $this->createAuthenticatedUser(['verification_status' => 'pending']);
+        $testData = $this->setupTestRoute();
+
+        $response = $this->withHeaders($this->getAuthHeaders($user))
+            ->postJson('/api/pickup-requests', [
+                'route_id' => $testData['route']->id,
+                'pickup_stop_id' => $testData['pickup_stop']->id,
+                'dropoff_stop_id' => $testData['dropoff_stop']->id,
+            ]);
+
+        $response->assertStatus(403)
+            ->assertJsonPath('message', 'Your account is not yet verified.')
+            ->assertJsonPath('verification_status', 'pending');
     }
 
     public function test_create_booking_with_valid_data(): void

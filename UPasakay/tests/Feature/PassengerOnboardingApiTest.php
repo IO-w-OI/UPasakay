@@ -124,4 +124,82 @@ class PassengerOnboardingApiTest extends TestCase
             ->assertJsonPath('data.passenger.profile_completed', true)
             ->assertJsonPath('data.onboarding.next_route', 'UserRecents');
     }
+
+    public function test_verification_endpoint_returns_current_status_values(): void
+    {
+        $user = User::create([
+            'name' => 'Verification User',
+            'email' => 'verification-user@example.com',
+            'password_hash' => Hash::make('SecurePassword123!'),
+        ]);
+
+        Passenger::create([
+            'user_id' => $user->id,
+            'full_name' => 'Verification User',
+            'email' => $user->email,
+            'password_hash' => Hash::make('SecurePassword123!'),
+            'passenger_number' => 'VER-2001',
+            'passenger_type' => 'other',
+            'verification_status' => 'pending',
+            'passenger_status' => 'active',
+        ]);
+
+        $token = $user->createToken('mobile-app')->plainTextToken;
+
+        $response = $this->withToken($token)->getJson('/api/passenger/profile/verification');
+
+        $response->assertOk()
+            ->assertJsonPath('data.verification_status', 'pending')
+            ->assertJsonPath('data.passenger_status', 'active')
+            ->assertJsonPath('data.profile_completed', true)
+            ->assertJsonStructure([
+                'success',
+                'data' => [
+                    'verification_status',
+                    'passenger_status',
+                    'reviewed_at',
+                    'profile_completed',
+                ],
+            ]);
+    }
+
+    public function test_verification_status_changes_are_reflected_after_refresh(): void
+    {
+        $user = User::create([
+            'name' => 'Refresh User',
+            'email' => 'refresh-user@example.com',
+            'password_hash' => Hash::make('SecurePassword123!'),
+        ]);
+
+        $passenger = Passenger::create([
+            'user_id' => $user->id,
+            'full_name' => 'Refresh User',
+            'email' => $user->email,
+            'password_hash' => Hash::make('SecurePassword123!'),
+            'passenger_number' => 'REF-2001',
+            'passenger_type' => 'other',
+            'verification_status' => 'pending',
+            'passenger_status' => 'active',
+        ]);
+
+        $token = $user->createToken('mobile-app')->plainTextToken;
+
+        $this->withToken($token)
+            ->getJson('/api/passenger/profile/verification')
+            ->assertOk()
+            ->assertJsonPath('data.verification_status', 'pending')
+            ->assertJsonPath('data.passenger_status', 'active');
+
+        $passenger->update([
+            'verification_status' => 'approved',
+            'passenger_status' => 'blocked',
+            'reviewed_at' => now(),
+        ]);
+
+        $this->withToken($token)
+            ->getJson('/api/passenger/profile/verification')
+            ->assertOk()
+            ->assertJsonPath('data.verification_status', 'approved')
+            ->assertJsonPath('data.passenger_status', 'blocked');
+    }
 }
