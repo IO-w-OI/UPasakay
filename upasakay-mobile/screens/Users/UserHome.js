@@ -21,7 +21,7 @@ const UserHome = () => {
     // 1. Updated handleSubmit to accept bus details
     const handleBusSelection = (busName, busId) => {
         router.push({
-            pathname: '/Users/UserBooking',
+            pathname: '/UserBooking',
             params: { 
                 busName: busName, 
                 busId: busId 
