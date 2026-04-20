@@ -26,7 +26,7 @@ const TripItem = ({ status, route, destination, date }) => {
       <CardTop>
         <BusIconContainer>
           <Image 
-              source={require('../assets/images/UPasakaySmall.png')} 
+              source={require('../../assets/images/UPasakaySmall.png')} 
               style={{ width: 45, height: 45, resizeMode: 'contain' }} 
           />
         </BusIconContainer>
