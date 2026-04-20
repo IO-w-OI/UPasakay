@@ -1,10 +1,10 @@
-import { Tabs } from 'expo-router';
+import { Stack } from 'expo-router';
 
 export default function TabLayout() {
   return (
-    <Tabs>
-      <Tabs.Screen name="Drivers" />
-      <Tabs.Screen name="Users" />
-    </Tabs>
+    <Stack>
+      <Stack.Screen name="Drivers" />
+      <Stack.Screen name="Users" />
+    </Stack>
   );
 }
