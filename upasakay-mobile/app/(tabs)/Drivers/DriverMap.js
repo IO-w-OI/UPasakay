@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
-import UserMapScreen from '../../../screens/Users/UserMap';
+import DriverMapScreen from '../../../screens/Drivers/DriverMap';
 
 export default function TabMap() {
   return (
@@ -9,7 +9,7 @@ export default function TabMap() {
         title: 'Map',
         tabBarIcon: ({ color }) => <Ionicons name="map" size={24} color={color} />,
       }} />
-      <UserMapScreen />
+      <DriverMapScreen />
     </>
   );
 }
