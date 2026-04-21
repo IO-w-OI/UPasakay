@@ -10,22 +10,22 @@ function NativeTabsLayout() {
       tintColor="#0b7a3f"          // active icon + label color (green)
    // optional background
     >
-      <NativeTabs.Trigger name="UserHome">
+      <NativeTabs.Trigger name="DriverHome">
         <Icon sf="house.fill" drawable="ic_menu_home" />
         <Label>Home</Label>
       </NativeTabs.Trigger>
 
-      <NativeTabs.Trigger name="UserRecents">
+      <NativeTabs.Trigger name="DriverRecents">
         <Icon sf="clock.fill" drawable="ic_menu_recent_history" />
         <Label>Recents</Label>
       </NativeTabs.Trigger>
 
-      <NativeTabs.Trigger name="UserMap">
+      <NativeTabs.Trigger name="DriverMap">
         <Icon sf="map.fill" drawable="ic_menu_mapmode" />
         <Label>Map</Label>
       </NativeTabs.Trigger>
 
-      <NativeTabs.Trigger name="UserProfile">
+      <NativeTabs.Trigger name="DriverProfile">
         <Icon sf="person.crop.circle.fill" drawable="ic_menu_edit" />
         <Label>Profile</Label>
       </NativeTabs.Trigger>
