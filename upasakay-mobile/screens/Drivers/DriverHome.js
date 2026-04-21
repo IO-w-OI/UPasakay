@@ -3,6 +3,8 @@ import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import { BackHandler } from 'react-native';
+import { useEffect } from 'react';
 
 import {
     BasePage,
@@ -19,7 +21,18 @@ import {
 // Replace with your actual driver store
 import { currentUser } from '../../services/UserStore';
 console.log('DriverHome screen loaded'); // Debug log to confirm screen load
+
+
+
 const DriverHome = () => {
+    // Block Android back button
+    useEffect(() => {
+        const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+            return true; // returning true blocks the back action
+        });
+        return () => backHandler.remove();
+    }, []);
+
     const router = useRouter();
     const [isOnDuty, setIsOnDuty] = useState(false);
 
