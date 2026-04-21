@@ -45,28 +45,28 @@ function CustomJSLayout() {
       }}
     >
       <Tabs.Screen
-        name="UserHome"
+        name="DriverHome"
         options={{
           title: 'Home',
           tabBarIcon: ({ color }) => <Ionicons name="home" size={24} color={color} />,
         }}
       />
       <Tabs.Screen
-        name="UserRecents"
+        name="DriverRecents"
         options={{
           title: 'Recents',
           tabBarIcon: ({ color }) => <Ionicons name="time" size={24} color={color} />,
         }}
       />
       <Tabs.Screen
-        name="UserMap"
+        name="DriverMap"
         options={{
           title: 'Map',
           tabBarIcon: ({ color }) => <Ionicons name="map" size={24} color={color} />,
         }}
       />
       <Tabs.Screen
-        name="UserProfile"
+        name="DriverProfile"
         options={{
           title: 'Profile',
           tabBarIcon: ({ color }) => <Ionicons name="person" size={24} color={color} />,
