@@ -929,3 +929,79 @@ Before running the project, verify:
 ```
 
 ```
+# Mobile App (iOS and Android) (EXPO GO VERSION)
+iOS and Android [Expo Go]
+> npm expo start
+[This version allows you to preview screen changes quickly without having to recompile and etc. pero OS] //Dont copy me sa terminal lmao
+   - Downsides //Dont copy me sa terminal lmao
+      - Requires Wifi //Dont copy me sa terminal lmao
+      - Dependent on Host (Laptop hosting the terminal/command prompt) //Dont copy me sa terminal lmao
+
+# Mobile App (iOS and Android) (DEVELOPMENT VERSION) (needs Laptop for app functionality)
+
+   # Run this to generate both ios and android folders
+   > npx expo prebuild
+      run this first because it will download cocoapods and all //Dont copy me sa terminal lmao
+
+   # iOS
+   > npx expo run:ios --device
+   [This version allows you to send the compiled app to a specific device, based from the connected iOS devices or simulators downloaded]
+      - Downsides
+         - Should not be disconnected from the PC hosting the server (if connected through USB)
+
+      # you can also run the app through xcode by after prebuilding
+      > open ios/upasakaymobile.xcworkspace
+         # have fun playing around i guess
+
+   # Android
+   > npx expo run:android --device
+   [This version allows you to send the compiled app to a specific device, based from the connected Android devices or simulators downloaded]
+      - Downsides //Dont copy me sa terminal lmao
+         - Should not be disconnected from the PC hosting the server (if connected through USB) //Dont copy me sa terminal lmao
+
+      # Open Android Studio or whatever emulator u have for android idk (i use android studio)
+
+      # Generate a list of Android devices before proceeding (you might need to recheck connections and simulators before proceeding)
+      > adb devices 
+      (finds list of device) //Dont copy me sa terminal lmao
+
+      # Find your apk thing made by the prebuild
+      > find . -name "app-release.apk"
+
+      # Find the device you want your computer to send the APK to (simulator or connected phone)
+      > adb -s (device name) install -r ./android/app/build/outputs/apk/release/app-release.apk 
+      (change device name to name found on adb devices) //Dont copy me sa terminal lmao
+
+      # Clear the global Gradle cache (Do this once a month) (i do this to free space)
+      > rm -rf ~/.gradle/caches
+
+      # Clear the temporary build artifacts from this project (i do this to free space)
+      > cd android && ./gradlew clean && cd ..
+
+
+# Mobile App (iOS and Android) (STANDALONE APP) (no metro.js thing)
+
+   # Run this to generate both ios and android folders
+   - npx expo prebuild
+
+   # iOS
+   > npx expo run:ios --configuration Release --device
+      (runs without metro.js) (also lists the number of available simulators/connected iOS devices you have) //Dont copy me sa terminal lmao
+
+   # Android
+      # Run this to let Expo package it (the metro.js thing)
+      - npx expo run:android --variant release
+
+         # Open Android Studio or whatever emulator u have for android idk (i use android studio)
+
+      # Generate a list of Android devices before proceeding (you might need to recheck connections and simulators before proceeding)
+      > adb devices 
+      (finds list of device) //Dont copy me sa terminal lmao
+
+      # Find your apk thing made by the prebuild
+      > find . -name "app-release.apk"
+
+      # Find the device you want your computer to send the APK to (simulator or connected phone)
+      > adb -s (device name) install -r ./android/app/build/outputs/apk/release/app-release.apk 
+      (change device name to name found on adb devices) //Dont copy me sa terminal lmao
+

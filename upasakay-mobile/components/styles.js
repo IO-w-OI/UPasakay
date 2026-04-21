@@ -141,8 +141,8 @@ export const StyledButton = styled.TouchableOpacity`
 export const ButtonText = styled.Text`
     /* Default color for the standard Login button */
     color: ${Colors.base_page}; 
-    font-size: 20px;
-    font-family: 'Nunito-Regular';
+    font-size: 18px;
+    font-family: 'Nunito-SemiBold';
     text-align: center;
 
     /* If the google prop is true, override the color and padding */
@@ -242,7 +242,7 @@ export const SmallTextLinkContent = styled.Text`
 
 export const Header = styled.Text`
     margin-top: 10px;
-    font-size: 35px;
+    font-size: 30px;
     color: ${Colors.text_active};
     font-family: 'Nunito-Bold';
 
@@ -398,7 +398,7 @@ export const AvatarContainer = styled.View`
 
 export const UserName = styled.Text`
     font-family: 'Nunito-Bold';
-    font-size: 24px;
+    font-size: 20px;
     color: #1A2E1A;
 `;
 
@@ -549,7 +549,7 @@ export const MenuLabel = styled.Text`
 
 export const LogOutText = styled.Text`
     color: ${Colors.base_page}; 
-    font-size: 20px;
+    font-size: 18px;
     font-family: 'Nunito-Bold';
     text-align: center;
 `;
