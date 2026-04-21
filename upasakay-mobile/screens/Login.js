@@ -81,7 +81,12 @@ const Login = () => {
                         if (result.success) {
                             // SUCCESS: Navigate to Home
                             console.log("Login Success! Welcome:", result.user.name);
+                            if(result.user.role === "Driver"){ //If user role is driver, redirect to Driver Home
+                                router.replace('/(tabs)/Drivers/DriverHome');
+                            }
+                            else{ //If user role is student, faculty or passenger, redirect to User Home
                             router.replace('/(tabs)/Users/UserHome'); 
+                            }
                         } else {
                             // FAIL: Shows either "Account not found" or "Password is invalid"
                             Alert.alert("Login Failed", result.message);
