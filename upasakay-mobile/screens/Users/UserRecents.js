@@ -1,5 +1,4 @@
 import { StatusBar } from 'expo-status-bar';
-import React from 'react';
 import { Image, ScrollView, View } from 'react-native';
 
 import {
@@ -17,7 +16,7 @@ import {
   TripDate,
   TripInfo,
   TripTitle
-} from '../components/styles';
+} from '../../components/styles';
 
 const TripItem = ({ status, route, destination, date }) => {
   const isCompleted = status === 'Completed';
@@ -27,14 +26,14 @@ const TripItem = ({ status, route, destination, date }) => {
       <CardTop>
         <BusIconContainer>
           <Image 
-              source={require('../assets/images/UPasakaySmall.png')} 
+              source={require('../../assets/images/UPasakaySmall.png')} 
               style={{ width: 45, height: 45, resizeMode: 'contain' }} 
           />
         </BusIconContainer>
         
         <TripInfo>
-          <TripTitle>{route}</TripTitle>
-          <TripTitle style={{ fontFamily: 'Nunito-Bold', fontSize: 15 }}>{destination}</TripTitle>
+          <TripTitle style={{ fontFamily: 'Nunito-Bold', fontSize: 13 }}>{route}</TripTitle>
+          <TripTitle style={{ fontFamily: 'Nunito-Bold', fontSize: 13 }}>{destination}</TripTitle>
           <TripDate>{date}</TripDate>
         </TripInfo>
 
