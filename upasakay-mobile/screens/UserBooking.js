@@ -6,9 +6,18 @@ import { router } from 'expo-router';
 
 const { width } = Dimensions.get('window');
 
+// Enable LayoutAnimation for Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
+
+// 1. Custom Fast Animation Config
+const SnappyAnim = {
+  duration: 200, // Very fast but smooth (Default is usually 400ms+)
+  update: { type: LayoutAnimation.Types.easeInEaseOut },
+  create: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
+  delete: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
+};
 
 const UserMapScreen = () => {
   const webViewRef = useRef(null);
@@ -16,7 +25,6 @@ const UserMapScreen = () => {
   const [pickupAddress, setPickupAddress] = useState('Locating...');
   const [currentCoords, setCurrentCoords] = useState({ lat: 10.3381, lng: 123.9116 });
 
-  // 1. Leaflet HTML with Fixed Start Point (UP Cebu)
   const mapHtml = `
     <!DOCTYPE html>
     <html>
@@ -25,7 +33,7 @@ const UserMapScreen = () => {
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
         <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
         <style>
-          body { margin: 0; padding: 0; }
+          body { margin: 0; padding: 0; background-color: white; }
           #map { height: 100vh; width: 100vw; }
           .leaflet-control-attribution { display: none; }
           .bus-marker-icon {
@@ -46,27 +54,20 @@ const UserMapScreen = () => {
           var busMarker = null;
 
           window.startBusFromUPC = async function(destLat, destLng) {
-            // FIXED POINT X: UP Cebu Lahug Campus
             var startLat = 10.3381;
             var startLng = 123.9116;
-
             try {
               const url = "https://router.project-osrm.org/route/v1/driving/" + 
                           startLng + "," + startLat + ";" + destLng + "," + destLat + 
                           "?overview=full&geometries=geojson";
-              
               const response = await fetch(url);
               const data = await response.json();
               const routeCoords = data.routes[0].geometry.coordinates;
-
               L.marker([destLat, destLng]).addTo(map);
-
               var busIcon = L.divIcon({ className: 'bus-marker-icon', html: '🚌', iconSize:[40,40] });
               busMarker = L.marker([routeCoords[0][1], routeCoords[0][0]], { icon: busIcon }).addTo(map);
-
               var bounds = L.latLngBounds(routeCoords.map(c => [c[1], c[0]]));
               map.fitBounds(bounds, { padding: [80, 80] });
-
               let i = 0;
               function drive() {
                 if (i < routeCoords.length) {
@@ -99,26 +100,36 @@ const UserMapScreen = () => {
       }
     }
     if (data.type === 'ARRIVED') {
-      LayoutAnimation.configureNext(LayoutAnimation.Presets.spring);
+      LayoutAnimation.configureNext(SnappyAnim); // Sped up
       setStatus('arrived');
     }
   };
 
   const handleParaPress = () => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    LayoutAnimation.configureNext(SnappyAnim); // Sped up
     setStatus('booking');
     webViewRef.current?.injectJavaScript(`window.startBusFromUPC(${currentCoords.lat}, ${currentCoords.lng});`);
   };
 
   return (
     <View style={styles.container}>
-      <WebView ref={webViewRef} source={{ html: mapHtml }} onMessage={handleMessage} style={styles.map} />
+      <View style={styles.mapWrapper}>
+        <WebView 
+          ref={webViewRef} 
+          source={{ html: mapHtml }} 
+          onMessage={handleMessage} 
+          style={styles.map} 
+          containerStyle={{ backgroundColor: '#fff' }} 
+        />
+      </View>
 
       {status === 'searching' && (
         <>
           <View style={styles.topContainer}>
             <View style={styles.searchPill}>
-              <TouchableOpacity onPress={() => router.back()}><Ionicons name="arrow-back" size={24} color="#1A2E1A" /></TouchableOpacity>
+              <TouchableOpacity onPress={() => router.back()}>
+                <Ionicons name="arrow-back" size={24} color="#1A2E1A" />
+              </TouchableOpacity>
               <TextInput style={[styles.searchInput, {fontFamily: 'Nunito-Regular'}]} placeholder="Where to pick up?" />
             </View>
           </View>
@@ -128,7 +139,6 @@ const UserMapScreen = () => {
         </>
       )}
 
-      {/* THE BOTTOM CARD WITH BORDER */}
       <View style={styles.bookingCard}>
         {status === 'searching' ? (
           <>
@@ -148,7 +158,9 @@ const UserMapScreen = () => {
                  <Text style={styles.arriveTitle}>Arriving by 6:05AM</Text>
                  <Text style={styles.arriveSub}>Traveling from UP Cebu...</Text>
                </View>
-               <View style={styles.timeline}><Ionicons name="bus" size={20}/><Text>---</Text><Ionicons name="person" size={20}/></View>
+               <View style={styles.timeline}>
+                 <Ionicons name="bus" size={20} color="#1A2E1A"/><Text style={{color: '#ccc'}}>---</Text><Ionicons name="person" size={20} color="#1A2E1A"/>
+               </View>
             </View>
             <View style={styles.driverSection}>
               <Image source={{ uri: 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=100' }} style={styles.avatar} />
@@ -157,14 +169,13 @@ const UserMapScreen = () => {
                 <Text style={styles.dRoute}>UP Cebu Bus Route</Text>
               </View>
             </View>
-            <TouchableOpacity style={styles.cancelBtn} onPress={() => setStatus('searching')}>
+            <TouchableOpacity style={styles.cancelBtn} onPress={() => { LayoutAnimation.configureNext(SnappyAnim); setStatus('searching'); }}>
               <Text style={styles.cancelText}>Cancel Para</Text>
             </TouchableOpacity>
           </View>
         )}
       </View>
 
-      {/* ARRIVAL MODAL */}
       {status === 'arrived' && (
         <View style={styles.overlay}>
           <View style={styles.dimmer} />
@@ -176,7 +187,7 @@ const UserMapScreen = () => {
                 <Text style={styles.modalSub}>Please board the bus on time!</Text>
               </View>
             </View>
-            <TouchableOpacity style={styles.boardedBtn} onPress={() => setStatus('searching')}>
+            <TouchableOpacity style={styles.boardedBtn} onPress={() => { LayoutAnimation.configureNext(SnappyAnim); setStatus('searching'); }}>
               <Text style={styles.boardedText}>I have boarded!</Text>
             </TouchableOpacity>
           </View>
@@ -187,44 +198,31 @@ const UserMapScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  map: { flex: 1 },
-  topContainer: { position: 'absolute', top: 60, width: '100%', paddingHorizontal: 20 },
+  container: { flex: 1, backgroundColor: '#fff' },
+  mapWrapper: { flex: 1, backgroundColor: '#fff' },
+  map: { flex: 1, opacity: 0.99 },
+  topContainer: { position: 'absolute', top: 60, width: '100%', paddingHorizontal: 20, zIndex: 10 },
   searchPill: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', height: 55, borderRadius: 30, paddingHorizontal: 15, elevation: 5 },
   searchInput: { flex: 1, marginLeft: 10, fontSize: 16 },
   centerPinContainer: { ...StyleSheet.absoluteFillObject, justifyContent: 'center', alignItems: 'center', zIndex: 5 },
-  
-  // Card with Border and Nunito
   bookingCard: { 
-  position: 'absolute', 
-  bottom: 0,           // Ensure this is 0
-  left: 0, 
-  right: 0,
-  padding: 30, 
-  paddingBottom: 50,   // Increase this to push content above the home indicator
-  backgroundColor: '#F4F7F4', 
-  borderTopLeftRadius: 40, 
-  borderTopRightRadius: 40,
-  borderWidth: 1.5, 
-  borderColor: '#3e5141', 
-  elevation: 20, 
-  zIndex: 20,
-},
+    position: 'absolute', bottom: -1, left: 0, right: 0,
+    padding: 30, paddingBottom: Platform.OS === 'ios' ? 45 : 35, 
+    backgroundColor: '#F4F7F4', borderTopLeftRadius: 40, borderTopRightRadius: 40,
+    borderWidth: 1.5, borderBottomWidth: 0, borderColor: '#3e5141', elevation: 20, zIndex: 20,
+  },
   cardHeader: { fontSize: 22, color: '#1A2E1A', marginBottom: 15, fontFamily: 'Nunito-Bold' },
   inputBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', padding: 15, borderRadius: 30, borderWidth: 1, borderColor: '#1A2E1A', marginBottom: 15 },
   greenDot: { width: 24, height: 24, borderRadius: 12, backgroundColor: '#004d00', justifyContent: 'center', alignItems: 'center', marginRight: 10 },
-  addressText: { flex: 1, fontFamily: 'Nunito-Regular' },
-  paraBtn: { backgroundColor: '#FFB82E', height: 55, borderRadius: 30, justifyContent: 'center', alignItems: 'center' },
+  addressText: { flex: 1, fontFamily: 'Nunito-Regular', color: '#1A2E1A' },
+  paraBtn: { backgroundColor: '#FFB82E', height: 55, borderRadius: 30, justifyContent: 'center', alignItems: 'center', elevation: 3 },
   paraText: { fontSize: 20, color: '#1A2E1A', fontFamily: 'Nunito-Black' },
-
-  // Waiting/Arrival Styles
   arriveTitle: { fontSize: 22, color: '#1A2E1A', fontFamily: 'Nunito-Bold' },
   arriveSub: { fontSize: 14, color: '#666', fontFamily: 'Nunito-Regular' },
   dName: { fontSize: 18, color: '#1A2E1A', fontFamily: 'Nunito-Bold' },
   dRoute: { fontSize: 14, color: '#444', fontFamily: 'Nunito-Regular' },
   cancelBtn: { backgroundColor: '#8B211E', height: 55, borderRadius: 30, justifyContent: 'center', alignItems: 'center' },
   cancelText: { color: '#fff', fontSize: 18, fontFamily: 'Nunito-Black' },
-  
   overlay: { ...StyleSheet.absoluteFillObject, justifyContent: 'center', alignItems: 'center', zIndex: 100 },
   dimmer: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.4)' },
   arrivalModal: { width: width * 0.85, backgroundColor: '#F4F7F4', borderRadius: 35, padding: 25, borderWidth: 1.5, borderColor: '#3e5141' },
@@ -232,11 +230,9 @@ const styles = StyleSheet.create({
   modalSub: { fontSize: 13, color: '#555', fontFamily: 'Nunito-Regular' },
   boardedBtn: { backgroundColor: '#FFB82E', height: 55, borderRadius: 30, justifyContent: 'center', alignItems: 'center' },
   boardedText: { fontSize: 18, color: '#1A2E1A', fontFamily: 'Nunito-Black' },
-  
-  // Helper rows
-  row: { flexDirection: 'row', justifyContent: 'space-between' },
+  row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   timeline: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  driverSection: { flexDirection: 'row', alignItems: 'center', marginVertical: 15 },
+  driverSection: { flexDirection: 'row', alignItems: 'center', marginVertical: 20 },
   avatar: { width: 60, height: 60, borderRadius: 30, marginRight: 15 },
   modalTop: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
   modalAvatar: { width: 60, height: 60, borderRadius: 30, marginRight: 15 },
