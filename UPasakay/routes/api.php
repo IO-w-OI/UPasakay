@@ -15,6 +15,9 @@ use App\Http\Controllers\Api\PickupRequestController;
 use App\Http\Controllers\Api\DriverAssignmentController;
 use App\Http\Controllers\Api\ShuttleLocationController;
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\ActiveShuttleController;
+use App\Http\Controllers\Api\DriverLocationController;
+use App\Http\Controllers\Api\DriverTripController;
 
 // Public auth routes
 Route::post('register', [AuthController::class, 'register']);
@@ -157,6 +160,26 @@ Route::prefix('mobile')->group(function () {
     Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsurePassengerIsApproved::class])->group(function () {
         Route::post('/pickup-requests', [PickupRequestController::class, 'store']);
     });
+
+    // Driver routes — these can be used by driver accounts
+    Route::middleware('auth:sanctum')->prefix('driver')->group(function () {
+        // Location tracking endpoints
+        Route::post('/location/update', [DriverLocationController::class, 'updateLocation']);
+        Route::get('/location/latest', [DriverLocationController::class, 'getLatestLocation']);
+        Route::post('/location/batch', [DriverLocationController::class, 'batchUpdateLocations']);
+
+        // Trip status endpoints
+        Route::post('/trip/start', [DriverTripController::class, 'startTrip']);
+        Route::post('/trip/status', [DriverTripController::class, 'updateTripStatus']);
+        Route::get('/trip/current', [DriverTripController::class, 'getCurrentTrip']);
+        Route::post('/trip/end', [DriverTripController::class, 'endTrip']);
+    });
+
+    // Active shuttle information — available to both drivers and passengers
+    Route::middleware('auth:sanctum')->prefix('shuttle')->group(function () {
+        Route::get('/active', [ActiveShuttleController::class, 'getActiveShuttle']);
+        Route::get('/active/all', [ActiveShuttleController::class, 'getAllActiveShuttles']);
+    });
 });
 
 /*
@@ -178,3 +201,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('driver-assignments', DriverAssignmentController::class);
     Route::apiResource('shuttle-locations', ShuttleLocationController::class);
 });
+
+/*
+|--------------------------------------------------------------------------
+| Public Trip Status Routes (no authentication required)
+|--------------------------------------------------------------------------
+| Allows passengers to view real-time trip status without authentication
+|--------------------------------------------------------------------------
+*/
+Route::get('trip/{tripId}/status', [DriverTripController::class, 'getTripStatus']);
