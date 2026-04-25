@@ -3,6 +3,19 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 
+import * as Notifications from 'expo-notifications';
+
+// This determines how notifications appear when the app is foregrounded
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+    shouldShowBanner: true, // Required by current types
+    shouldShowList: true,   // Required by current types
+  }),
+});
+
 // Prevent the splash screen from hiding until fonts are ready
 SplashScreen.preventAutoHideAsync();
 

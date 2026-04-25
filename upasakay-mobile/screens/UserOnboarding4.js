@@ -15,7 +15,7 @@ const UserOnboarding4 = () => {
     const router = useRouter();
 
     const handleStart = () => {
-        router.replace('/Users/UserHome');
+        router.replace('/(tabs)/Users/UserHome');
     };
 
     return (

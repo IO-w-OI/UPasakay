@@ -15,7 +15,22 @@ import { useRouter } from 'expo-router';
 //database
 import { currentUser } from '../../services/UserStore';
 
+import * as Notifications from 'expo-notifications';
+
 const UserHome = () => {
+
+    const handleTestNotify = async () => {
+        console.log("Attempting to trigger notification..."); // This will help us see if the button works
+        await Notifications.scheduleNotificationAsync({
+            content: {
+                title: "UPasakay 🚌",
+                body: "imong mama ako mama",
+                sound: true,
+            },
+            trigger: null,
+        });
+    };
+
     const router = useRouter();
 
     // 1. Updated handleSubmit to accept bus details
@@ -86,7 +101,11 @@ const UserHome = () => {
                     <ButtonText style={{ fontSize: 20, color: Colors.white, fontFamily: 'Nunito-Bold' }}>
                         UPC SRP Bus Route
                     </ButtonText>
-                </StyledButton>          
+                </StyledButton>   
+
+                <StyledButton onPress={handleTestNotify}>
+                    <ButtonText style={{ fontWeight: 'bold' }}>Test Notification</ButtonText>
+                </StyledButton>       
 
             </BasePage>
         </StyledContainer>
