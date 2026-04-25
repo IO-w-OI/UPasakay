@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "upasakay-mobile",
+    "name": "UPasakay",
     "slug": "upasakay-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -10,7 +10,7 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.upasakay-mobile"
+      "bundleIdentifier": "com.kyleolmedo.upasakay-mobile"
     },
     "android": {
       "adaptiveIcon": {
@@ -21,7 +21,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.upasakaymobile"
+      "package": "com.kyleolmedo.upasakaymobile"
     },
     "web": {
       "output": "static",
