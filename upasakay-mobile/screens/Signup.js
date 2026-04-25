@@ -5,9 +5,7 @@ import { Formik } from 'formik';
 import { useState } from 'react';
 import { Alert, View } from 'react-native';
 
-// 1. IMPORT YOUR SERVICE (Temporary Database)
-import { addUser } from '../services/UserStore';
-
+// Styled Components
 import {
     ButtonText,
     Colors,
@@ -51,13 +49,11 @@ const Signup = () => {
                 />
 
                 <Formik
-                    // Added 'name' to initialValues
-                    initialValues={{ name: '', email: '', password: '', confirmPassword: '' }}
+                    initialValues={{ email: '', password: '', confirmPassword: '' }}
                     onSubmit={(values) => {
-                        // 1. VALIDATION LOGIC
                         const upEmailRegex = /^[a-zA-Z0-9._%+-]+@up\.edu\.ph$/;
 
-                        if (!values.name || !values.email || !values.password) {
+                        if (!values.email || !values.password) {
                             Alert.alert("Missing Info", "Please fill out all fields.");
                             return;
                         }
@@ -72,33 +68,19 @@ const Signup = () => {
                             return;
                         }
 
-                        // 2. SAVE TO ARRAY (The Service Call)
-                        // This pushes the values into your UserStore array like "Recents"
-                        const result = addUser(values.name, values.email, values.password);
-
-                        if (result.success) {
-                            console.log("Signup Successful! Redirecting to Tabs...");
-                            
-                            /* MAGIC FIX: Pushes straight to the Map/Home tabs */
-                            router.replace('/(tabs)/UserHome'); 
-                        } else {
-                            // Handles cases where the email is already in the array
-                            Alert.alert("Signup Failed", result.message);
-                        }
+                        // Routing only account credentials to Onboarding 1
+                        router.push({
+                            pathname: '/UserOnboarding1',
+                            params: { 
+                                email: values.email,
+                                password: values.password
+                            }
+                        });
                     }}
                 >
                     {({handleChange, handleBlur, handleSubmit, values}) => (
                         <StyledFormArea>
-                            {/* --- FULL NAME INPUT --- */}
-                            <MyTextInput
-                                icon="person"
-                                placeholder="Full Name"
-                                placeholderTextColor={Colors.text_idle}
-                                onChangeText={handleChange('name')}
-                                onBlur={handleBlur('name')}
-                                value={values.name}
-                            />
-
+                            {/* --- EMAIL INPUT --- */}
                             <MyTextInput
                                 icon="mail"
                                 placeholder="Enter your email address"
@@ -108,6 +90,8 @@ const Signup = () => {
                                 value={values.email}
                                 keyboardType="email-address"
                             />
+
+                            {/* --- PASSWORD INPUT --- */}
                             <MyTextInput
                                 icon="lock"
                                 placeholder="Enter your password"
@@ -120,6 +104,8 @@ const Signup = () => {
                                 hidePassword={hidePassword}
                                 setHidePassword={setHidePassword}
                             />
+
+                            {/* --- CONFIRM PASSWORD INPUT --- */}
                             <MyTextInput
                                 icon="lock"
                                 placeholder="Confirm your password"
@@ -133,27 +119,17 @@ const Signup = () => {
                                 setHidePassword={setHideConfirmPassword} 
                             />
 
-                            <ExtraView>
+                            <ExtraView style={{ marginTop: 5 }}>
                                 <ExtraSmallText>
-                                    By clicking 'Sign Up', you have read and agreed to our{"\n"}
-                                    <ExtraSmallText 
-                                        style={{ fontWeight: 'regular', color: Colors.button_loginsignup }} 
-                                        onPress={() => Alert.alert("Legal", "Terms of Service coming soon!")}
-                                    >
-                                        <SmallTextLinkContent>Terms of Service</SmallTextLinkContent>
-                                    </ExtraSmallText>
+                                    By clicking 'Continue', you have read and agreed to our{"\n"}
+                                    <TextLinkContent style={{ color: Colors.button_loginsignup }}>Terms of Service</TextLinkContent>
                                     <ExtraSmallText> and </ExtraSmallText>
-                                    <ExtraSmallText 
-                                        style={{ fontWeight: 'regular', color: Colors.button_loginsignup }} 
-                                        onPress={() => Alert.alert("Legal", "Privacy Policy coming soon!")}
-                                    >
-                                        <SmallTextLinkContent>Privacy Policy</SmallTextLinkContent>
-                                    </ExtraSmallText>
+                                    <TextLinkContent style={{ color: Colors.button_loginsignup }}>Privacy Policy</TextLinkContent>
                                 </ExtraSmallText>
                             </ExtraView>
 
                             <StyledButton onPress={handleSubmit}>
-                                <ButtonText>Sign Up</ButtonText>
+                                <ButtonText>Continue</ButtonText>
                             </StyledButton>
 
                             <LineContainer>
@@ -183,7 +159,7 @@ const Signup = () => {
 
 const MyTextInput = ({ label, icon, isPassword, hidePassword, setHidePassword, ...props }) => {
     return (
-        <View style={{ marginBottom: 5 }}>
+        <View style={{ marginBottom: 10 }}> 
             <StyledInputLabel>{label}</StyledInputLabel>
             <View style={{ justifyContent: 'center' }}> 
                 <LeftIcon>

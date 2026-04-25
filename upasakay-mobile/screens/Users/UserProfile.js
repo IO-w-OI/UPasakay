@@ -59,7 +59,7 @@ const UserProfile = () => {
                 {/* We use ?. to prevent crashing if currentUser is temporarily null */}
                 <UserName>{currentUser?.name || "User Name"}</UserName>
                 <UserEmail>{currentUser?.email || "email@up.edu.ph"}</UserEmail>
-                <UserRole>{currentUser?.role || "Student"}</UserRole>
+                <UserRole>{currentUser?.passenger_type || "Passenger Type"}</UserRole>
 
                 {/* My Account Section */}
                 <SectionHeader style={{ width: 322 }}>My Account</SectionHeader>

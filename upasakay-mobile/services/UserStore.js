@@ -1,60 +1,78 @@
-// 1. This is your temporary "Database"
-// It functions exactly like your "Recents" array.
+/**
+ * 1. TEMPORARY DATABASE
+ * Stores all registered users in memory for the current session.
+ */
 export let usersArray = [
     {
         name: "Kyle Dominic D. Olmedo",
         email: "kdolmedo@up.edu.ph",
         password: "password123",
-        role: "Student"
+        phone: "09123456789",
+        passenger_type: "student",
+        Department_office: "College of Science"
     },
     {
         name: "Norvel Lawrence P. Roxas",
-        email:"nlproxas@up.edu.ph",
+        email: "nlproxas@up.edu.ph",
         password: "password123",
-        role: "Driver"
+        phone: "09987654321",
+        passenger_type: "employee",
+        Department_office: "Campus Maintenance Office (CMO)"
     }
 ];
 
-// 2. This tracks the current session
+/**
+ * 2. SESSION TRACKER
+ * Holds the object of the user currently logged into the app.
+ */
 export let currentUser = null;
 
 /**
- * SIGNUP: Adds a new student to the array
- * @param {string} name - From the 'Full Name' input
- * @param {string} email - From the 'Email' input
- * @param {string} password - From the 'Password' input
+ * 3. SIGNUP LOGIC
+ * Adds a new user with conditional roles and departments.
+ * * @param {string} name - User's full name
+ * @param {string} email - UP Mail address
+ * @param {string} password - Account password
+ * @param {string} phone - Mobile number
+ * @param {string} passenger_type - [student, faculty, employee, Other]
+ * @param {string} Department_office - Specific office or college based on type
  */
-export const addUser = (name, email, password) => {
-    // Check if the student already exists in the list
+export const addUser = (name, email, password, phone, passenger_type, Department_office) => {
+    // Check for existing account
     const exists = usersArray.find(u => u.email === email);
     
     if (exists) {
         return { success: false, message: "This UP email is already registered!" };
     }
 
-    // Create the new object (The "Recents" style)
+    // Create the user object with the new schema
     const newUser = {
         name: name,
         email: email,
         password: password,
-        role: "Student"
+        phone: phone,
+        passenger_type: passenger_type,
+        Department_office: Department_office
     };
 
-    // Push into the array
+    // Save to the temporary array
     usersArray.push(newUser);
     
-    // Auto-set as active user for immediate login
+    // Automatically set as active user (Login upon signup)
     currentUser = newUser;
 
-    console.log("--- UserStore Updated ---");
-    console.log("New Student:", name);
-    console.log("Total Users in Memory:", usersArray.length);
+    console.log("--- UPSakay: New User Registered ---");
+    console.log(`Name: ${name}`);
+    console.log(`Type: ${passenger_type}`);
+    console.log(`Office/College: ${Department_office}`);
+    console.log(`Total Database Count: ${usersArray.length}`);
     
     return { success: true };
 };
 
 /**
- * LOGIN: Validates credentials against the array
+ * 4. LOGIN LOGIC
+ * Checks credentials and updates the currentUser session.
  */
 export const validateUser = (email, password) => {
     const user = usersArray.find(u => u.email === email);
@@ -64,4 +82,12 @@ export const validateUser = (email, password) => {
     
     currentUser = user; 
     return { success: true, user };
+};
+
+/**
+ * 5. LOGOUT LOGIC
+ */
+export const logoutUser = () => {
+    currentUser = null;
+    return { success: true };
 };

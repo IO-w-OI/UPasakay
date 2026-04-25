@@ -91,7 +91,7 @@ export const StyledTextInput = styled.TextInput`
     font-size: 16px;
     height: 55px;
     color: ${Colors.text_active};
-    margin-bottom: 1px;
+    margin-bottom: 0px;
 `;
 
 export const BasePage = styled.View`
@@ -415,6 +415,7 @@ export const UserRole = styled.Text`
     color: #1A2E1A;
     margin-top: 4px;
     margin-bottom: 3px;
+    text-transform: capitalize;
 `;
 
 export const SectionHeader = styled.Text`
