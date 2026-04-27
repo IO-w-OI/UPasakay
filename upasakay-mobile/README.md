@@ -48,3 +48,40 @@ Join our community of developers creating universal apps.
 
 - [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+
+
+## Export development build to access features like notifications [IMPORTANT FOR ANDROID]
+
+Do keep in mind that there are options for you to run the app with or without the server (running the app locally on the phone)
+
+App with computer
+
+1. Prepare your Android device/simulator (connect Android phone through USB)
+
+2. Start the app
+
+   ```bash
+   npx expo run:android
+   ```
+
+3. Select your device
+
+4. Wait for installation to happen
+
+5. Do not disconnect physical device when running the app. (It will complain about Metro.js)
+
+App without computer
+
+1. Prepare your Android device/simulator (connect Android phone through USB)
+
+2. Start the app
+
+   ```bash
+   npx expo run:android
+   ```
+
+3. Select your device
+
+4. Wait for installation to happen
+
+5. Physical phone is now free to disconnect from the host server and can run the app's local database with its local memory.
