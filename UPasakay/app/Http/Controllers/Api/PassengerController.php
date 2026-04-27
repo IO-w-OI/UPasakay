@@ -31,19 +31,28 @@ class PassengerController extends Controller
     {
         $validated = $request->validated();
 
-        // Create the underlying user account
-        $user = User::create([
-            'email' => $validated['email'],
-            'password_hash' => Hash::make($validated['password']),
-        ]);
+        // Optionally create an associated user when email/password provided
+        $user = null;
+        if (!empty($validated['email']) && !empty($validated['password'])) {
+            $user = User::create([
+                'email' => $validated['email'],
+                'password_hash' => Hash::make($validated['password']),
+            ]);
+        }
 
-        // Create the passenger profile linked to the user
         $passenger = Passenger::create([
-            'user_id' => $user->id,
+            'user_id' => $user ? $user->id : null,
+            'full_name' => $validated['full_name'] ?? null,
+            'email' => $validated['email'] ?? null,
             'passenger_number' => $validated['passenger_number'],
-            'department' => $validated['department'] ?? null,
+            'department_office' => $validated['department_office'] ?? ($validated['department'] ?? null),
             'passenger_type' => $validated['passenger_type'] ?? 'student',
             'passenger_status' => 'pending',
+            'verification_status' => 'pending',
+            'phone_number' => $validated['phone_number'] ?? null,
+            'student_id' => $validated['student_id'] ?? null,
+            'employee_id' => $validated['employee_id'] ?? null,
+            'proof_document_path' => $validated['proof_document_path'] ?? null,
         ]);
 
         $passenger->load('user');
@@ -79,16 +88,34 @@ class PassengerController extends Controller
             return response()->json(['message' => 'Passenger not found.'], 404);
         }
 
+
         $validated = $request->validated();
 
-        // Update passenger fields
-        $passenger->update(array_intersect_key($validated, array_flip([
+        $updatable = array_intersect_key($validated, array_flip([
+            'full_name',
             'passenger_number',
+            'department_office',
             'department',
             'passenger_type',
-        ])));
+            'phone_number',
+            'student_id',
+            'employee_id',
+            'proof_document_path',
+            'verification_status',
+            'passenger_status',
+        ]));
 
-        // Update user email if provided
+        // If legacy 'department' provided, set both columns for compatibility
+        if (isset($validated['department'])) {
+            $updatable['department'] = $validated['department'];
+            if (!isset($updatable['department_office'])) {
+                $updatable['department_office'] = $validated['department'];
+            }
+        }
+
+        $passenger->update($updatable);
+
+        // Update user email if provided and user exists
         if (isset($validated['email']) && $passenger->user) {
             $passenger->user->update(['email' => $validated['email']]);
         }
