@@ -56,19 +56,33 @@ Do keep in mind that there are options for you to run the app with or without th
 
 App with computer
 
-1. Prepare your Android device/simulator (connect Android phone through USB)
+1. **Connect your Android phone to your computer via USB cable.**
 
-2. Start the app
+2. **Enable Developer Mode on your Android device:**
+   - Open **Settings**
+   - Go to **About phone**
+   - Locate **Build number**
+   - Tap **Build number** 7 times until Developer Mode is enabled
 
-   ```bash
-   npx expo run:android
-   ```
+3. **Enable USB Debugging:**
+   - Go to **Settings > System > Developer options**
+   - Turn on **USB debugging**
 
-3. Select your device
+4. **Verify that your device is detected (Windows):**
+   - Open Command Prompt
+   - Run:
+     ```bash
+     C:\Users\DELL\AppData\Local\Android\Sdk\platform-tools>adb devices
+     ```
+   - You should see output similar to:
+     ```text
+     List of devices attached
+     06219330CI035872        device
+     ```
 
-4. Wait for installation to happen
+5. Wait for installation to happen
 
-5. Do not disconnect physical device when running the app. (It will complain about Metro.js)
+6. Do not disconnect physical device when running the app. (It will complain about Metro.js)
 
 App without computer
 
