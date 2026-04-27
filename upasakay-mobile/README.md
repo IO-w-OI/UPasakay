@@ -74,6 +74,12 @@ App without computer
 
 1. Prepare your Android device/simulator (connect Android phone through USB)
 
+2. Go to settings and tap [Build Number] 7 times until it says "You are now a developer".
+
+3. Enable USB Debugging from Settings>System>Developer Options and turn on the setting
+
+4. Connect phone to PC through USB
+
 2. Start the app
 
    ```bash
