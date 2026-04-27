@@ -81,7 +81,7 @@ const Login = () => {
                         if (result.success) {
                             // SUCCESS: Navigate to Home
                             console.log("Login Success! Welcome:", result.user.name);
-                            if(result.user.role === "Driver"){ //If user role is driver, redirect to Driver Home
+                            if(result.user.passenger_type === "Driver"){ //If user role is driver, redirect to Driver Home
                                 router.replace('/(tabs)/Drivers/DriverHome');
                                 console.log("Redirecting to Driver Home...");
                             }
