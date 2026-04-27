@@ -77,7 +77,7 @@ App without computer
 2. Start the app
 
    ```bash
-   npx expo run:android
+   npx expo run:android --configuration Release --device
    ```
 
 3. Select your device
