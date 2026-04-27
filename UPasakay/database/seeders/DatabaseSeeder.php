@@ -18,5 +18,6 @@ class DatabaseSeeder extends Seeder
             PassengerSeeder::class,
             PickupRequestSeeder::class,
         ]);
+        echo "Seeder is running!\n";
     }
 }
