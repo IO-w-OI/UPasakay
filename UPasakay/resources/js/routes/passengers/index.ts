@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\PassengerController::index
  * @see app/Http/Controllers/Api/PassengerController.php:18
@@ -42,41 +42,6 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\Api\PassengerController::index
- * @see app/Http/Controllers/Api/PassengerController.php:18
- * @route '/api/passengers'
- */
-    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: index.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\PassengerController::index
- * @see app/Http/Controllers/Api/PassengerController.php:18
- * @route '/api/passengers'
- */
-        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\Api\PassengerController::index
- * @see app/Http/Controllers/Api/PassengerController.php:18
- * @route '/api/passengers'
- */
-        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    index.form = indexForm
 /**
 * @see \App\Http\Controllers\PassengerApprovalController::index
  * @see app/Http/Controllers/PassengerApprovalController.php:11
@@ -120,41 +85,6 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\PassengerApprovalController::index
- * @see app/Http/Controllers/PassengerApprovalController.php:11
- * @route '/passengers'
- */
-    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: index.url(options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\PassengerApprovalController::index
- * @see app/Http/Controllers/PassengerApprovalController.php:11
- * @route '/passengers'
- */
-        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index.url(options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\PassengerApprovalController::index
- * @see app/Http/Controllers/PassengerApprovalController.php:11
- * @route '/passengers'
- */
-        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: index.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    index.form = indexForm
 /**
 * @see \App\Http\Controllers\Api\PassengerController::store
  * @see app/Http/Controllers/Api/PassengerController.php:30
@@ -189,27 +119,6 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     method: 'post',
 })
 
-    /**
-* @see \App\Http\Controllers\Api\PassengerController::store
- * @see app/Http/Controllers/Api/PassengerController.php:30
- * @route '/api/passengers'
- */
-    const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: store.url(options),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\PassengerController::store
- * @see app/Http/Controllers/Api/PassengerController.php:30
- * @route '/api/passengers'
- */
-        storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: store.url(options),
-            method: 'post',
-        })
-    
-    store.form = storeForm
 /**
 * @see \App\Http\Controllers\Api\PassengerController::show
  * @see app/Http/Controllers/Api/PassengerController.php:69
@@ -272,41 +181,6 @@ show.head = (args: { passenger: string | number } | [passenger: string | number 
     method: 'head',
 })
 
-    /**
-* @see \App\Http\Controllers\Api\PassengerController::show
- * @see app/Http/Controllers/Api/PassengerController.php:69
- * @route '/api/passengers/{passenger}'
- */
-    const showForm = (args: { passenger: string | number } | [passenger: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-        action: show.url(args, options),
-        method: 'get',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\PassengerController::show
- * @see app/Http/Controllers/Api/PassengerController.php:69
- * @route '/api/passengers/{passenger}'
- */
-        showForm.get = (args: { passenger: string | number } | [passenger: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: show.url(args, options),
-            method: 'get',
-        })
-            /**
-* @see \App\Http\Controllers\Api\PassengerController::show
- * @see app/Http/Controllers/Api/PassengerController.php:69
- * @route '/api/passengers/{passenger}'
- */
-        showForm.head = (args: { passenger: string | number } | [passenger: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-            action: show.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'HEAD',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'get',
-        })
-    
-    show.form = showForm
 /**
 * @see \App\Http\Controllers\Api\PassengerController::update
  * @see app/Http/Controllers/Api/PassengerController.php:83
@@ -369,51 +243,6 @@ update.patch = (args: { passenger: string | number } | [passenger: string | numb
     method: 'patch',
 })
 
-    /**
-* @see \App\Http\Controllers\Api\PassengerController::update
- * @see app/Http/Controllers/Api/PassengerController.php:83
- * @route '/api/passengers/{passenger}'
- */
-    const updateForm = (args: { passenger: string | number } | [passenger: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: update.url(args, {
-                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                        _method: 'PUT',
-                        ...(options?.query ?? options?.mergeQuery ?? {}),
-                    }
-                }),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\PassengerController::update
- * @see app/Http/Controllers/Api/PassengerController.php:83
- * @route '/api/passengers/{passenger}'
- */
-        updateForm.put = (args: { passenger: string | number } | [passenger: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: update.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'PUT',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-            /**
-* @see \App\Http\Controllers\Api\PassengerController::update
- * @see app/Http/Controllers/Api/PassengerController.php:83
- * @route '/api/passengers/{passenger}'
- */
-        updateForm.patch = (args: { passenger: string | number } | [passenger: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: update.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'PATCH',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-    
-    update.form = updateForm
 /**
 * @see \App\Http\Controllers\Api\PassengerController::destroy
  * @see app/Http/Controllers/Api/PassengerController.php:134
@@ -467,37 +296,6 @@ destroy.delete = (args: { passenger: string | number } | [passenger: string | nu
     method: 'delete',
 })
 
-    /**
-* @see \App\Http\Controllers\Api\PassengerController::destroy
- * @see app/Http/Controllers/Api/PassengerController.php:134
- * @route '/api/passengers/{passenger}'
- */
-    const destroyForm = (args: { passenger: string | number } | [passenger: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: destroy.url(args, {
-                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                        _method: 'DELETE',
-                        ...(options?.query ?? options?.mergeQuery ?? {}),
-                    }
-                }),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\Api\PassengerController::destroy
- * @see app/Http/Controllers/Api/PassengerController.php:134
- * @route '/api/passengers/{passenger}'
- */
-        destroyForm.delete = (args: { passenger: string | number } | [passenger: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: destroy.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'DELETE',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-    
-    destroy.form = destroyForm
 /**
 * @see \App\Http\Controllers\PassengerApprovalController::updateStatus
  * @see app/Http/Controllers/PassengerApprovalController.php:70
@@ -556,37 +354,6 @@ updateStatus.patch = (args: { passenger: number | { id: number } } | [passenger:
     method: 'patch',
 })
 
-    /**
-* @see \App\Http\Controllers\PassengerApprovalController::updateStatus
- * @see app/Http/Controllers/PassengerApprovalController.php:70
- * @route '/passengers/{passenger}/status'
- */
-    const updateStatusForm = (args: { passenger: number | { id: number } } | [passenger: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: updateStatus.url(args, {
-                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                        _method: 'PATCH',
-                        ...(options?.query ?? options?.mergeQuery ?? {}),
-                    }
-                }),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\PassengerApprovalController::updateStatus
- * @see app/Http/Controllers/PassengerApprovalController.php:70
- * @route '/passengers/{passenger}/status'
- */
-        updateStatusForm.patch = (args: { passenger: number | { id: number } } | [passenger: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: updateStatus.url(args, {
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'PATCH',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-    
-    updateStatus.form = updateStatusForm
 /**
 * @see \App\Http\Controllers\PassengerApprovalController::bulkStatus
  * @see app/Http/Controllers/PassengerApprovalController.php:86
@@ -620,38 +387,6 @@ bulkStatus.patch = (options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
     url: bulkStatus.url(options),
     method: 'patch',
 })
-
-    /**
-* @see \App\Http\Controllers\PassengerApprovalController::bulkStatus
- * @see app/Http/Controllers/PassengerApprovalController.php:86
- * @route '/passengers/bulk-status'
- */
-    const bulkStatusForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-        action: bulkStatus.url({
-                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                        _method: 'PATCH',
-                        ...(options?.query ?? options?.mergeQuery ?? {}),
-                    }
-                }),
-        method: 'post',
-    })
-
-            /**
-* @see \App\Http\Controllers\PassengerApprovalController::bulkStatus
- * @see app/Http/Controllers/PassengerApprovalController.php:86
- * @route '/passengers/bulk-status'
- */
-        bulkStatusForm.patch = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
-            action: bulkStatus.url({
-                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-                            _method: 'PATCH',
-                            ...(options?.query ?? options?.mergeQuery ?? {}),
-                        }
-                    }),
-            method: 'post',
-        })
-    
-    bulkStatus.form = bulkStatusForm
 const passengers = {
     index: Object.assign(index, index),
 store: Object.assign(store, store),
