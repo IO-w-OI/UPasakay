@@ -83,6 +83,16 @@ class PickupRequestService
     }
     private function calculateETA($driverLat, $driverLng, $passengerLat, $passengerLng): int
     { //Calculates ETA based on Haversine Formula and location of both passenger and driver
+            /**
+         * Calculate ETA in minutes from driver's current position to passenger's pickup stop.
+         * Uses the Haversine formula to compute distance, assumes 30 km/h average shuttle speed.
+         *
+         * @param float $driverLat Driver's current latitude
+         * @param float $driverLng Driver's current longitude
+         * @param float $passengerLat Pickup stop latitude
+         * @param float $passengerLng Pickup stop longitude
+         * @return int ETA in minutes
+         */
         $earthRadius = 6371;
         $dLat = deg2rad($passengerLat - $driverLat);
         $dLng = deg2rad($passengerLng - $driverLng);
