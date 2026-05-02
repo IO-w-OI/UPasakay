@@ -12,11 +12,13 @@ class PickupRequestService
     /**
      * Create a new pickup request for an authenticated user.
      * Prevents duplicate submissions for active bookings.
+     * Calculates ETA from driver's latest location to pickup stop
+     * using the Haversine formula assuming 30 km/h shuttle speed.
      *
      * @param User $user The authenticated user
      * @param array $data Validated request data containing route_id, pickup_stop_id, dropoff_stop_id
-     * @return PickupRequest
-     * @throws ValidationException if a duplicate active booking exists
+     * @return PickupRequest with eta_minutes if driver location is available
+     * @throws ValidationException if passenger is invalid or duplicate booking exists
      */
     public function createPickupRequest(User $user, array $data): PickupRequest
     {
@@ -64,11 +66,23 @@ class PickupRequestService
             'dropoff_stop_id' => $data['dropoff_stop_id'],
             'status' => 'pending',
         ]);
+        $latestLocation = ShuttleLocation::latest('recorded_at')->first();
+
+        if ($latestLocation) {
+            $pickupStop = Stop::find($data['pickup_stop_id']);
+            $pickupRequest->eta_minutes = $this->calculateETA(
+                $latestLocation->latitude,
+                $latestLocation->longitude,
+                $pickupStop->latitude,
+                $pickupStop->longitude
+            );
+            $pickupRequest->save();
+        }
 
         return $pickupRequest;
     }
     private function calculateETA($driverLat, $driverLng, $passengerLat, $passengerLng): int
-    {
+    { //Calculates ETA based on Haversine Formula and location of both passenger and driver
         $earthRadius = 6371;
         $dLat = deg2rad($passengerLat - $driverLat);
         $dLng = deg2rad($passengerLng - $driverLng);
