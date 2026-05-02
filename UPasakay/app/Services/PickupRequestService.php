@@ -1,7 +1,8 @@
 <?php
 
 namespace App\Services;
-
+use App\Models\ShuttleLocation;
+use App\Models\Stop;
 use App\Models\PickupRequest;
 use App\Models\User;
 use Illuminate\Validation\ValidationException;
@@ -65,5 +66,16 @@ class PickupRequestService
         ]);
 
         return $pickupRequest;
+    }
+    private function calculateETA($driverLat, $driverLng, $passengerLat, $passengerLng): int
+    {
+        $earthRadius = 6371;
+        $dLat = deg2rad($passengerLat - $driverLat);
+        $dLng = deg2rad($passengerLng - $driverLng);
+        $a = sin($dLat/2) * sin($dLat/2) +
+            cos(deg2rad($driverLat)) * cos(deg2rad($passengerLat)) *
+            sin($dLng/2) * sin($dLng/2);
+        $distance = $earthRadius * 2 * atan2(sqrt($a), sqrt(1-$a));
+        return (int) round(($distance / 30) * 60);
     }
 }
