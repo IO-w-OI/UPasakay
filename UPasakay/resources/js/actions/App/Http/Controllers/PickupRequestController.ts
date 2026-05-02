@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\PickupRequestController::index
  * @see app/Http/Controllers/PickupRequestController.php:16
@@ -42,6 +42,41 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\PickupRequestController::index
+ * @see app/Http/Controllers/PickupRequestController.php:16
+ * @route '/pickup-requests'
+ */
+    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: index.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\PickupRequestController::index
+ * @see app/Http/Controllers/PickupRequestController.php:16
+ * @route '/pickup-requests'
+ */
+        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\PickupRequestController::index
+ * @see app/Http/Controllers/PickupRequestController.php:16
+ * @route '/pickup-requests'
+ */
+        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    index.form = indexForm
 /**
 * @see \App\Http\Controllers\PickupRequestController::assign
  * @see app/Http/Controllers/PickupRequestController.php:91
@@ -99,6 +134,38 @@ assign.patch = (args: { pickupRequest: number | { id: number } } | [pickupReques
     url: assign.url(args, options),
     method: 'patch',
 })
+
+    /**
+* @see \App\Http\Controllers\PickupRequestController::assign
+ * @see app/Http/Controllers/PickupRequestController.php:91
+ * @route '/pickup-requests/{pickupRequest}/assign'
+ */
+    const assignForm = (args: { pickupRequest: number | { id: number } } | [pickupRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: assign.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'PATCH',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\PickupRequestController::assign
+ * @see app/Http/Controllers/PickupRequestController.php:91
+ * @route '/pickup-requests/{pickupRequest}/assign'
+ */
+        assignForm.patch = (args: { pickupRequest: number | { id: number } } | [pickupRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: assign.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'PATCH',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    assign.form = assignForm
 const PickupRequestController = { index, assign }
 
 export default PickupRequestController

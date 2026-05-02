@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\NotificationController::index
  * @see app/Http/Controllers/NotificationController.php:12
@@ -42,6 +42,41 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\NotificationController::index
+ * @see app/Http/Controllers/NotificationController.php:12
+ * @route '/notifications'
+ */
+    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: index.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\NotificationController::index
+ * @see app/Http/Controllers/NotificationController.php:12
+ * @route '/notifications'
+ */
+        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\NotificationController::index
+ * @see app/Http/Controllers/NotificationController.php:12
+ * @route '/notifications'
+ */
+        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    index.form = indexForm
 /**
 * @see \App\Http\Controllers\NotificationController::store
  * @see app/Http/Controllers/NotificationController.php:96
@@ -76,6 +111,27 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\NotificationController::store
+ * @see app/Http/Controllers/NotificationController.php:96
+ * @route '/notifications'
+ */
+    const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: store.url(options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\NotificationController::store
+ * @see app/Http/Controllers/NotificationController.php:96
+ * @route '/notifications'
+ */
+        storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: store.url(options),
+            method: 'post',
+        })
+    
+    store.form = storeForm
 /**
 * @see \App\Http\Controllers\NotificationController::destroy
  * @see app/Http/Controllers/NotificationController.php:143
@@ -129,6 +185,37 @@ destroy.delete = (args: { id: string | number } | [id: string | number ] | strin
     method: 'delete',
 })
 
+    /**
+* @see \App\Http\Controllers\NotificationController::destroy
+ * @see app/Http/Controllers/NotificationController.php:143
+ * @route '/notifications/{id}'
+ */
+    const destroyForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: destroy.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'DELETE',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\NotificationController::destroy
+ * @see app/Http/Controllers/NotificationController.php:143
+ * @route '/notifications/{id}'
+ */
+        destroyForm.delete = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: destroy.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'DELETE',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    destroy.form = destroyForm
 /**
 * @see \App\Http\Controllers\NotificationController::storeSchedule
  * @see app/Http/Controllers/NotificationController.php:154
@@ -163,6 +250,27 @@ storeSchedule.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => (
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\NotificationController::storeSchedule
+ * @see app/Http/Controllers/NotificationController.php:154
+ * @route '/notifications/schedules'
+ */
+    const storeScheduleForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: storeSchedule.url(options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\NotificationController::storeSchedule
+ * @see app/Http/Controllers/NotificationController.php:154
+ * @route '/notifications/schedules'
+ */
+        storeScheduleForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: storeSchedule.url(options),
+            method: 'post',
+        })
+    
+    storeSchedule.form = storeScheduleForm
 /**
 * @see \App\Http\Controllers\NotificationController::updateSchedule
  * @see app/Http/Controllers/NotificationController.php:175
@@ -216,6 +324,37 @@ updateSchedule.patch = (args: { id: string | number } | [id: string | number ] |
     method: 'patch',
 })
 
+    /**
+* @see \App\Http\Controllers\NotificationController::updateSchedule
+ * @see app/Http/Controllers/NotificationController.php:175
+ * @route '/notifications/schedules/{id}'
+ */
+    const updateScheduleForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: updateSchedule.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'PATCH',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\NotificationController::updateSchedule
+ * @see app/Http/Controllers/NotificationController.php:175
+ * @route '/notifications/schedules/{id}'
+ */
+        updateScheduleForm.patch = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: updateSchedule.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'PATCH',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    updateSchedule.form = updateScheduleForm
 /**
 * @see \App\Http\Controllers\NotificationController::toggleSchedule
  * @see app/Http/Controllers/NotificationController.php:199
@@ -269,6 +408,37 @@ toggleSchedule.patch = (args: { id: string | number } | [id: string | number ] |
     method: 'patch',
 })
 
+    /**
+* @see \App\Http\Controllers\NotificationController::toggleSchedule
+ * @see app/Http/Controllers/NotificationController.php:199
+ * @route '/notifications/schedules/{id}/toggle'
+ */
+    const toggleScheduleForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: toggleSchedule.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'PATCH',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\NotificationController::toggleSchedule
+ * @see app/Http/Controllers/NotificationController.php:199
+ * @route '/notifications/schedules/{id}/toggle'
+ */
+        toggleScheduleForm.patch = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: toggleSchedule.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'PATCH',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    toggleSchedule.form = toggleScheduleForm
 /**
 * @see \App\Http\Controllers\NotificationController::destroySchedule
  * @see app/Http/Controllers/NotificationController.php:210
@@ -321,6 +491,38 @@ destroySchedule.delete = (args: { id: string | number } | [id: string | number ]
     url: destroySchedule.url(args, options),
     method: 'delete',
 })
+
+    /**
+* @see \App\Http\Controllers\NotificationController::destroySchedule
+ * @see app/Http/Controllers/NotificationController.php:210
+ * @route '/notifications/schedules/{id}'
+ */
+    const destroyScheduleForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: destroySchedule.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'DELETE',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\NotificationController::destroySchedule
+ * @see app/Http/Controllers/NotificationController.php:210
+ * @route '/notifications/schedules/{id}'
+ */
+        destroyScheduleForm.delete = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: destroySchedule.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'DELETE',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    destroySchedule.form = destroyScheduleForm
 const NotificationController = { index, store, destroy, storeSchedule, updateSchedule, toggleSchedule, destroySchedule }
 
 export default NotificationController

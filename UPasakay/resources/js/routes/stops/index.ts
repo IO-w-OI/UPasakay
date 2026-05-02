@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\StopController::index
  * @see app/Http/Controllers/Api/StopController.php:13
@@ -42,6 +42,41 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\StopController::index
+ * @see app/Http/Controllers/Api/StopController.php:13
+ * @route '/api/stops'
+ */
+    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: index.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\StopController::index
+ * @see app/Http/Controllers/Api/StopController.php:13
+ * @route '/api/stops'
+ */
+        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\StopController::index
+ * @see app/Http/Controllers/Api/StopController.php:13
+ * @route '/api/stops'
+ */
+        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    index.form = indexForm
 /**
 * @see \App\Http\Controllers\Api\StopController::store
  * @see app/Http/Controllers/Api/StopController.php:25
@@ -76,6 +111,27 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\StopController::store
+ * @see app/Http/Controllers/Api/StopController.php:25
+ * @route '/api/stops'
+ */
+    const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: store.url(options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\StopController::store
+ * @see app/Http/Controllers/Api/StopController.php:25
+ * @route '/api/stops'
+ */
+        storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: store.url(options),
+            method: 'post',
+        })
+    
+    store.form = storeForm
 /**
 * @see \App\Http\Controllers\Api\StopController::show
  * @see app/Http/Controllers/Api/StopController.php:48
@@ -143,6 +199,41 @@ show.head = (args: { stop: number | { id: number } } | [stop: number | { id: num
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\StopController::show
+ * @see app/Http/Controllers/Api/StopController.php:48
+ * @route '/api/stops/{stop}'
+ */
+    const showForm = (args: { stop: number | { id: number } } | [stop: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: show.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\StopController::show
+ * @see app/Http/Controllers/Api/StopController.php:48
+ * @route '/api/stops/{stop}'
+ */
+        showForm.get = (args: { stop: number | { id: number } } | [stop: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: show.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\StopController::show
+ * @see app/Http/Controllers/Api/StopController.php:48
+ * @route '/api/stops/{stop}'
+ */
+        showForm.head = (args: { stop: number | { id: number } } | [stop: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: show.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    show.form = showForm
 /**
 * @see \App\Http\Controllers\Api\StopController::update
  * @see app/Http/Controllers/Api/StopController.php:53
@@ -210,6 +301,51 @@ update.patch = (args: { stop: number | { id: number } } | [stop: number | { id: 
     method: 'patch',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\StopController::update
+ * @see app/Http/Controllers/Api/StopController.php:53
+ * @route '/api/stops/{stop}'
+ */
+    const updateForm = (args: { stop: number | { id: number } } | [stop: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: update.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'PUT',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\StopController::update
+ * @see app/Http/Controllers/Api/StopController.php:53
+ * @route '/api/stops/{stop}'
+ */
+        updateForm.put = (args: { stop: number | { id: number } } | [stop: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: update.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'PUT',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+            /**
+* @see \App\Http\Controllers\Api\StopController::update
+ * @see app/Http/Controllers/Api/StopController.php:53
+ * @route '/api/stops/{stop}'
+ */
+        updateForm.patch = (args: { stop: number | { id: number } } | [stop: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: update.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'PATCH',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    update.form = updateForm
 /**
 * @see \App\Http\Controllers\Api\StopController::destroy
  * @see app/Http/Controllers/Api/StopController.php:77
@@ -267,6 +403,38 @@ destroy.delete = (args: { stop: number | { id: number } } | [stop: number | { id
     url: destroy.url(args, options),
     method: 'delete',
 })
+
+    /**
+* @see \App\Http\Controllers\Api\StopController::destroy
+ * @see app/Http/Controllers/Api/StopController.php:77
+ * @route '/api/stops/{stop}'
+ */
+    const destroyForm = (args: { stop: number | { id: number } } | [stop: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: destroy.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'DELETE',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\StopController::destroy
+ * @see app/Http/Controllers/Api/StopController.php:77
+ * @route '/api/stops/{stop}'
+ */
+        destroyForm.delete = (args: { stop: number | { id: number } } | [stop: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: destroy.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'DELETE',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    destroy.form = destroyForm
 const stops = {
     index: Object.assign(index, index),
 store: Object.assign(store, store),
