@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\RouteController::index
  * @see app/Http/Controllers/Api/RouteController.php:11
@@ -42,6 +42,41 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\RouteController::index
+ * @see app/Http/Controllers/Api/RouteController.php:11
+ * @route '/api/routes'
+ */
+    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: index.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\RouteController::index
+ * @see app/Http/Controllers/Api/RouteController.php:11
+ * @route '/api/routes'
+ */
+        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\RouteController::index
+ * @see app/Http/Controllers/Api/RouteController.php:11
+ * @route '/api/routes'
+ */
+        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    index.form = indexForm
 /**
 * @see \App\Http\Controllers\Api\RouteController::store
  * @see app/Http/Controllers/Api/RouteController.php:16
@@ -76,6 +111,27 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\RouteController::store
+ * @see app/Http/Controllers/Api/RouteController.php:16
+ * @route '/api/routes'
+ */
+    const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: store.url(options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\RouteController::store
+ * @see app/Http/Controllers/Api/RouteController.php:16
+ * @route '/api/routes'
+ */
+        storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: store.url(options),
+            method: 'post',
+        })
+    
+    store.form = storeForm
 /**
 * @see \App\Http\Controllers\Api\RouteController::show
  * @see app/Http/Controllers/Api/RouteController.php:31
@@ -143,6 +199,41 @@ show.head = (args: { route: number | { id: number } } | [route: number | { id: n
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\RouteController::show
+ * @see app/Http/Controllers/Api/RouteController.php:31
+ * @route '/api/routes/{route}'
+ */
+    const showForm = (args: { route: number | { id: number } } | [route: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: show.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\RouteController::show
+ * @see app/Http/Controllers/Api/RouteController.php:31
+ * @route '/api/routes/{route}'
+ */
+        showForm.get = (args: { route: number | { id: number } } | [route: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: show.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\RouteController::show
+ * @see app/Http/Controllers/Api/RouteController.php:31
+ * @route '/api/routes/{route}'
+ */
+        showForm.head = (args: { route: number | { id: number } } | [route: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: show.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    show.form = showForm
 /**
 * @see \App\Http\Controllers\Api\RouteController::update
  * @see app/Http/Controllers/Api/RouteController.php:36
@@ -210,6 +301,51 @@ update.patch = (args: { route: number | { id: number } } | [route: number | { id
     method: 'patch',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\RouteController::update
+ * @see app/Http/Controllers/Api/RouteController.php:36
+ * @route '/api/routes/{route}'
+ */
+    const updateForm = (args: { route: number | { id: number } } | [route: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: update.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'PUT',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\RouteController::update
+ * @see app/Http/Controllers/Api/RouteController.php:36
+ * @route '/api/routes/{route}'
+ */
+        updateForm.put = (args: { route: number | { id: number } } | [route: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: update.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'PUT',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+            /**
+* @see \App\Http\Controllers\Api\RouteController::update
+ * @see app/Http/Controllers/Api/RouteController.php:36
+ * @route '/api/routes/{route}'
+ */
+        updateForm.patch = (args: { route: number | { id: number } } | [route: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: update.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'PATCH',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    update.form = updateForm
 /**
 * @see \App\Http\Controllers\Api\RouteController::destroy
  * @see app/Http/Controllers/Api/RouteController.php:51
@@ -267,6 +403,38 @@ destroy.delete = (args: { route: number | { id: number } } | [route: number | { 
     url: destroy.url(args, options),
     method: 'delete',
 })
+
+    /**
+* @see \App\Http\Controllers\Api\RouteController::destroy
+ * @see app/Http/Controllers/Api/RouteController.php:51
+ * @route '/api/routes/{route}'
+ */
+    const destroyForm = (args: { route: number | { id: number } } | [route: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: destroy.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'DELETE',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\RouteController::destroy
+ * @see app/Http/Controllers/Api/RouteController.php:51
+ * @route '/api/routes/{route}'
+ */
+        destroyForm.delete = (args: { route: number | { id: number } } | [route: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: destroy.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'DELETE',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    destroy.form = destroyForm
 const RouteController = { index, store, show, update, destroy }
 
 export default RouteController

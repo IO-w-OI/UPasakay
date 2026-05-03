@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\DriverAssignmentController::index
  * @see app/Http/Controllers/Api/DriverAssignmentController.php:17
@@ -42,6 +42,41 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\DriverAssignmentController::index
+ * @see app/Http/Controllers/Api/DriverAssignmentController.php:17
+ * @route '/api/driver-assignments'
+ */
+    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: index.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\DriverAssignmentController::index
+ * @see app/Http/Controllers/Api/DriverAssignmentController.php:17
+ * @route '/api/driver-assignments'
+ */
+        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\DriverAssignmentController::index
+ * @see app/Http/Controllers/Api/DriverAssignmentController.php:17
+ * @route '/api/driver-assignments'
+ */
+        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    index.form = indexForm
 /**
 * @see \App\Http\Controllers\Api\DriverAssignmentController::store
  * @see app/Http/Controllers/Api/DriverAssignmentController.php:24
@@ -76,6 +111,27 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\DriverAssignmentController::store
+ * @see app/Http/Controllers/Api/DriverAssignmentController.php:24
+ * @route '/api/driver-assignments'
+ */
+    const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: store.url(options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\DriverAssignmentController::store
+ * @see app/Http/Controllers/Api/DriverAssignmentController.php:24
+ * @route '/api/driver-assignments'
+ */
+        storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: store.url(options),
+            method: 'post',
+        })
+    
+    store.form = storeForm
 /**
 * @see \App\Http\Controllers\Api\DriverAssignmentController::show
  * @see app/Http/Controllers/Api/DriverAssignmentController.php:45
@@ -138,6 +194,41 @@ show.head = (args: { driver_assignment: string | number } | [driver_assignment: 
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\DriverAssignmentController::show
+ * @see app/Http/Controllers/Api/DriverAssignmentController.php:45
+ * @route '/api/driver-assignments/{driver_assignment}'
+ */
+    const showForm = (args: { driver_assignment: string | number } | [driver_assignment: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: show.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\DriverAssignmentController::show
+ * @see app/Http/Controllers/Api/DriverAssignmentController.php:45
+ * @route '/api/driver-assignments/{driver_assignment}'
+ */
+        showForm.get = (args: { driver_assignment: string | number } | [driver_assignment: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: show.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\DriverAssignmentController::show
+ * @see app/Http/Controllers/Api/DriverAssignmentController.php:45
+ * @route '/api/driver-assignments/{driver_assignment}'
+ */
+        showForm.head = (args: { driver_assignment: string | number } | [driver_assignment: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: show.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    show.form = showForm
 /**
 * @see \App\Http\Controllers\Api\DriverAssignmentController::update
  * @see app/Http/Controllers/Api/DriverAssignmentController.php:50
@@ -200,6 +291,51 @@ update.patch = (args: { driver_assignment: string | number } | [driver_assignmen
     method: 'patch',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\DriverAssignmentController::update
+ * @see app/Http/Controllers/Api/DriverAssignmentController.php:50
+ * @route '/api/driver-assignments/{driver_assignment}'
+ */
+    const updateForm = (args: { driver_assignment: string | number } | [driver_assignment: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: update.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'PUT',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\DriverAssignmentController::update
+ * @see app/Http/Controllers/Api/DriverAssignmentController.php:50
+ * @route '/api/driver-assignments/{driver_assignment}'
+ */
+        updateForm.put = (args: { driver_assignment: string | number } | [driver_assignment: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: update.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'PUT',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+            /**
+* @see \App\Http\Controllers\Api\DriverAssignmentController::update
+ * @see app/Http/Controllers/Api/DriverAssignmentController.php:50
+ * @route '/api/driver-assignments/{driver_assignment}'
+ */
+        updateForm.patch = (args: { driver_assignment: string | number } | [driver_assignment: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: update.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'PATCH',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    update.form = updateForm
 /**
 * @see \App\Http\Controllers\Api\DriverAssignmentController::destroy
  * @see app/Http/Controllers/Api/DriverAssignmentController.php:65
@@ -252,6 +388,38 @@ destroy.delete = (args: { driver_assignment: string | number } | [driver_assignm
     url: destroy.url(args, options),
     method: 'delete',
 })
+
+    /**
+* @see \App\Http\Controllers\Api\DriverAssignmentController::destroy
+ * @see app/Http/Controllers/Api/DriverAssignmentController.php:65
+ * @route '/api/driver-assignments/{driver_assignment}'
+ */
+    const destroyForm = (args: { driver_assignment: string | number } | [driver_assignment: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: destroy.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'DELETE',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\DriverAssignmentController::destroy
+ * @see app/Http/Controllers/Api/DriverAssignmentController.php:65
+ * @route '/api/driver-assignments/{driver_assignment}'
+ */
+        destroyForm.delete = (args: { driver_assignment: string | number } | [driver_assignment: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: destroy.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'DELETE',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    destroy.form = destroyForm
 const DriverAssignmentController = { index, store, show, update, destroy }
 
 export default DriverAssignmentController

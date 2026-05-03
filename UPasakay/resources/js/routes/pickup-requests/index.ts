@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\PickupRequestController::index
  * @see app/Http/Controllers/Api/PickupRequestController.php:20
@@ -42,6 +42,41 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\PickupRequestController::index
+ * @see app/Http/Controllers/Api/PickupRequestController.php:20
+ * @route '/api/pickup-requests'
+ */
+    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: index.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\PickupRequestController::index
+ * @see app/Http/Controllers/Api/PickupRequestController.php:20
+ * @route '/api/pickup-requests'
+ */
+        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\PickupRequestController::index
+ * @see app/Http/Controllers/Api/PickupRequestController.php:20
+ * @route '/api/pickup-requests'
+ */
+        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    index.form = indexForm
 /**
 * @see \App\Http\Controllers\PickupRequestController::index
  * @see app/Http/Controllers/PickupRequestController.php:16
@@ -85,6 +120,41 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\PickupRequestController::index
+ * @see app/Http/Controllers/PickupRequestController.php:16
+ * @route '/pickup-requests'
+ */
+    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: index.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\PickupRequestController::index
+ * @see app/Http/Controllers/PickupRequestController.php:16
+ * @route '/pickup-requests'
+ */
+        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\PickupRequestController::index
+ * @see app/Http/Controllers/PickupRequestController.php:16
+ * @route '/pickup-requests'
+ */
+        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    index.form = indexForm
 /**
 * @see \App\Http\Controllers\Api\PickupRequestController::store
  * @see app/Http/Controllers/Api/PickupRequestController.php:27
@@ -119,6 +189,27 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\PickupRequestController::store
+ * @see app/Http/Controllers/Api/PickupRequestController.php:27
+ * @route '/api/pickup-requests'
+ */
+    const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: store.url(options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\PickupRequestController::store
+ * @see app/Http/Controllers/Api/PickupRequestController.php:27
+ * @route '/api/pickup-requests'
+ */
+        storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: store.url(options),
+            method: 'post',
+        })
+    
+    store.form = storeForm
 /**
 * @see \App\Http\Controllers\Api\PickupRequestController::show
  * @see app/Http/Controllers/Api/PickupRequestController.php:57
@@ -181,6 +272,41 @@ show.head = (args: { pickup_request: string | number } | [pickup_request: string
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\PickupRequestController::show
+ * @see app/Http/Controllers/Api/PickupRequestController.php:57
+ * @route '/api/pickup-requests/{pickup_request}'
+ */
+    const showForm = (args: { pickup_request: string | number } | [pickup_request: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: show.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\PickupRequestController::show
+ * @see app/Http/Controllers/Api/PickupRequestController.php:57
+ * @route '/api/pickup-requests/{pickup_request}'
+ */
+        showForm.get = (args: { pickup_request: string | number } | [pickup_request: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: show.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\PickupRequestController::show
+ * @see app/Http/Controllers/Api/PickupRequestController.php:57
+ * @route '/api/pickup-requests/{pickup_request}'
+ */
+        showForm.head = (args: { pickup_request: string | number } | [pickup_request: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: show.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    show.form = showForm
 /**
 * @see \App\Http\Controllers\Api\PickupRequestController::update
  * @see app/Http/Controllers/Api/PickupRequestController.php:64
@@ -243,6 +369,51 @@ update.patch = (args: { pickup_request: string | number } | [pickup_request: str
     method: 'patch',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\PickupRequestController::update
+ * @see app/Http/Controllers/Api/PickupRequestController.php:64
+ * @route '/api/pickup-requests/{pickup_request}'
+ */
+    const updateForm = (args: { pickup_request: string | number } | [pickup_request: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: update.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'PUT',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\PickupRequestController::update
+ * @see app/Http/Controllers/Api/PickupRequestController.php:64
+ * @route '/api/pickup-requests/{pickup_request}'
+ */
+        updateForm.put = (args: { pickup_request: string | number } | [pickup_request: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: update.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'PUT',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+            /**
+* @see \App\Http\Controllers\Api\PickupRequestController::update
+ * @see app/Http/Controllers/Api/PickupRequestController.php:64
+ * @route '/api/pickup-requests/{pickup_request}'
+ */
+        updateForm.patch = (args: { pickup_request: string | number } | [pickup_request: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: update.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'PATCH',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    update.form = updateForm
 /**
 * @see \App\Http\Controllers\Api\PickupRequestController::destroy
  * @see app/Http/Controllers/Api/PickupRequestController.php:76
@@ -296,6 +467,37 @@ destroy.delete = (args: { pickup_request: string | number } | [pickup_request: s
     method: 'delete',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\PickupRequestController::destroy
+ * @see app/Http/Controllers/Api/PickupRequestController.php:76
+ * @route '/api/pickup-requests/{pickup_request}'
+ */
+    const destroyForm = (args: { pickup_request: string | number } | [pickup_request: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: destroy.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'DELETE',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\PickupRequestController::destroy
+ * @see app/Http/Controllers/Api/PickupRequestController.php:76
+ * @route '/api/pickup-requests/{pickup_request}'
+ */
+        destroyForm.delete = (args: { pickup_request: string | number } | [pickup_request: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: destroy.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'DELETE',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    destroy.form = destroyForm
 /**
 * @see \App\Http\Controllers\PickupRequestController::assign
  * @see app/Http/Controllers/PickupRequestController.php:91
@@ -353,6 +555,38 @@ assign.patch = (args: { pickupRequest: number | { id: number } } | [pickupReques
     url: assign.url(args, options),
     method: 'patch',
 })
+
+    /**
+* @see \App\Http\Controllers\PickupRequestController::assign
+ * @see app/Http/Controllers/PickupRequestController.php:91
+ * @route '/pickup-requests/{pickupRequest}/assign'
+ */
+    const assignForm = (args: { pickupRequest: number | { id: number } } | [pickupRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: assign.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'PATCH',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\PickupRequestController::assign
+ * @see app/Http/Controllers/PickupRequestController.php:91
+ * @route '/pickup-requests/{pickupRequest}/assign'
+ */
+        assignForm.patch = (args: { pickupRequest: number | { id: number } } | [pickupRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: assign.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'PATCH',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    assign.form = assignForm
 const pickupRequests = {
     index: Object.assign(index, index),
 store: Object.assign(store, store),

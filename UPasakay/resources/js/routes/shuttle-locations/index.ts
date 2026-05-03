@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\ShuttleLocationController::index
  * @see app/Http/Controllers/Api/ShuttleLocationController.php:11
@@ -42,6 +42,41 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\ShuttleLocationController::index
+ * @see app/Http/Controllers/Api/ShuttleLocationController.php:11
+ * @route '/api/shuttle-locations'
+ */
+    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: index.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\ShuttleLocationController::index
+ * @see app/Http/Controllers/Api/ShuttleLocationController.php:11
+ * @route '/api/shuttle-locations'
+ */
+        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\ShuttleLocationController::index
+ * @see app/Http/Controllers/Api/ShuttleLocationController.php:11
+ * @route '/api/shuttle-locations'
+ */
+        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    index.form = indexForm
 /**
 * @see \App\Http\Controllers\Api\ShuttleLocationController::store
  * @see app/Http/Controllers/Api/ShuttleLocationController.php:16
@@ -76,6 +111,27 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\ShuttleLocationController::store
+ * @see app/Http/Controllers/Api/ShuttleLocationController.php:16
+ * @route '/api/shuttle-locations'
+ */
+    const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: store.url(options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\ShuttleLocationController::store
+ * @see app/Http/Controllers/Api/ShuttleLocationController.php:16
+ * @route '/api/shuttle-locations'
+ */
+        storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: store.url(options),
+            method: 'post',
+        })
+    
+    store.form = storeForm
 /**
 * @see \App\Http\Controllers\Api\ShuttleLocationController::show
  * @see app/Http/Controllers/Api/ShuttleLocationController.php:29
@@ -138,6 +194,41 @@ show.head = (args: { shuttle_location: string | number } | [shuttle_location: st
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\ShuttleLocationController::show
+ * @see app/Http/Controllers/Api/ShuttleLocationController.php:29
+ * @route '/api/shuttle-locations/{shuttle_location}'
+ */
+    const showForm = (args: { shuttle_location: string | number } | [shuttle_location: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: show.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\ShuttleLocationController::show
+ * @see app/Http/Controllers/Api/ShuttleLocationController.php:29
+ * @route '/api/shuttle-locations/{shuttle_location}'
+ */
+        showForm.get = (args: { shuttle_location: string | number } | [shuttle_location: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: show.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\ShuttleLocationController::show
+ * @see app/Http/Controllers/Api/ShuttleLocationController.php:29
+ * @route '/api/shuttle-locations/{shuttle_location}'
+ */
+        showForm.head = (args: { shuttle_location: string | number } | [shuttle_location: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: show.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    show.form = showForm
 /**
 * @see \App\Http\Controllers\Api\ShuttleLocationController::update
  * @see app/Http/Controllers/Api/ShuttleLocationController.php:34
@@ -200,6 +291,51 @@ update.patch = (args: { shuttle_location: string | number } | [shuttle_location:
     method: 'patch',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\ShuttleLocationController::update
+ * @see app/Http/Controllers/Api/ShuttleLocationController.php:34
+ * @route '/api/shuttle-locations/{shuttle_location}'
+ */
+    const updateForm = (args: { shuttle_location: string | number } | [shuttle_location: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: update.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'PUT',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\ShuttleLocationController::update
+ * @see app/Http/Controllers/Api/ShuttleLocationController.php:34
+ * @route '/api/shuttle-locations/{shuttle_location}'
+ */
+        updateForm.put = (args: { shuttle_location: string | number } | [shuttle_location: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: update.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'PUT',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+            /**
+* @see \App\Http\Controllers\Api\ShuttleLocationController::update
+ * @see app/Http/Controllers/Api/ShuttleLocationController.php:34
+ * @route '/api/shuttle-locations/{shuttle_location}'
+ */
+        updateForm.patch = (args: { shuttle_location: string | number } | [shuttle_location: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: update.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'PATCH',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    update.form = updateForm
 /**
 * @see \App\Http\Controllers\Api\ShuttleLocationController::destroy
  * @see app/Http/Controllers/Api/ShuttleLocationController.php:46
@@ -252,6 +388,38 @@ destroy.delete = (args: { shuttle_location: string | number } | [shuttle_locatio
     url: destroy.url(args, options),
     method: 'delete',
 })
+
+    /**
+* @see \App\Http\Controllers\Api\ShuttleLocationController::destroy
+ * @see app/Http/Controllers/Api/ShuttleLocationController.php:46
+ * @route '/api/shuttle-locations/{shuttle_location}'
+ */
+    const destroyForm = (args: { shuttle_location: string | number } | [shuttle_location: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: destroy.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'DELETE',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\ShuttleLocationController::destroy
+ * @see app/Http/Controllers/Api/ShuttleLocationController.php:46
+ * @route '/api/shuttle-locations/{shuttle_location}'
+ */
+        destroyForm.delete = (args: { shuttle_location: string | number } | [shuttle_location: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: destroy.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'DELETE',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    destroy.form = destroyForm
 const shuttleLocations = {
     index: Object.assign(index, index),
 store: Object.assign(store, store),

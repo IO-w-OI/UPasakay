@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\ShuttleWebController::update
  * @see app/Http/Controllers/ShuttleWebController.php:11
@@ -57,6 +57,37 @@ update.patch = (args: { shuttle: number | { id: number } } | [shuttle: number | 
     method: 'patch',
 })
 
+    /**
+* @see \App\Http\Controllers\ShuttleWebController::update
+ * @see app/Http/Controllers/ShuttleWebController.php:11
+ * @route '/shuttles/{shuttle}'
+ */
+    const updateForm = (args: { shuttle: number | { id: number } } | [shuttle: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: update.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'PATCH',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\ShuttleWebController::update
+ * @see app/Http/Controllers/ShuttleWebController.php:11
+ * @route '/shuttles/{shuttle}'
+ */
+        updateForm.patch = (args: { shuttle: number | { id: number } } | [shuttle: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: update.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'PATCH',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    update.form = updateForm
 /**
 * @see \App\Http\Controllers\ShuttleWebController::assignDriver
  * @see app/Http/Controllers/ShuttleWebController.php:51
@@ -115,6 +146,37 @@ assignDriver.patch = (args: { shuttle: number | { id: number } } | [shuttle: num
     method: 'patch',
 })
 
+    /**
+* @see \App\Http\Controllers\ShuttleWebController::assignDriver
+ * @see app/Http/Controllers/ShuttleWebController.php:51
+ * @route '/shuttles/{shuttle}/assign-driver'
+ */
+    const assignDriverForm = (args: { shuttle: number | { id: number } } | [shuttle: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: assignDriver.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'PATCH',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\ShuttleWebController::assignDriver
+ * @see app/Http/Controllers/ShuttleWebController.php:51
+ * @route '/shuttles/{shuttle}/assign-driver'
+ */
+        assignDriverForm.patch = (args: { shuttle: number | { id: number } } | [shuttle: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: assignDriver.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'PATCH',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    assignDriver.form = assignDriverForm
 /**
 * @see \App\Http\Controllers\ShuttleWebController::updateStatus
  * @see app/Http/Controllers/ShuttleWebController.php:74
@@ -172,6 +234,38 @@ updateStatus.patch = (args: { shuttle: number | { id: number } } | [shuttle: num
     url: updateStatus.url(args, options),
     method: 'patch',
 })
+
+    /**
+* @see \App\Http\Controllers\ShuttleWebController::updateStatus
+ * @see app/Http/Controllers/ShuttleWebController.php:74
+ * @route '/shuttles/{shuttle}/status'
+ */
+    const updateStatusForm = (args: { shuttle: number | { id: number } } | [shuttle: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: updateStatus.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'PATCH',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\ShuttleWebController::updateStatus
+ * @see app/Http/Controllers/ShuttleWebController.php:74
+ * @route '/shuttles/{shuttle}/status'
+ */
+        updateStatusForm.patch = (args: { shuttle: number | { id: number } } | [shuttle: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: updateStatus.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'PATCH',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    updateStatus.form = updateStatusForm
 const ShuttleWebController = { update, assignDriver, updateStatus }
 
 export default ShuttleWebController

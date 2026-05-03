@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\ShuttleController::index
  * @see app/Http/Controllers/Api/ShuttleController.php:11
@@ -42,6 +42,41 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\ShuttleController::index
+ * @see app/Http/Controllers/Api/ShuttleController.php:11
+ * @route '/api/shuttles'
+ */
+    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: index.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\ShuttleController::index
+ * @see app/Http/Controllers/Api/ShuttleController.php:11
+ * @route '/api/shuttles'
+ */
+        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\ShuttleController::index
+ * @see app/Http/Controllers/Api/ShuttleController.php:11
+ * @route '/api/shuttles'
+ */
+        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    index.form = indexForm
 /**
 * @see \App\Http\Controllers\Api\ShuttleController::store
  * @see app/Http/Controllers/Api/ShuttleController.php:16
@@ -76,6 +111,27 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     method: 'post',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\ShuttleController::store
+ * @see app/Http/Controllers/Api/ShuttleController.php:16
+ * @route '/api/shuttles'
+ */
+    const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: store.url(options),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\ShuttleController::store
+ * @see app/Http/Controllers/Api/ShuttleController.php:16
+ * @route '/api/shuttles'
+ */
+        storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: store.url(options),
+            method: 'post',
+        })
+    
+    store.form = storeForm
 /**
 * @see \App\Http\Controllers\Api\ShuttleController::show
  * @see app/Http/Controllers/Api/ShuttleController.php:28
@@ -143,6 +199,41 @@ show.head = (args: { shuttle: number | { id: number } } | [shuttle: number | { i
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\ShuttleController::show
+ * @see app/Http/Controllers/Api/ShuttleController.php:28
+ * @route '/api/shuttles/{shuttle}'
+ */
+    const showForm = (args: { shuttle: number | { id: number } } | [shuttle: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: show.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\ShuttleController::show
+ * @see app/Http/Controllers/Api/ShuttleController.php:28
+ * @route '/api/shuttles/{shuttle}'
+ */
+        showForm.get = (args: { shuttle: number | { id: number } } | [shuttle: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: show.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\ShuttleController::show
+ * @see app/Http/Controllers/Api/ShuttleController.php:28
+ * @route '/api/shuttles/{shuttle}'
+ */
+        showForm.head = (args: { shuttle: number | { id: number } } | [shuttle: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: show.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    show.form = showForm
 /**
 * @see \App\Http\Controllers\Api\ShuttleController::update
  * @see app/Http/Controllers/Api/ShuttleController.php:33
@@ -210,6 +301,51 @@ update.patch = (args: { shuttle: number | { id: number } } | [shuttle: number | 
     method: 'patch',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\ShuttleController::update
+ * @see app/Http/Controllers/Api/ShuttleController.php:33
+ * @route '/api/shuttles/{shuttle}'
+ */
+    const updateForm = (args: { shuttle: number | { id: number } } | [shuttle: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: update.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'PUT',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\ShuttleController::update
+ * @see app/Http/Controllers/Api/ShuttleController.php:33
+ * @route '/api/shuttles/{shuttle}'
+ */
+        updateForm.put = (args: { shuttle: number | { id: number } } | [shuttle: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: update.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'PUT',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+            /**
+* @see \App\Http\Controllers\Api\ShuttleController::update
+ * @see app/Http/Controllers/Api/ShuttleController.php:33
+ * @route '/api/shuttles/{shuttle}'
+ */
+        updateForm.patch = (args: { shuttle: number | { id: number } } | [shuttle: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: update.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'PATCH',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    update.form = updateForm
 /**
 * @see \App\Http\Controllers\ShuttleWebController::update
  * @see app/Http/Controllers/ShuttleWebController.php:11
@@ -268,6 +404,37 @@ update.patch = (args: { shuttle: number | { id: number } } | [shuttle: number | 
     method: 'patch',
 })
 
+    /**
+* @see \App\Http\Controllers\ShuttleWebController::update
+ * @see app/Http/Controllers/ShuttleWebController.php:11
+ * @route '/shuttles/{shuttle}'
+ */
+    const updateForm = (args: { shuttle: number | { id: number } } | [shuttle: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: update.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'PATCH',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\ShuttleWebController::update
+ * @see app/Http/Controllers/ShuttleWebController.php:11
+ * @route '/shuttles/{shuttle}'
+ */
+        updateForm.patch = (args: { shuttle: number | { id: number } } | [shuttle: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: update.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'PATCH',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    update.form = updateForm
 /**
 * @see \App\Http\Controllers\Api\ShuttleController::destroy
  * @see app/Http/Controllers/Api/ShuttleController.php:45
@@ -326,6 +493,37 @@ destroy.delete = (args: { shuttle: number | { id: number } } | [shuttle: number 
     method: 'delete',
 })
 
+    /**
+* @see \App\Http\Controllers\Api\ShuttleController::destroy
+ * @see app/Http/Controllers/Api/ShuttleController.php:45
+ * @route '/api/shuttles/{shuttle}'
+ */
+    const destroyForm = (args: { shuttle: number | { id: number } } | [shuttle: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: destroy.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'DELETE',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\ShuttleController::destroy
+ * @see app/Http/Controllers/Api/ShuttleController.php:45
+ * @route '/api/shuttles/{shuttle}'
+ */
+        destroyForm.delete = (args: { shuttle: number | { id: number } } | [shuttle: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: destroy.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'DELETE',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    destroy.form = destroyForm
 /**
 * @see \App\Http\Controllers\ShuttleWebController::assignDriver
  * @see app/Http/Controllers/ShuttleWebController.php:51
@@ -384,6 +582,37 @@ assignDriver.patch = (args: { shuttle: number | { id: number } } | [shuttle: num
     method: 'patch',
 })
 
+    /**
+* @see \App\Http\Controllers\ShuttleWebController::assignDriver
+ * @see app/Http/Controllers/ShuttleWebController.php:51
+ * @route '/shuttles/{shuttle}/assign-driver'
+ */
+    const assignDriverForm = (args: { shuttle: number | { id: number } } | [shuttle: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: assignDriver.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'PATCH',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\ShuttleWebController::assignDriver
+ * @see app/Http/Controllers/ShuttleWebController.php:51
+ * @route '/shuttles/{shuttle}/assign-driver'
+ */
+        assignDriverForm.patch = (args: { shuttle: number | { id: number } } | [shuttle: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: assignDriver.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'PATCH',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    assignDriver.form = assignDriverForm
 /**
 * @see \App\Http\Controllers\ShuttleWebController::updateStatus
  * @see app/Http/Controllers/ShuttleWebController.php:74
@@ -441,6 +670,38 @@ updateStatus.patch = (args: { shuttle: number | { id: number } } | [shuttle: num
     url: updateStatus.url(args, options),
     method: 'patch',
 })
+
+    /**
+* @see \App\Http\Controllers\ShuttleWebController::updateStatus
+ * @see app/Http/Controllers/ShuttleWebController.php:74
+ * @route '/shuttles/{shuttle}/status'
+ */
+    const updateStatusForm = (args: { shuttle: number | { id: number } } | [shuttle: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: updateStatus.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'PATCH',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\ShuttleWebController::updateStatus
+ * @see app/Http/Controllers/ShuttleWebController.php:74
+ * @route '/shuttles/{shuttle}/status'
+ */
+        updateStatusForm.patch = (args: { shuttle: number | { id: number } } | [shuttle: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: updateStatus.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'PATCH',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    updateStatus.form = updateStatusForm
 const shuttles = {
     index: Object.assign(index, index),
 store: Object.assign(store, store),
