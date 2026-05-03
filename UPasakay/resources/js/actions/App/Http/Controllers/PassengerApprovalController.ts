@@ -1,4 +1,4 @@
-import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../wayfinder'
+import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\PassengerApprovalController::index
  * @see app/Http/Controllers/PassengerApprovalController.php:11
@@ -42,6 +42,41 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     method: 'head',
 })
 
+    /**
+* @see \App\Http\Controllers\PassengerApprovalController::index
+ * @see app/Http/Controllers/PassengerApprovalController.php:11
+ * @route '/passengers'
+ */
+    const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: index.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\PassengerApprovalController::index
+ * @see app/Http/Controllers/PassengerApprovalController.php:11
+ * @route '/passengers'
+ */
+        indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\PassengerApprovalController::index
+ * @see app/Http/Controllers/PassengerApprovalController.php:11
+ * @route '/passengers'
+ */
+        indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: index.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    index.form = indexForm
 /**
 * @see \App\Http\Controllers\PassengerApprovalController::updateStatus
  * @see app/Http/Controllers/PassengerApprovalController.php:70
@@ -100,6 +135,37 @@ updateStatus.patch = (args: { passenger: number | { id: number } } | [passenger:
     method: 'patch',
 })
 
+    /**
+* @see \App\Http\Controllers\PassengerApprovalController::updateStatus
+ * @see app/Http/Controllers/PassengerApprovalController.php:70
+ * @route '/passengers/{passenger}/status'
+ */
+    const updateStatusForm = (args: { passenger: number | { id: number } } | [passenger: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: updateStatus.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'PATCH',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\PassengerApprovalController::updateStatus
+ * @see app/Http/Controllers/PassengerApprovalController.php:70
+ * @route '/passengers/{passenger}/status'
+ */
+        updateStatusForm.patch = (args: { passenger: number | { id: number } } | [passenger: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: updateStatus.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'PATCH',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    updateStatus.form = updateStatusForm
 /**
 * @see \App\Http\Controllers\PassengerApprovalController::bulkUpdateStatus
  * @see app/Http/Controllers/PassengerApprovalController.php:86
@@ -133,6 +199,38 @@ bulkUpdateStatus.patch = (options?: RouteQueryOptions): RouteDefinition<'patch'>
     url: bulkUpdateStatus.url(options),
     method: 'patch',
 })
+
+    /**
+* @see \App\Http\Controllers\PassengerApprovalController::bulkUpdateStatus
+ * @see app/Http/Controllers/PassengerApprovalController.php:86
+ * @route '/passengers/bulk-status'
+ */
+    const bulkUpdateStatusForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: bulkUpdateStatus.url({
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'PATCH',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\PassengerApprovalController::bulkUpdateStatus
+ * @see app/Http/Controllers/PassengerApprovalController.php:86
+ * @route '/passengers/bulk-status'
+ */
+        bulkUpdateStatusForm.patch = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: bulkUpdateStatus.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'PATCH',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    bulkUpdateStatus.form = bulkUpdateStatusForm
 const PassengerApprovalController = { index, updateStatus, bulkUpdateStatus }
 
 export default PassengerApprovalController
