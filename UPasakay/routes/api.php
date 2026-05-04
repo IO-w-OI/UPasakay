@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\AdminAuthController;
 use App\Http\Controllers\Api\RouteController;
 use App\Http\Controllers\Api\StopController;
 use App\Http\Controllers\Api\ShuttleController;
@@ -16,6 +17,7 @@ use App\Http\Controllers\Api\NotificationController;
 // Public auth routes
 Route::post('register', [AuthController::class, 'register']);
 Route::post('login', [AuthController::class, 'login']);
+Route::post('admin/register', [AdminAuthController::class, 'register']);
 
 // Backward-compatible mobile alias routes
 Route::prefix('mobile')->group(function () {
