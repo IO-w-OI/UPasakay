@@ -15,8 +15,7 @@ class RideCompleted implements ShouldBroadcast
 
     public function __construct(
         public PickupRequest $pickupRequest,
-    ) {
-    }
+    ) {}
 
     /**
      * Get the channels the event should broadcast on.
@@ -26,7 +25,7 @@ class RideCompleted implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            new Channel('passenger-' . $this->pickupRequest->passenger_id),
+            new Channel('passenger-'.$this->pickupRequest->passenger_id),
         ];
     }
 
