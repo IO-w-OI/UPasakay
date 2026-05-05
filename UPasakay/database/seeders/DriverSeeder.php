@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 use App\Models\Driver;
 
@@ -24,7 +23,7 @@ class DriverSeeder extends Seeder
         foreach ($drivers as $d) {
             $user = User::firstOrCreate(
                 ['email' => $d['email']],
-                ['password_hash' => Hash::make('password')]
+                ['password_hash' => 'password']
             );
 
             Driver::updateOrCreate(

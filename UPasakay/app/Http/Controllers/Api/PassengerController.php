@@ -8,7 +8,6 @@ use App\Http\Requests\UpdatePassengerRequest;
 use App\Models\Passenger;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Hash;
 
 class PassengerController extends Controller
 {
@@ -36,7 +35,7 @@ class PassengerController extends Controller
         if (!empty($validated['email']) && !empty($validated['password'])) {
             $user = User::create([
                 'email' => $validated['email'],
-                'password_hash' => Hash::make($validated['password']),
+                'password_hash' => $validated['password'],
             ]);
         }
 

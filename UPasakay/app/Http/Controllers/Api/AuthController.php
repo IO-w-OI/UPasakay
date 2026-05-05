@@ -49,7 +49,7 @@ class AuthController extends Controller
             'user_id' => $user->id,
             'full_name' => $validated['full_name'] ?? null,
             'email' => $validated['email'],
-            'password_hash' => Hash::make($validated['password']),
+            'password_hash' => $validated['password'],
             'passenger_number' => $validated['passenger_number'] ?? $this->generatePassengerNumber(),
             'passenger_type' => $validated['passenger_type'] ?? 'student',
             'passenger_status' => 'active',

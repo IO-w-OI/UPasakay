@@ -8,7 +8,6 @@ use App\Models\Route;
 use App\Models\Stop;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class PickupRequestApiTest extends TestCase
@@ -23,7 +22,7 @@ class PickupRequestApiTest extends TestCase
         $user = User::create([
             'name' => 'Passenger ' . $sequence,
             'email' => "passenger{$sequence}@example.com",
-            'password_hash' => Hash::make('password123'),
+            'password_hash' => 'password123',
         ]);
 
         Passenger::create(array_merge([
@@ -123,7 +122,7 @@ class PickupRequestApiTest extends TestCase
         $user = User::create([
             'name' => 'No Passenger User',
             'email' => 'no-passenger@example.com',
-            'password_hash' => Hash::make('password123'),
+            'password_hash' => 'password123',
         ]);
         // Note: no passenger profile created
 

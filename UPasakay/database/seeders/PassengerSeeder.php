@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\User;
 use App\Models\Passenger;
-use Illuminate\Support\Facades\Hash;
 
 class PassengerSeeder extends Seeder
 {
@@ -47,7 +46,7 @@ class PassengerSeeder extends Seeder
                 ['email' => $seedPassenger['email']],
                 [
                     'name' => $seedPassenger['name'],
-                    'password_hash' => Hash::make('password'),
+                    'password_hash' => 'password',
                 ]
             );
 

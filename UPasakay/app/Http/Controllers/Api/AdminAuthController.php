@@ -8,7 +8,6 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 
 class AdminAuthController extends Controller
@@ -41,7 +40,7 @@ class AdminAuthController extends Controller
             $user = User::create([
                 'name' => $validated['name'],
                 'email' => $validated['email'],
-                'password_hash' => Hash::make($validated['password']),
+                'password_hash' => $validated['password'],
             ]);
 
             return Admin::create([

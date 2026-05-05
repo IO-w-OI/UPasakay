@@ -8,7 +8,6 @@ use App\Models\Shuttle;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 
@@ -192,7 +191,7 @@ class DriverController extends Controller
 
         $user = User::create([
             'email' => $request->email,
-            'password_hash' => Hash::make($request->password),
+            'password_hash' => $request->password,
         ]);
 
         $driver = Driver::create([
@@ -258,7 +257,7 @@ class DriverController extends Controller
         ]);
 
         if ($driver->user) {
-            $driver->user->update(['password_hash' => Hash::make($request->password)]);
+            $driver->user->update(['password_hash' => $request->password]);
         }
 
         return back()->with('success', 'Password reset successfully.');

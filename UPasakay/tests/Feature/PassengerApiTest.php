@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Models\Passenger;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class PassengerApiTest extends TestCase
@@ -20,7 +19,7 @@ class PassengerApiTest extends TestCase
         $user = User::create([
             'name' => 'Auth Passenger',
             'email' => 'auth-passenger@example.com',
-            'password_hash' => Hash::make('password123'),
+            'password_hash' => 'password123',
         ]);
 
         Passenger::create([
@@ -47,7 +46,7 @@ class PassengerApiTest extends TestCase
         $user = User::create([
             'name' => 'Passenger ' . $sequence,
             'email' => "passenger{$sequence}@example.com",
-            'password_hash' => Hash::make('password123'),
+            'password_hash' => 'password123',
         ]);
 
         return Passenger::create(array_merge([
