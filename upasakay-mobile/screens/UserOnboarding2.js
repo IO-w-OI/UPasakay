@@ -67,26 +67,32 @@ const UserOnboarding2 = () => {
         }
     };
 
-    const handleFinish = () => {
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const handleFinish = async () => {
         if (!dept) return Alert.alert("Missing Info", "Please select your college or office.");
-
-        // FINAL STEP: Save to your temporary database
-        const result = addUser(
-            allData.name, 
-            allData.email, 
-            allData.password, 
-            allData.phone, 
-            allData.passenger_type, 
-            dept
-        );
-
+        
+        setIsSubmitting(true); // Disable the button/show loading
+        
+        const result = await addUser(...);
+        
+        setIsSubmitting(false); // Re-enable if there's an error
+        
         if (result.success) {
-            console.log("Signup Complete!");
-            router.replace('/UserOnboarding3'); // To the "Success" screen
+            router.replace('/UserOnboarding3');
         } else {
             Alert.alert("Error", result.message);
         }
     };
+
+    // In your StyledButton:
+    <StyledButton 
+        onPress={handleFinish} 
+        disabled={isSubmitting} 
+        style={{ marginTop: 20, opacity: isSubmitting ? 0.5 : 1 }}
+    >
+        <ButtonText>{isSubmitting ? "Processing..." : "Next"}</ButtonText>
+    </StyledButton>
 
     return (
         <StyledContainer>

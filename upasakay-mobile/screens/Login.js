@@ -66,7 +66,7 @@ const Login = () => {
 
                 <Formik
                     initialValues={{ email: '', password: '' }}
-                    onSubmit={(values) => {
+                    onSubmit={async (values) => {
                         // 1. REGEX Check for UP Email
                         const upEmailRegex = /^[a-zA-Z0-9._%+-]+@up\.edu\.ph$/;
                         if (!upEmailRegex.test(values.email)) {
@@ -76,7 +76,7 @@ const Login = () => {
 
                         // 2. THE CHECK
                         // This calls your updated UserStore logic
-                        const result = validateUser(values.email, values.password);
+                        const result = await validateUser(values.email, values.password);
 
                         if (result.success) {
                             // SUCCESS: Navigate to Home
