@@ -162,6 +162,7 @@ class AuthController extends Controller
             'user' => [
                 'id' => $authUser->getKey(),
                 'email' => $authUser->email,
+                'full_name' => $authUser->name,
             ],
             'passenger' => $this->formatPassenger($passenger),
             'onboarding' => [

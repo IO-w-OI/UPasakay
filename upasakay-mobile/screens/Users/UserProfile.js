@@ -57,7 +57,7 @@ const UserProfile = () => {
                 
                 {/* 2. REFERENCE DYNAMIC DATA */}
                 {/* We use ?. to prevent crashing if currentUser is temporarily null */}
-                <UserName>{currentUser?.name || "User Name"}</UserName>
+                <UserName>{currentUser?.full_name || "User Name"}</UserName>
                 <UserEmail>{currentUser?.email || "email@up.edu.ph"}</UserEmail>
                 <UserRole>{currentUser?.passenger_type || "Passenger Type"}</UserRole>
 

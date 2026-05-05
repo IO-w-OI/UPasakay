@@ -75,22 +75,29 @@ const Login = () => {
                         }
 
                         // 2. THE CHECK
-                        // This calls your updated UserStore logic
                         const result = await validateUser(values.email, values.password);
 
                         if (result.success) {
-                            // SUCCESS: Navigate to Home
-                            console.log("Login Success! Welcome:", result.user.name);
-                            if(result.user.passenger_type === "Driver"){ //If user role is driver, redirect to Driver Home
-                                router.replace('/(tabs)/Drivers/DriverHome');
-                                console.log("Redirecting to Driver Home...");
-                            }
-                            else{ //If user role is student, faculty or passenger, redirect to User Home
-                                router.replace('/(tabs)/Users/UserHome'); 
+                            /**
+                             * SAFETY CHECK:
+                             * If passenger_type is null in the DB, default to "passenger"
+                             * This prevents the crash that triggers the "Login Failed" alert.
+                             */
+                            //const userRole = result.user?.passenger_type || "passenger";
+                            //const userName = result.user?.name || "UP User";
+
+                            //console.log("Login Success! Welcome:", userName);
+
+                           // if(userRole === "Driver"){ 
+                                //console.log("Redirecting to Driver Home...");
+                                //router.replace('/(tabs)/Drivers/DriverHome');
+                            //}
+                            { //add else here later
                                 console.log("Redirecting to User Home...");
+                                router.replace('/(tabs)/Users/UserHome'); 
                             }
                         } else {
-                            // FAIL: Shows either "Account not found" or "Password is invalid"
+                            // Only shows if credentials actually fail
                             Alert.alert("Login Failed", result.message);
                         }
                     }}
