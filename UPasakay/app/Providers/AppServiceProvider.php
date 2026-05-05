@@ -2,19 +2,19 @@
 
 namespace App\Providers;
 
-use App\Models\Admin;
-use App\Policies\AdminPolicy;
 use App\Listeners\LogSuccessfulLogin;
+use App\Models\Admin;
 use App\Models\DriverAssignment;
 use App\Models\PickupRequest;
 use App\Observers\DriverAssignmentObserver;
 use App\Observers\PickupRequestObserver;
+use App\Policies\AdminPolicy;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 

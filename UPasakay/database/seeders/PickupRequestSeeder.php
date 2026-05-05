@@ -2,11 +2,11 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\PickupRequest;
 use App\Models\Route;
 use App\Models\Stop;
 use App\Models\User;
+use Illuminate\Database\Seeder;
 
 class PickupRequestSeeder extends Seeder
 {
@@ -39,7 +39,7 @@ class PickupRequestSeeder extends Seeder
             $users = [1];
         }
 
-        $uid = fn(int $i) => $users[$i % count($users)] ?? 1;
+        $uid = fn (int $i) => $users[$i % count($users)] ?? 1;
 
         // Helper: pick a random pickup & dropoff within the same route
         $pickDrop = function (int $routeId) use ($routeStops) {
@@ -48,6 +48,7 @@ class PickupRequestSeeder extends Seeder
             do {
                 $dropoff = $stops[array_rand($stops)];
             } while ($dropoff === $pickup);
+
             return [$pickup, $dropoff];
         };
 

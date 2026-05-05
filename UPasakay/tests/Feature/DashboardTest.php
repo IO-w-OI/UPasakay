@@ -4,8 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\ActivityLog;
 use App\Models\User;
-use Inertia\Testing\AssertableInertia as Assert;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class DashboardTest extends TestCase
@@ -51,7 +51,7 @@ class DashboardTest extends TestCase
         $response
             ->assertOk()
             ->assertInertia(
-                fn(Assert $page) => $page
+                fn (Assert $page) => $page
                     ->component('Dashboard')
                     ->has('recentActivity', 2)
                     ->where('recentActivity.0.text', 'newer activity entry')
@@ -80,7 +80,7 @@ class DashboardTest extends TestCase
         $response
             ->assertOk()
             ->assertInertia(
-                fn(Assert $page) => $page
+                fn (Assert $page) => $page
                     ->component('Dashboard')
                     ->has('recentActivity', 6)
                     ->where('recentActivity.0.text', 'activity 7')

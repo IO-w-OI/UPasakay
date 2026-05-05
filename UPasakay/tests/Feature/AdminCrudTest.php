@@ -12,7 +12,9 @@ class AdminCrudTest extends TestCase
     use RefreshDatabase;
 
     private User $superAdmin;
+
     private User $regularAdmin;
+
     private User $regularUser;
 
     protected function setUp(): void

@@ -1,9 +1,10 @@
 <?php
 
 namespace App\Services;
+
+use App\Models\PickupRequest;
 use App\Models\ShuttleLocation;
 use App\Models\Stop;
-use App\Models\PickupRequest;
 use App\Models\User;
 use Illuminate\Validation\ValidationException;
 
@@ -15,15 +16,16 @@ class PickupRequestService
      * Calculates ETA from driver's latest location to pickup stop
      * using the Haversine formula assuming 30 km/h shuttle speed.
      *
-     * @param User $user The authenticated user
-     * @param array $data Validated request data containing route_id, pickup_stop_id, dropoff_stop_id
+     * @param  User  $user  The authenticated user
+     * @param  array  $data  Validated request data containing route_id, pickup_stop_id, dropoff_stop_id
      * @return PickupRequest with eta_minutes if driver location is available
+     *
      * @throws ValidationException if passenger is invalid or duplicate booking exists
      */
     public function createPickupRequest(User $user, array $data): PickupRequest
     {
         // Check if user has a valid passenger profile
-        if (!$user->passenger) {
+        if (! $user->passenger) {
             throw ValidationException::withMessages([
                 'passenger' => 'User does not have a valid passenger profile.',
             ]);
@@ -81,25 +83,27 @@ class PickupRequestService
 
         return $pickupRequest;
     }
+
     private function calculateETA($driverLat, $driverLng, $passengerLat, $passengerLng): int
-    { //Calculates ETA based on Haversine Formula and location of both passenger and driver
-            /**
+    { // Calculates ETA based on Haversine Formula and location of both passenger and driver
+        /**
          * Calculate ETA in minutes from driver's current position to passenger's pickup stop.
          * Uses the Haversine formula to compute distance, assumes 30 km/h average shuttle speed.
          *
-         * @param float $driverLat Driver's current latitude
-         * @param float $driverLng Driver's current longitude
-         * @param float $passengerLat Pickup stop latitude
-         * @param float $passengerLng Pickup stop longitude
+         * @param  float  $driverLat  Driver's current latitude
+         * @param  float  $driverLng  Driver's current longitude
+         * @param  float  $passengerLat  Pickup stop latitude
+         * @param  float  $passengerLng  Pickup stop longitude
          * @return int ETA in minutes
          */
         $earthRadius = 6371;
         $dLat = deg2rad($passengerLat - $driverLat);
         $dLng = deg2rad($passengerLng - $driverLng);
-        $a = sin($dLat/2) * sin($dLat/2) +
+        $a = sin($dLat / 2) * sin($dLat / 2) +
             cos(deg2rad($driverLat)) * cos(deg2rad($passengerLat)) *
-            sin($dLng/2) * sin($dLng/2);
-        $distance = $earthRadius * 2 * atan2(sqrt($a), sqrt(1-$a));
+            sin($dLng / 2) * sin($dLng / 2);
+        $distance = $earthRadius * 2 * atan2(sqrt($a), sqrt(1 - $a));
+
         return (int) round(($distance / 30) * 60);
     }
 }

@@ -10,8 +10,6 @@ use App\Http\Controllers\PassengerApprovalController;
 use App\Http\Controllers\PickupRequestController;
 use App\Http\Controllers\ShuttleWebController;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
-use Laravel\Fortify\Features;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -59,4 +57,4 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('feedback', [FeedbackController::class, 'index'])->name('feedback.index');
 });
 
-require __DIR__ . '/settings.php';
+require __DIR__.'/settings.php';

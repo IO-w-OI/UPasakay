@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Models\Notification;
 use App\Models\NotificationSchedule;
-use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 
 class NotificationSeeder extends Seeder

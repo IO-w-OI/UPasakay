@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Route;
 use App\Models\Stop;
+use Illuminate\Database\Seeder;
 
 class StopSeeder extends Seeder
 {

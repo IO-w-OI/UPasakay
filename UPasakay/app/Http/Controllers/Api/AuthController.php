@@ -5,13 +5,13 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Passenger;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
@@ -19,7 +19,7 @@ class AuthController extends Controller
     {
         $passwordRules = ['required', 'confirmed'];
 
-        if (!$request->filled('passenger_number')) {
+        if (! $request->filled('passenger_number')) {
             $passwordRules[] = Password::min(8)
                 ->mixedCase()
                 ->numbers()
@@ -79,7 +79,7 @@ class AuthController extends Controller
 
         $passenger = Passenger::where('email', $request->email)->first();
         if ($passenger) {
-            if (!Hash::check($request->password, (string) $passenger->password_hash)) {
+            if (! Hash::check($request->password, (string) $passenger->password_hash)) {
                 throw ValidationException::withMessages([
                     'email' => ['The provided credentials are incorrect.'],
                 ]);
@@ -102,7 +102,7 @@ class AuthController extends Controller
         }
 
         $user = User::where('email', $request->email)->first();
-        if (!$user || !Hash::check($request->password, (string) $user->password_hash)) {
+        if (! $user || ! Hash::check($request->password, (string) $user->password_hash)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid credentials',
@@ -150,7 +150,7 @@ class AuthController extends Controller
     private function generatePassengerNumber(): string
     {
         do {
-            $passengerNumber = 'PASS' . strtoupper(uniqid());
+            $passengerNumber = 'PASS'.strtoupper(uniqid());
         } while (Passenger::where('passenger_number', $passengerNumber)->exists());
 
         return $passengerNumber;
@@ -166,9 +166,9 @@ class AuthController extends Controller
             ],
             'passenger' => $this->formatPassenger($passenger),
             'onboarding' => [
-                'required' => !$passenger?->profile_completed,
+                'required' => ! $passenger?->profile_completed,
                 'profile_completed' => (bool) ($passenger?->profile_completed ?? false),
-                'next_route' => !$passenger?->profile_completed
+                'next_route' => ! $passenger?->profile_completed
                     ? 'ProfileOnboarding'
                     : $this->routeForPassengerType($passenger?->passenger_type),
             ],
@@ -178,7 +178,7 @@ class AuthController extends Controller
 
     private function formatPassenger(?Passenger $passenger): ?array
     {
-        if (!$passenger) {
+        if (! $passenger) {
             return null;
         }
 

@@ -1,17 +1,17 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\RouteController;
-use App\Http\Controllers\Api\StopController;
-use App\Http\Controllers\Api\ShuttleController;
+use App\Http\Controllers\Api\DriverAssignmentController;
+use App\Http\Controllers\Api\DriverController;
+use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PassengerController;
 use App\Http\Controllers\Api\PassengerProfileController;
-use App\Http\Controllers\Api\DriverController;
 use App\Http\Controllers\Api\PickupRequestController;
-use App\Http\Controllers\Api\DriverAssignmentController;
+use App\Http\Controllers\Api\RouteController;
+use App\Http\Controllers\Api\ShuttleController;
 use App\Http\Controllers\Api\ShuttleLocationController;
-use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\StopController;
+use Illuminate\Support\Facades\Route;
 
 // Public auth routes
 Route::post('register', [AuthController::class, 'register']);

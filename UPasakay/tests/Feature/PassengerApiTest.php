@@ -45,14 +45,14 @@ class PassengerApiTest extends TestCase
         $sequence++;
 
         $user = User::create([
-            'name' => 'Passenger ' . $sequence,
+            'name' => 'Passenger '.$sequence,
             'email' => "passenger{$sequence}@example.com",
             'password_hash' => Hash::make('password123'),
         ]);
 
         return Passenger::create(array_merge([
             'user_id' => $user->id,
-            'passenger_number' => 'P-' . str_pad($sequence, 4, '0', STR_PAD_LEFT),
+            'passenger_number' => 'P-'.str_pad($sequence, 4, '0', STR_PAD_LEFT),
             'department' => 'Engineering',
             'passenger_type' => 'student',
             'passenger_status' => 'active',

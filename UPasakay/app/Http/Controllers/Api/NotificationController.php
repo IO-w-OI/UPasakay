@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Notification;
-use App\Models\Route;
 use Illuminate\Http\Request;
 
 class NotificationController extends Controller
@@ -20,7 +19,6 @@ class NotificationController extends Controller
         if ($request->has('type')) {
             $query->where('type', $request->type);
         }
-
 
         if ($request->has('target')) {
             $query->where('target', $request->target);
@@ -78,6 +76,7 @@ class NotificationController extends Controller
     public function destroy(Notification $notification)
     {
         $notification->delete();
+
         return response()->json(['message' => 'Notification deleted successfully']);
     }
 
@@ -108,6 +107,7 @@ class NotificationController extends Controller
     public function scheduled()
     {
         $notifications = Notification::scheduled()->orderBy('scheduled_at', 'asc')->get();
+
         return response()->json($notifications);
     }
 
