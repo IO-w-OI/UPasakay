@@ -17,6 +17,9 @@ class AuthController extends Controller
 {
     public function register(Request $request): JsonResponse
     {
+        // Keep this error_log! It is your only way to see if the phone is actually sending the keys.
+        error_log("Incoming Request Data: " . json_encode($request->all()));
+
         $passwordRules = ['required', 'confirmed'];
 
         if (! $request->filled('passenger_number')) {
@@ -37,21 +40,28 @@ class AuthController extends Controller
             'full_name' => ['nullable', 'string', 'max:255'],
             'passenger_number' => ['nullable', 'string', 'unique:passengers,passenger_number'],
             'passenger_type' => ['nullable', 'string', Rule::in(Passenger::PASSENGER_TYPES)],
+            'department_office' => ['nullable', 'string'],
+            'phone' => ['nullable', 'string'],
         ]);
 
+        // 1. Create User - Using raw $request fallbacks for the name
         $user = User::create([
-            'name' => $validated['full_name'] ?? null,
+            'name' => $request->full_name ?? $request->name ?? 'New User',
             'email' => $validated['email'],
             'password_hash' => $validated['password'],
         ]);
 
+        // 2. Create Passenger - Using raw $request fallbacks for Dept and Phone
         $passenger = Passenger::create([
             'user_id' => $user->id,
-            'full_name' => $validated['full_name'] ?? null,
+            'full_name' => $request->full_name ?? $request->name ?? 'New User',
             'email' => $validated['email'],
             'password_hash' => Hash::make($validated['password']),
             'passenger_number' => $validated['passenger_number'] ?? $this->generatePassengerNumber(),
             'passenger_type' => $validated['passenger_type'] ?? 'student',
+            'department_office' => $request->department_office ?? $request->department,
+            'department' => $request->department_office ?? $request->department,
+            'phone_number' => $request->phone ?? $request->phone_number,
             'passenger_status' => 'active',
             'verification_status' => 'pending',
         ]);
@@ -106,9 +116,6 @@ class AuthController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid credentials',
-                'errors' => [
-                    'email' => ['The provided credentials are invalid.'],
-                ],
             ], 401);
         }
 
@@ -158,19 +165,22 @@ class AuthController extends Controller
 
     private function buildAuthPayload(Model $authUser, ?Passenger $passenger, string $token): array
     {
+        // formatPassenger is what you just showed me
+        $formattedPassenger = $this->formatPassenger($passenger);
+
         return [
             'user' => [
                 'id' => $authUser->getKey(),
                 'email' => $authUser->email,
-                'full_name' => $authUser->name,
+                // Use the same keys here that you used in formatPassenger
+                'full_name' => $formattedPassenger['full_name'] ?? $authUser->name,
+                'name' => $formattedPassenger['full_name'] ?? $authUser->name,
             ],
-            'passenger' => $this->formatPassenger($passenger),
+            'passenger' => $formattedPassenger,
             'onboarding' => [
-                'required' => ! $passenger?->profile_completed,
+                'required' => !($passenger?->profile_completed ?? false),
                 'profile_completed' => (bool) ($passenger?->profile_completed ?? false),
-                'next_route' => ! $passenger?->profile_completed
-                    ? 'ProfileOnboarding'
-                    : $this->routeForPassengerType($passenger?->passenger_type),
+                'next_route' => $this->routeForPassengerType($passenger?->passenger_type),
             ],
             'token' => $token,
         ];
@@ -178,14 +188,13 @@ class AuthController extends Controller
 
     private function formatPassenger(?Passenger $passenger): ?array
     {
-        if (! $passenger) {
-            return null;
-        }
+        if (! $passenger) return null;
 
         return [
             'id' => $passenger->id,
             'user_id' => $passenger->user_id,
             'full_name' => $passenger->full_name,
+            'name' => $passenger->full_name,
             'email' => $passenger->email,
             'phone_number' => $passenger->phone_number,
             'passenger_number' => $passenger->passenger_number,
@@ -204,10 +213,10 @@ class AuthController extends Controller
     private function routeForPassengerType(?string $passengerType): string
     {
         return match ($passengerType) {
-            'student' => 'UserHome',
-            'faculty' => 'UserRecents',
-            'employee' => 'UserMap',
-            default => 'UserProfile',
+            'student'  => 'UserHome',
+            'employee' => 'UserHome', // Change this to the actual screen name for Employees/Drivers
+            'faculty'  => 'UserHome',
+            default    => 'UserHome',
         };
     }
 }

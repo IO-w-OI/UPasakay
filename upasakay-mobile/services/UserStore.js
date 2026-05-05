@@ -14,7 +14,7 @@ export let currentUser = null;
  * 3. SIGNUP LOGIC
  * Adds a new user to the PostgreSQL database.
  */
-export const addUser = async (name, email, password, phone, passenger_type, Department_office) => {
+export const addUser = async (full_name, email, password, phone, passenger_type, department_office) => {
     try {
         const response = await fetch(`${API_URL}/register`, {
             method: 'POST',
@@ -23,13 +23,13 @@ export const addUser = async (name, email, password, phone, passenger_type, Depa
                 'Accept': 'application/json' 
             },
             body: JSON.stringify({
-                full_name: name,         
+                full_name: full_name,         
                 email: email,
                 password: password,      
                 password_confirmation: password, 
-                passenger_type: 'student', 
+                passenger_type: passenger_type, 
                 phone: phone, 
-                department_office: Department_office
+                department_office: department_office
             })
         });
 

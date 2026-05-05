@@ -24,7 +24,7 @@ const UserOnboarding2 = () => {
     // Safety: ensure allData is never undefined by using an empty object as fallback
     const allData = useLocalSearchParams() || {}; 
     
-    const [dept, setDept] = useState('');
+    const [department_office, setDept] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const academicList = [
@@ -70,33 +70,31 @@ const UserOnboarding2 = () => {
     };
 
     const handleFinish = async () => {
-        // Validation check
-        if (!dept) return Alert.alert("Missing Info", "Please select your college or office.");
-        
-        // Final Safety Check: Verify we have the core identity from Screen 1
-        if (!allData.email) {
-            return Alert.alert("Data Error", "User registration data was lost. Please go back to the first step.");
-        }
+        if (!department_office) return Alert.alert("Missing Info", "Please select your college or office.");
+        if (!allData.email) return Alert.alert("Data Error", "Registration data lost.");
 
         setIsSubmitting(true); 
         
-        const result = await addUser(
-            allData.full_name, 
+        console.log("DEBUG - What is in allData?", allData);
+        const result = await addUser( 
+            allData.full_name,
             allData.email, 
             allData.password, 
-            allData.phone || "N/A", 
-            allData.passenger_type || "student", 
-            dept
+            allData.phone, 
+            allData.passenger_type, 
+            department_office, // Correctly passing the selected college/office
         );
         
         setIsSubmitting(false);
 
-// Inside handleFinish
         if (result.success) {
+            // Syncing with 'full_name' so the Home screen greeting works immediately
             setCurrentUser({
-                name: allData.full_name,
+                full_name: allData.full_name,
+                name: allData.full_name, 
                 email: allData.email,
-                passenger_type: allData.passenger_type || 'student'
+                passenger_type: allData.passenger_type,
+                department_office: department_office,
             });
             router.replace('/UserOnboarding3');
         } else {
@@ -128,7 +126,7 @@ const UserOnboarding2 = () => {
                             <StyledTextInput
                                 placeholder="Select College/Office"
                                 placeholderTextColor={Colors.text_idle}
-                                value={dept}
+                                value={department_office}
                                 editable={false}
                                 pointerEvents="none"
                             />

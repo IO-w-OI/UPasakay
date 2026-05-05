@@ -30,7 +30,6 @@ import {
     TextLinkContent
 } from '../components/styles';
 
-// --- SUB-COMPONENT: MyTextInput ---
 const MyTextInput = ({ label, icon, isPassword, hidePassword, setHidePassword, ...props }) => {
     return (
         <View style={{ marginBottom: 7 }}>
@@ -67,38 +66,33 @@ const Login = () => {
                 <Formik
                     initialValues={{ email: '', password: '' }}
                     onSubmit={async (values) => {
-                        // 1. REGEX Check for UP Email
-                        const upEmailRegex = /^[a-zA-Z0-9._%+-]+@up\.edu\.ph$/;
+                        // 1. Domain Validation
+                        const upEmailRegex = /^[a-zA-Z0-9._%+-]+@(up\.edu\.ph|upasakay\.com)$/;
                         if (!upEmailRegex.test(values.email)) {
-                            Alert.alert("Invalid Email", "Please use your official @up.edu.ph email address.");
+                            Alert.alert("Invalid Email", "Please use @up.edu.ph or @upasakay.com.");
                             return;
                         }
 
-                        // 2. THE CHECK
+                        // 2. API Call
                         const result = await validateUser(values.email, values.password);
 
                         if (result.success) {
-                            /**
-                             * SAFETY CHECK:
-                             * If passenger_type is null in the DB, default to "passenger"
-                             * This prevents the crash that triggers the "Login Failed" alert.
-                             */
-                            //const userRole = result.user?.passenger_type || "passenger";
-                            //const userName = result.user?.name || "UP User";
+                            const userEmail = values.email.toLowerCase();
+                            const userName = result.data?.user?.full_name;
 
-                            //console.log("Login Success! Welcome:", userName);
+                            console.log("Login Success! Welcome:", userName);
 
-                           // if(userRole === "Driver"){ 
-                                //console.log("Redirecting to Driver Home...");
-                                //router.replace('/(tabs)/Drivers/DriverHome');
-                            //}
-                            { //add else here later
-                                console.log("Redirecting to User Home...");
+                            // 3. Domain-Based Routing (The Juan Logic)
+                            // Strict check: @upasakay.com = Driver | @up.edu.ph = Passenger
+                            if (userEmail.endsWith('@upasakay.com')) {
+                                console.log("Authorized Driver detected. Routing to Driver Dashboard...");
+                                router.replace('/(tabs)/Drivers/DriverHome');
+                            } else {
+                                console.log("Passenger detected. Routing to User Home...");
                                 router.replace('/(tabs)/Users/UserHome'); 
                             }
                         } else {
-                            // Only shows if credentials actually fail
-                            Alert.alert("Login Failed", result.message);
+                            Alert.alert("Login Failed", result.message || "Invalid credentials.");
                         }
                     }}
                 >
@@ -106,7 +100,7 @@ const Login = () => {
                         <StyledFormArea>
                             <MyTextInput
                                 icon="mail"
-                                placeholder="Enter your UP email"
+                                placeholder="Enter your email"
                                 placeholderTextColor={Colors.text_idle}
                                 onChangeText={handleChange('email')}
                                 onBlur={handleBlur('email')}

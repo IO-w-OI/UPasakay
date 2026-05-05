@@ -33,6 +33,7 @@ class Passenger extends Authenticatable
     protected $fillable = [
         'user_id',
         'full_name',
+        'name',
         'email',
         'password_hash',
         'passenger_number',

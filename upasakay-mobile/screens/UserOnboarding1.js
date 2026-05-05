@@ -20,7 +20,7 @@ const UserOnboarding1 = () => {
     const router = useRouter();
     const prevData = useLocalSearchParams(); // Catch email and password from Signup.js
     
-    const [name, setName] = useState('');
+    const [full_name, setName] = useState('');
     const [phone, setPhone] = useState('');
     const [role, setRole] = useState(''); // Empty initially for placeholder effect
 
@@ -48,7 +48,7 @@ const UserOnboarding1 = () => {
     };
 
     const handleNext = () => {
-        if (!name || !phone || !role) {
+        if (!full_name || !phone || !role) {
             return Alert.alert("Missing Info", "Please fill in all fields.");
         }
 
@@ -58,7 +58,7 @@ const UserOnboarding1 = () => {
             pathname: '/UserOnboarding2',
             params: { 
                 ...prevData, 
-                name: name,
+                full_name: full_name,
                 phone: phone, 
                 passenger_type: role.toLowerCase() 
             }
@@ -84,7 +84,7 @@ const UserOnboarding1 = () => {
                             placeholder="Full Name"
                             placeholderTextColor={Colors.text_idle}
                             onChangeText={setName}
-                            value={name}
+                            value={full_name}
                         />
                     </View>
 
