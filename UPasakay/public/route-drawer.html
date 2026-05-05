@@ -139,6 +139,7 @@
     <button id="modeMapBtn"   class="active" onclick="setInputMode('map')">Click Map</button>
     <button id="modeSingleBtn"             onclick="setInputMode('single')">Single Coord</button>
     <button id="modeBulkBtn"               onclick="setInputMode('bulk')">Paste / Bulk</button>
+    <button id="modeEditBtn"               onclick="setInputMode('edit')">Edit Path</button>
   </div>
 
   <!-- Coord input panel (hidden when mode = map) -->
@@ -173,11 +174,28 @@ or just:
       <div class="coord-error" id="bulkError"></div>
     </div>
 
+    <!-- Edit Path sub-panel -->
+    <div id="editPanel" class="coord-section" style="display:none;">
+      <label>Paste a path array to load and edit</label>
+      <textarea class="bulk-textarea" id="editInput" placeholder="Paste a path array:
+[
+  [10.3701320, 123.9192870],
+  [10.3701500, 123.9192690],
+  [10.3702000, 123.9193000]
+]"></textarea>
+      <div class="bulk-actions">
+        <button class="btn-bulk-add"   onclick="loadEditPath()">▶ Load Path</button>
+        <button class="btn-bulk-clear" onclick="document.getElementById('editInput').value=''">Clear</button>
+      </div>
+      <div class="coord-error" id="editError"></div>
+    </div>
+
   </div>
 
   <!-- Controls -->
   <div class="controls">
     <button id="btnDraw" class="active" onclick="toggleDraw()">Drawing ON</button>
+    <button onclick="reverseRoute()">⟲ Reverse</button>
     <button onclick="undoLast()">↩ Undo</button>
     <button class="danger" onclick="clearRoute()">✕ Clear Route</button>
   </div>
@@ -222,11 +240,13 @@ function setInputMode(mode) {
   document.getElementById('modeMapBtn').classList.toggle('active', mode === 'map');
   document.getElementById('modeSingleBtn').classList.toggle('active', mode === 'single');
   document.getElementById('modeBulkBtn').classList.toggle('active', mode === 'bulk');
+  document.getElementById('modeEditBtn').classList.toggle('active', mode === 'edit');
 
   const panel = document.getElementById('coordPanel');
   panel.style.display = mode === 'map' ? 'none' : 'block';
   document.getElementById('singlePanel').style.display = mode === 'single' ? 'flex' : 'none';
   document.getElementById('bulkPanel').style.display   = mode === 'bulk'   ? 'flex' : 'none';
+  document.getElementById('editPanel').style.display   = mode === 'edit'   ? 'flex' : 'none';
 
   // Keep drawing toggle in sync: only enable map click when in map mode
   drawingEnabled = mode === 'map';
@@ -444,6 +464,89 @@ async function removeWaypoint(idx) {
   rd.markers.splice(idx, 1)[0].remove();
   rd.waypoints.splice(idx, 1);
   rd.markers.forEach((m, i) => m.setTooltipContent('#' + (i+1)));
+  await rebuildRoad(currentRoute);
+  updateUI();
+}
+
+// ── Load path from edit mode ──────────────────────────────────────────────
+async function loadEditPath() {
+  const raw   = document.getElementById('editInput').value;
+  const errEl = document.getElementById('editError');
+  errEl.textContent = '';
+
+  // Try to parse as JSON array first
+  let pairs = [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      pairs = parsed.map(p => {
+        if (Array.isArray(p) && p.length >= 2) {
+          const lat = parseFloat(p[0]);
+          const lng = parseFloat(p[1]);
+          if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+            return [lat, lng];
+          }
+        }
+        return null;
+      }).filter(p => p !== null);
+    }
+  } catch (e) {
+    // Not valid JSON, try line-by-line parsing
+    const lines = raw.split(/\n|(?<=\])\s*,\s*(?=\[)/).map(l => l.trim()).filter(Boolean);
+    const bad = [];
+    lines.forEach((line, i) => {
+      const p = parseLatLng(line);
+      if (p) pairs.push(p);
+      else if (line.length > 1) bad.push(i + 1);
+    });
+    if (bad.length && pairs.length === 0) {
+      errEl.textContent = '⚠ Could not parse coordinates. Check format.';
+      return;
+    }
+  }
+
+  if (pairs.length === 0) {
+    errEl.textContent = '⚠ No valid coordinates found.';
+    return;
+  }
+
+  // Clear current route and load new one
+  await clearRoute();
+  setStatus('Loading ' + pairs.length + ' waypoints from path…');
+
+  const rd = routeData[currentRoute];
+  for (const [lat, lng] of pairs) {
+    const idx = rd.waypoints.length;
+    const marker = L.circleMarker([lat, lng], {
+      radius: 7, color: '#fff', fillColor: routeColors[currentRoute], fillOpacity: 1, weight: 2,
+    }).addTo(map).bindTooltip('#' + (idx + 1), { permanent: true, direction: 'top', offset: [0, -10] });
+    rd.waypoints.push([lat, lng]);
+    rd.markers.push(marker);
+  }
+
+  await rebuildRoad(currentRoute);
+  updateUI();
+
+  if (rd.polyline) map.fitBounds(rd.polyline.getBounds(), { padding: [40, 40] });
+  document.getElementById('editInput').value = '';
+}
+
+// ── Reverse route ────────────────────────────────────────────────────────
+async function reverseRoute() {
+  const rd = routeData[currentRoute];
+  if (rd.waypoints.length < 2) {
+    setStatus('Need at least 2 waypoints to reverse');
+    return;
+  }
+
+  // Reverse both waypoints and markers
+  rd.waypoints.reverse();
+  rd.markers.reverse();
+
+  // Update tooltip labels
+  rd.markers.forEach((m, i) => m.setTooltipContent('#' + (i + 1)));
+
+  setStatus('Reversed "' + currentRoute + '" route');
   await rebuildRoad(currentRoute);
   updateUI();
 }
