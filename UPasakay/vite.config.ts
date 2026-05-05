@@ -1,11 +1,12 @@
 import { existsSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import { wayfinder } from '@laravel/vite-plugin-wayfinder';
 import tailwindcss from '@tailwindcss/vite';
 import vue from '@vitejs/plugin-vue';
 import laravel from 'laravel-vite-plugin';
 import { defineConfig } from 'vite';
 
-const wayfinderCommand = (() => {
+const resolveWayfinderCommand = () => {
     if (process.env.WAYFINDER_COMMAND) {
         return process.env.WAYFINDER_COMMAND;
     }
@@ -18,8 +19,16 @@ const wayfinderCommand = (() => {
         return `"${herdPhp}" artisan wayfinder:generate`;
     }
 
-    return 'php artisan wayfinder:generate';
-})();
+    const localPhp = spawnSync('php', ['-v'], { shell: false, stdio: 'ignore' });
+
+    if (!localPhp.error && localPhp.status === 0) {
+        return 'php artisan wayfinder:generate';
+    }
+
+    return null;
+};
+
+const wayfinderCommand = resolveWayfinderCommand();
 
 export default defineConfig({
     plugins: [
@@ -29,10 +38,6 @@ export default defineConfig({
             refresh: true,
         }),
         tailwindcss(),
-        wayfinder({
-            formVariants: true,
-            command: wayfinderCommand,
-        }),
         vue({
             template: {
                 transformAssetUrls: {
@@ -41,5 +46,13 @@ export default defineConfig({
                 },
             },
         }),
+        ...(wayfinderCommand
+            ? [
+                  wayfinder({
+                      formVariants: true,
+                      command: wayfinderCommand,
+                  }),
+              ]
+            : []),
     ],
 });

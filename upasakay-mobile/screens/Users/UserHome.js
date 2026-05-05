@@ -25,7 +25,7 @@ const UserHome = () => {
         await Notifications.scheduleNotificationAsync({
             content: {
                 title: "UPasakay 🚌",
-                body: "imong mama ako mama",
+                body: "You pressed the notification button. I work!",
                 sound: true,
             },
             trigger: null,

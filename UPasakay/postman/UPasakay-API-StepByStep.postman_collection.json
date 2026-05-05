@@ -1,0 +1,532 @@
+{
+  "info": {
+    "_postman_id": "f6aa1df9-4f5b-4f1f-9f3d-6f5e67de9a11",
+    "name": "UPasakay API Step-by-Step Testing",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Step-by-step API flow for signup profile completion, verification status, passenger profile fetch/update, and booking creation."
+  },
+  "variable": [
+    { "key": "apiBase", "value": "https://upasakay.test/api" },
+    { "key": "email", "value": "qa.passenger1@example.com" },
+    { "key": "password", "value": "Test@12345" },
+    { "key": "fullName", "value": "QA Passenger One" },
+    { "key": "token", "value": "" },
+    { "key": "userId", "value": "" },
+    { "key": "routeId", "value": "1" },
+    { "key": "pickupStopId", "value": "1" },
+    { "key": "dropoffStopId", "value": "2" }
+  ],
+  "item": [
+    {
+      "name": "0. Setup Helpers",
+      "item": [
+        {
+          "name": "Health Check (API reachable)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{apiBase}}/routes"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('API is reachable', function () {",
+                  "  pm.expect(pm.response.code).to.not.equal(404);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "1. Auth",
+      "item": [
+        {
+          "name": "Register Passenger",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\",\n  \"password_confirmation\": \"{{password}}\",\n  \"full_name\": \"{{fullName}}\",\n  \"passenger_type\": \"student\"\n}"
+            },
+            "url": {
+              "raw": "{{apiBase}}/register"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Register returns 201 or already-exists validation 422', function () {",
+                  "  pm.expect([201, 422]).to.include(pm.response.code);",
+                  "});",
+                  "if (pm.response.code === 201) {",
+                  "  var res = pm.response.json();",
+                  "  var token = res.token || (res.data && res.data.token);",
+                  "  var userId = res.data && res.data.user && res.data.user.id;",
+                  "  if (token) pm.collectionVariables.set('token', token);",
+                  "  if (userId) pm.collectionVariables.set('userId', String(userId));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login Passenger",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{apiBase}}/login"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Login success', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "var res = pm.response.json();",
+                  "var token = res.token || (res.data && res.data.token);",
+                  "var userId = res.data && res.data.user && res.data.user.id;",
+                  "pm.test('Token is returned', function () {",
+                  "  pm.expect(token).to.be.a('string').and.not.empty;",
+                  "});",
+                  "if (token) pm.collectionVariables.set('token', token);",
+                  "if (userId) pm.collectionVariables.set('userId', String(userId));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Passenger Profile",
+      "item": [
+        {
+          "name": "Complete Profile",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"{{fullName}}\",\n  \"passenger_type\": \"student\",\n  \"student_id\": \"2026-00001\",\n  \"proof_document_path\": \"uploads/proofs/qa-passenger1-id.jpg\"\n}"
+            },
+            "url": {
+              "raw": "{{apiBase}}/passenger/profile/complete"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Profile completion success', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "var res = pm.response.json();",
+                  "pm.test('Profile marked completed', function () {",
+                  "  pm.expect(res.data.passenger.profile_completed).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verification Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{apiBase}}/passenger/profile/verification"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Verification endpoint success', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "var res = pm.response.json();",
+                  "pm.test('Contains verification and passenger status fields', function () {",
+                  "  pm.expect(res.data).to.have.property('verification_status');",
+                  "  pm.expect(res.data).to.have.property('passenger_status');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Passenger Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{apiBase}}/passenger/profile"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Profile fetch success', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "var res = pm.response.json();",
+                  "pm.test('Profile payload contains passenger object', function () {",
+                  "  pm.expect(res.data).to.have.property('passenger');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Passenger Profile",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone_number\": \"09171234567\"\n}"
+            },
+            "url": {
+              "raw": "{{apiBase}}/passenger/profile"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Profile update success', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "var res = pm.response.json();",
+                  "pm.test('Phone number is updated', function () {",
+                  "  pm.expect(res.data.passenger.phone_number).to.eql('09171234567');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Reference IDs",
+      "item": [
+        {
+          "name": "List Routes (save first routeId)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{apiBase}}/routes"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Routes fetched', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "var res = pm.response.json();",
+                  "if (Array.isArray(res) && res.length > 0 && res[0].id) {",
+                  "  pm.collectionVariables.set('routeId', String(res[0].id));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List Stops (save pickup/dropoff IDs)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{apiBase}}/stops"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Stops fetched', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "var res = pm.response.json();",
+                  "if (Array.isArray(res) && res.length >= 2) {",
+                  "  if (res[0].id) pm.collectionVariables.set('pickupStopId', String(res[0].id));",
+                  "  if (res[1].id) pm.collectionVariables.set('dropoffStopId', String(res[1].id));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4. Approval Gate",
+      "item": [
+        {
+          "name": "Approve Passenger (required for booking)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"verification_status\": \"approved\",\n  \"passenger_status\": \"active\"\n}"
+            },
+            "url": {
+              "raw": "{{apiBase}}/passengers/{{userId}}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Passenger approval update success', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5. Booking",
+      "item": [
+        {
+          "name": "Create Booking Request (happy path)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"route_id\": {{routeId}},\n  \"pickup_stop_id\": {{pickupStopId}},\n  \"dropoff_stop_id\": {{dropoffStopId}}\n}"
+            },
+            "url": {
+              "raw": "{{apiBase}}/pickup-requests"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Booking created', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "var res = pm.response.json();",
+                  "pm.test('Booking status is pending', function () {",
+                  "  pm.expect(res.status).to.eql('pending');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Duplicate Booking (negative)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"route_id\": {{routeId}},\n  \"pickup_stop_id\": {{pickupStopId}},\n  \"dropoff_stop_id\": {{dropoffStopId}}\n}"
+            },
+            "url": {
+              "raw": "{{apiBase}}/pickup-requests"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Duplicate booking blocked', function () {",
+                  "  pm.expect(pm.response.code).to.eql(422);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Booking Missing Fields (negative)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"route_id\": {{routeId}}\n}"
+            },
+            "url": {
+              "raw": "{{apiBase}}/pickup-requests"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Validation error for missing stop IDs', function () {",
+                  "  pm.expect(pm.response.code).to.eql(422);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Booking Without Token (negative)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"route_id\": {{routeId}},\n  \"pickup_stop_id\": {{pickupStopId}},\n  \"dropoff_stop_id\": {{dropoffStopId}}\n}"
+            },
+            "url": {
+              "raw": "{{apiBase}}/pickup-requests"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Unauthorized without token', function () {",
+                  "  pm.expect(pm.response.code).to.eql(401);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "6. Cleanup",
+      "item": [
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{apiBase}}/logout"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Logout success', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
