@@ -2155,24 +2155,25 @@ export const liveMapRoutes: RouteConfig = {
     north: {
         color: '#3b82f6',
         stops: [
-                [10.395150, 123.956550], // SM Consolacion (Loading Zone Front)
-                [10.378350, 123.961050], // Home Builder’s Consolacion (North Road Curbside)
-                [10.338521, 123.899214], // UP Cebu (Gorordo Ave Gate)
-                [10.320412, 123.948756], // Gaisano Island Mall (Mactan Terminal Area)
-                [10.344850, 123.937250], // Pacific Mall (PUJ/Bus Terminal)
-                [10.332300, 123.928800], // San Miguel - Tipolo (MC Briones Highway)
-                [10.322800, 123.911500], // Hipodromo (MJ Cuenco Ave stop)                    [10.321800, 123.912500], // CIC / Camp Sotero Cabahug (MJ Cuenco entrance)
+                [10.379421466919222, 123.96500992917743], // SM Consolacion (Loading Zone Front)
+                [10.378576269510365, 123.96361680702032], // Home Builder’s Consolacion (North Road Curbside)
+                [10.32240110974636, 123.89839499974325], // UP Cebu (Gorordo Ave Gate)
+                [10.317342554183213, 123.96261657121796], // Gaisano Island Mall (Mactan Terminal Area)
+                [10.340956164883575, 123.9485818683762], // Pacific Mall (PUJ/Bus Terminal)
+                [10.330419131323268, 123.93289450989764], // San Miguel - Tipolo (MC Briones Highway)
+                [10.313965655571439, 123.91404037008384], // Hipodromo (MJ Cuenco Ave stop)                    
+                [10.312423759176745, 123.90317026577462], // CIC / Camp Sotero Cabahug (MJ Cuenco entrance)
                 ],
                 path: northPath,
                 landmarks: [
-                { name: 'SM Consolacion', coord: [10.395150, 123.956550] },
-                { name: 'Home Builder’s Consolacion', coord: [10.378350, 123.961050] },
-                { name: 'UP Cebu Lahug', coord: [10.338521, 123.899214] },
-                { name: 'Pacific Mall Mandaue', coord: [10.344850, 123.937250] },
-                { name: 'Gaisano Island Mall', coord: [10.320412, 123.948756] },
-                { name: 'San Miguel Brewery - Tipolo', coord: [10.332300, 123.928800] },
-                { name: 'Hipodromo', coord: [10.322800, 123.911500] },
-                { name: 'CIC / Camp Sotero Cabahug', coord: [10.321800, 123.912500] }
+                { name: 'SM Consolacion', coord: [10.379421466919222, 123.96500992917743] },
+                { name: 'Home Builder’s Consolacion', coord: [10.378576269510365, 123.96361680702032] },
+                { name: 'UP Cebu Lahug', coord: [10.32240110974636, 123.89839499974325] },
+                { name: 'Pacific Mall Mandaue', coord: [10.340956164883575, 123.9485818683762] },
+                { name: 'Gaisano Island Mall', coord: [10.317342554183213, 123.96261657121796] },
+                { name: 'San Miguel Brewery - Tipolo', coord: [10.330419131323268, 123.93289450989764] },
+                { name: 'Hipodromo', coord: [10.313965655571439, 123.91404037008384] },
+                { name: 'CIC / Camp Sotero Cabahug', coord: [10.312423759176745, 123.90317026577462] }
                 ],
             },
 };
