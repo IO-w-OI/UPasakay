@@ -60,6 +60,8 @@ const UserProfile = () => {
                 <UserName>{currentUser?.full_name || "User Name"}</UserName>
                 <UserEmail>{currentUser?.email || "email@up.edu.ph"}</UserEmail>
                 <UserRole>{currentUser?.passenger_type || "Passenger Type"}</UserRole>
+                {/*<UserRole>{currentUser?.department || currentUser?.department_office || "Affiliation"} </UserRole>*/}
+                {/*i'll fix this later bc im tired*/}
 
                 {/* My Account Section */}
                 <SectionHeader style={{ width: 322 }}>My Account</SectionHeader>

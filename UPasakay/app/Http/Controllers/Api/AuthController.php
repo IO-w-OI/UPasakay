@@ -165,16 +165,19 @@ class AuthController extends Controller
 
     private function buildAuthPayload(Model $authUser, ?Passenger $passenger, string $token): array
     {
-        // formatPassenger is what you just showed me
+        // We call this first to get the cleaned data
         $formattedPassenger = $this->formatPassenger($passenger);
 
         return [
             'user' => [
                 'id' => $authUser->getKey(),
                 'email' => $authUser->email,
-                // Use the same keys here that you used in formatPassenger
                 'full_name' => $formattedPassenger['full_name'] ?? $authUser->name,
                 'name' => $formattedPassenger['full_name'] ?? $authUser->name,
+                
+                // THIS LINE IS MISSING: This is why the Profile screen is blank
+                'department_office' => $formattedPassenger['department_office'] ?? null,
+                'department' => $formattedPassenger['department_office'] ?? null,
             ],
             'passenger' => $formattedPassenger,
             'onboarding' => [
@@ -200,6 +203,7 @@ class AuthController extends Controller
             'passenger_number' => $passenger->passenger_number,
             'passenger_type' => $passenger->passenger_type,
             'department_office' => $passenger->department_office,
+            'department' => $passenger->department_office,
             'student_id' => $passenger->student_id,
             'employee_id' => $passenger->employee_id,
             'verification_status' => $passenger->verification_status,
