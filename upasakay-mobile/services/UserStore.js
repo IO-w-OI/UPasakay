@@ -16,7 +16,7 @@ export let usersArray = [
         email: "nlproxas@up.edu.ph",
         password: "password123",
         phone: "09987654321",
-        passenger_type: "employee",
+        passenger_type: "Driver",
         Department_office: "Campus Maintenance Office (CMO)"
     }
 ];
