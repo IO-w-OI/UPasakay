@@ -36,13 +36,15 @@ class RideAccepted implements ShouldBroadcast
      */
     public function broadcastWith(): array
     {
+        $assignment = data_get($this->pickupRequest, 'assignment');
+
         return [
             'pickup_request_id' => $this->pickupRequest->id,
-            'driver_id' => $this->pickupRequest->driver_id,
-            'driver_name' => $this->pickupRequest->driver?->user?->name,
-            'driver_rating' => $this->pickupRequest->driver?->rating,
-            'shuttle_id' => $this->pickupRequest->shuttle_id,
-            'shuttle_number' => $this->pickupRequest->shuttle?->shuttle_number,
+            'driver_id' => data_get($assignment, 'driver_id'),
+            'driver_name' => data_get($assignment, 'driver.user.name'),
+            'driver_rating' => data_get($assignment, 'driver.rating'),
+            'shuttle_id' => data_get($assignment, 'shuttle_id'),
+            'shuttle_number' => data_get($assignment, 'shuttle.shuttle_number'),
             'status' => 'accepted',
             'eta_minutes' => 5, // TODO: Calculate ETA
         ];
