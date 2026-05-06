@@ -2,10 +2,10 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 use App\Models\Shuttle;
 use App\Models\ShuttleLocation;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class ShuttleLocationSeeder extends Seeder
 {
@@ -49,8 +49,9 @@ class ShuttleLocationSeeder extends Seeder
 
         foreach ($shuttles as $shuttle) {
             $routeName = $shuttle->route?->name;
-            if (!$routeName || !isset($routePoints[$routeName]))
+            if (! $routeName || ! isset($routePoints[$routeName])) {
                 continue;
+            }
 
             $points = $routePoints[$routeName];
 

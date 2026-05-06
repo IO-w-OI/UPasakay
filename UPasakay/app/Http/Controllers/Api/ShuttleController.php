@@ -22,6 +22,7 @@ class ShuttleController extends Controller
         ]);
 
         $shuttle = Shuttle::create($validated);
+
         return response()->json($shuttle, 201);
     }
 
@@ -33,18 +34,20 @@ class ShuttleController extends Controller
     public function update(Request $request, Shuttle $shuttle)
     {
         $validated = $request->validate([
-            'plate_number' => 'sometimes|string|unique:shuttles,plate_number,' . $shuttle->id,
+            'plate_number' => 'sometimes|string|unique:shuttles,plate_number,'.$shuttle->id,
             'capacity' => 'sometimes|integer|min:1',
             'is_active' => 'boolean',
         ]);
 
         $shuttle->update($validated);
+
         return response()->json($shuttle);
     }
 
     public function destroy(Shuttle $shuttle)
     {
         $shuttle->delete();
+
         return response()->json(['message' => 'Shuttle deleted successfully']);
     }
 }

@@ -168,9 +168,9 @@ class PassengerProfileController extends Controller
                 'department_office' => Passenger::DEPARTMENT_OFFICES,
             ],
             'onboarding' => [
-                'required' => !$passenger->profile_completed,
+                'required' => ! $passenger->profile_completed,
                 'profile_completed' => (bool) $passenger->profile_completed,
-                'next_route' => !$passenger->profile_completed
+                'next_route' => ! $passenger->profile_completed
                     ? 'ProfileOnboarding'
                     : $this->routeForPassengerType($passenger->passenger_type),
             ],
@@ -190,7 +190,7 @@ class PassengerProfileController extends Controller
     private function generatePassengerNumber(): string
     {
         do {
-            $passengerNumber = 'PASS' . strtoupper(uniqid());
+            $passengerNumber = 'PASS'.strtoupper(uniqid());
         } while (Passenger::where('passenger_number', $passengerNumber)->exists());
 
         return $passengerNumber;

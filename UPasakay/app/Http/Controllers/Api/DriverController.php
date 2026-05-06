@@ -22,6 +22,7 @@ class DriverController extends Controller
         ]);
 
         $driver = Driver::create($validated);
+
         return response()->json($driver, 201);
     }
 
@@ -33,17 +34,19 @@ class DriverController extends Controller
     public function update(Request $request, Driver $driver)
     {
         $validated = $request->validate([
-            'license_number' => 'sometimes|string|unique:drivers,license_number,' . $driver->id,
+            'license_number' => 'sometimes|string|unique:drivers,license_number,'.$driver->id,
             'is_available' => 'boolean',
         ]);
 
         $driver->update($validated);
+
         return response()->json($driver);
     }
 
     public function destroy(Driver $driver)
     {
         $driver->delete();
+
         return response()->json(['message' => 'Driver deleted successfully']);
     }
 }

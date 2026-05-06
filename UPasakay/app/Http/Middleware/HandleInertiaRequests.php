@@ -64,7 +64,7 @@ class HandleInertiaRequests extends Middleware
                     ? Passenger::where('passenger_status', 'pending')->count()
                     : 0,
             ],
-            'sidebarOpen' => !$request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }
 }

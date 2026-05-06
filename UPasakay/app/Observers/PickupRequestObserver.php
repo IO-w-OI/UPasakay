@@ -30,7 +30,7 @@ class PickupRequestObserver
     public function updated(PickupRequest $pickupRequest): void
     {
         // Only log status changes
-        if (!$pickupRequest->wasChanged('status')) {
+        if (! $pickupRequest->wasChanged('status')) {
             return;
         }
 

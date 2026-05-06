@@ -7,7 +7,6 @@ use App\Http\Requests\UpdateAdminRequest;
 use App\Models\Admin;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
 
 class AdminController extends Controller
@@ -185,7 +184,7 @@ class AdminController extends Controller
     {
         $currentUser = auth()->user();
 
-        if (!$currentUser->admin || !$currentUser->admin->isSuperAdmin()) {
+        if (! $currentUser->admin || ! $currentUser->admin->isSuperAdmin()) {
             return false;
         }
 

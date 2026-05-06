@@ -33,7 +33,7 @@ class PassengerController extends Controller
 
         // Optionally create an associated user when email/password provided
         $user = null;
-        if (!empty($validated['email']) && !empty($validated['password'])) {
+        if (! empty($validated['email']) && ! empty($validated['password'])) {
             $user = User::create([
                 'email' => $validated['email'],
                 'password_hash' => Hash::make($validated['password']),
@@ -70,7 +70,7 @@ class PassengerController extends Controller
     {
         $passenger = Passenger::with('user')->where('user_id', $id)->first();
 
-        if (!$passenger) {
+        if (! $passenger) {
             return response()->json(['message' => 'Passenger not found.'], 404);
         }
 
@@ -84,10 +84,9 @@ class PassengerController extends Controller
     {
         $passenger = Passenger::with('user')->where('user_id', $id)->first();
 
-        if (!$passenger) {
+        if (! $passenger) {
             return response()->json(['message' => 'Passenger not found.'], 404);
         }
-
 
         $validated = $request->validated();
 
@@ -108,7 +107,7 @@ class PassengerController extends Controller
         // If legacy 'department' provided, set both columns for compatibility
         if (isset($validated['department'])) {
             $updatable['department'] = $validated['department'];
-            if (!isset($updatable['department_office'])) {
+            if (! isset($updatable['department_office'])) {
                 $updatable['department_office'] = $validated['department'];
             }
         }
@@ -135,7 +134,7 @@ class PassengerController extends Controller
     {
         $passenger = Passenger::where('user_id', $id)->first();
 
-        if (!$passenger) {
+        if (! $passenger) {
             return response()->json(['message' => 'Passenger not found.'], 404);
         }
 

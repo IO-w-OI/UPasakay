@@ -30,7 +30,6 @@ import {
     TextLinkContent
 } from '../components/styles';
 
-// --- SUB-COMPONENT: MyTextInput ---
 const MyTextInput = ({ label, icon, isPassword, hidePassword, setHidePassword, ...props }) => {
     return (
         <View style={{ marginBottom: 7 }}>
@@ -66,32 +65,34 @@ const Login = () => {
 
                 <Formik
                     initialValues={{ email: '', password: '' }}
-                    onSubmit={(values) => {
-                        // 1. REGEX Check for UP Email
-                        const upEmailRegex = /^[a-zA-Z0-9._%+-]+@up\.edu\.ph$/;
+                    onSubmit={async (values) => {
+                        // 1. Domain Validation
+                        const upEmailRegex = /^[a-zA-Z0-9._%+-]+@(up\.edu\.ph|upasakay\.com)$/;
                         if (!upEmailRegex.test(values.email)) {
-                            Alert.alert("Invalid Email", "Please use your official @up.edu.ph email address.");
+                            Alert.alert("Invalid Email", "Please use @up.edu.ph or @upasakay.com.");
                             return;
                         }
 
-                        // 2. THE CHECK
-                        // This calls your updated UserStore logic
-                        const result = validateUser(values.email, values.password);
+                        // 2. API Call
+                        const result = await validateUser(values.email, values.password);
 
                         if (result.success) {
-                            // SUCCESS: Navigate to Home
-                            console.log("Login Success! Welcome:", result.user.name);
-                            if(result.user.passenger_type === "Driver"){ //If user role is driver, redirect to Driver Home
+                            const userEmail = values.email.toLowerCase();
+                            const userName = result.data?.user?.full_name;
+
+                            console.log("Login Success! Welcome:", userName);
+
+                            // 3. Domain-Based Routing (The Juan Logic)
+                            // Strict check: @upasakay.com = Driver | @up.edu.ph = Passenger
+                            if (userEmail.endsWith('@upasakay.com')) {
+                                console.log("Authorized Driver detected. Routing to Driver Dashboard...");
                                 router.replace('/(tabs)/Drivers/DriverHome');
-                                console.log("Redirecting to Driver Home...");
-                            }
-                            else{ //If user role is student, faculty or passenger, redirect to User Home
+                            } else {
+                                console.log("Passenger detected. Routing to User Home...");
                                 router.replace('/(tabs)/Users/UserHome'); 
-                                console.log("Redirecting to User Home...");
                             }
                         } else {
-                            // FAIL: Shows either "Account not found" or "Password is invalid"
-                            Alert.alert("Login Failed", result.message);
+                            Alert.alert("Login Failed", result.message || "Invalid credentials.");
                         }
                     }}
                 >
@@ -99,7 +100,7 @@ const Login = () => {
                         <StyledFormArea>
                             <MyTextInput
                                 icon="mail"
-                                placeholder="Enter your UP email"
+                                placeholder="Enter your email"
                                 placeholderTextColor={Colors.text_idle}
                                 onChangeText={handleChange('email')}
                                 onBlur={handleBlur('email')}

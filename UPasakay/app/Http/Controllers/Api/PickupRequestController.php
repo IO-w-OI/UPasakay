@@ -36,7 +36,7 @@ class PickupRequestController extends Controller
         // Get the authenticated user from the request token/session
         $user = $request->user();
 
-        if (!$user) {
+        if (! $user) {
             return response()->json([
                 'message' => 'Unauthenticated',
             ], 401);
@@ -45,6 +45,7 @@ class PickupRequestController extends Controller
         // Validate passenger status and check for duplicates
         try {
             $pickupRequest = $this->pickupRequestService->createPickupRequest($user, $validated);
+
             return response()->json($pickupRequest, 201);
         } catch (ValidationException $e) {
             return response()->json([
@@ -70,12 +71,14 @@ class PickupRequestController extends Controller
         ]);
 
         $pickupRequest->update($validated);
+
         return response()->json($pickupRequest);
     }
 
     public function destroy(PickupRequest $pickupRequest)
     {
         $pickupRequest->delete();
+
         return response()->json(['message' => 'Pickup request deleted successfully']);
     }
 }

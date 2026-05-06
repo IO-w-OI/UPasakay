@@ -1,8 +1,10 @@
 <?php
+
 namespace App\Models;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class PickupRequest extends Model
 {
@@ -32,18 +34,22 @@ class PickupRequest extends Model
     {
         return $this->belongsTo(User::class);
     }
+
     public function route()
     {
         return $this->belongsTo(Route::class);
     }
+
     public function pickupStop()
     {
         return $this->belongsTo(Stop::class, 'pickup_stop_id');
     }
+
     public function dropoffStop()
     {
         return $this->belongsTo(Stop::class, 'dropoff_stop_id');
     }
+
     public function assignment()
     {
         return $this->hasOne(DriverAssignment::class);

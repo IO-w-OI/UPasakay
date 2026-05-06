@@ -4,7 +4,8 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /**
      * Run the migrations.
      */
@@ -20,10 +21,10 @@ return new class extends Migration {
             }
 
             Schema::table('passengers', function (Blueprint $table) {
-                if (!Schema::hasColumn('passengers', 'department')) {
+                if (! Schema::hasColumn('passengers', 'department')) {
                     $table->string('department')->nullable();
                 }
-                if (!Schema::hasColumn('passengers', 'passenger_type')) {
+                if (! Schema::hasColumn('passengers', 'passenger_type')) {
                     $table->string('passenger_type')->default('student'); // student | staff | faculty
                 }
             });
@@ -43,7 +44,7 @@ return new class extends Migration {
                 if (Schema::hasColumn('passengers', 'passenger_type')) {
                     $table->dropColumn('passenger_type');
                 }
-                if (!Schema::hasColumn('passengers', 'course')) {
+                if (! Schema::hasColumn('passengers', 'course')) {
                     $table->string('course')->nullable();
                 }
             });

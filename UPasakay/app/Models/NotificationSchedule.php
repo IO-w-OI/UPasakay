@@ -48,6 +48,7 @@ class NotificationSchedule extends Model
     {
         $freqLabel = $this->getFrequencyLabel();
         $timeFormatted = date('g:i A', strtotime($this->time));
+
         return "{$freqLabel} {$timeFormatted}";
     }
 
@@ -72,7 +73,8 @@ class NotificationSchedule extends Model
      */
     public function toggleActive()
     {
-        $this->update(['is_active' => !$this->is_active]);
+        $this->update(['is_active' => ! $this->is_active]);
+
         return $this;
     }
 }
