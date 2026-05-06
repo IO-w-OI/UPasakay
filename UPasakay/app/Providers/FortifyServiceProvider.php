@@ -50,7 +50,9 @@ class FortifyServiceProvider extends ServiceProvider
         Fortify::loginView(fn (Request $request) => Inertia::render('auth/Login', [
             'canResetPassword' => Features::enabled(Features::resetPasswords()),
             'canRegister' => Features::enabled(Features::registration()),
-            'status' => $request->session()->get('status'),
+            'canAdminRegister' => config('admin.registration.enabled'),
+            'status' => $request->session()->get('status')
+                ?? ($request->boolean('admin_registered') ? 'Admin account created successfully. Please log in.' : null),
         ]));
 
         Fortify::resetPasswordView(fn (Request $request) => Inertia::render('auth/ResetPassword', [

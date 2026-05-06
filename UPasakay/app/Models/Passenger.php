@@ -57,6 +57,7 @@ class Passenger extends Authenticatable
     protected $casts = [
         'reviewed_at' => 'datetime',
         'profile_completed' => 'boolean',
+        'password_hash' => 'hashed',
     ];
 
     protected static function booted()

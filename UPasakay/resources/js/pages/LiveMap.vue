@@ -2,6 +2,7 @@
 import { Head } from '@inertiajs/vue3';
 import * as L from 'leaflet';
 import { Map as MapIcon, Bus, MapPin, RefreshCw, ArrowRight } from 'lucide-vue-next';
+import Pusher from 'pusher-js';
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { useAppearance } from '@/composables/useAppearance';
 import { liveMapRoutes, type RouteConfig } from '@/data/routeData';
@@ -41,13 +42,16 @@ const routeFilter = ref('All');
 const searchQuery  = ref('');
 const autoRefresh  = ref(true);
 
+// Local copy so Pusher updates can mutate coordinates without touching props
+const localShuttles = ref(props.shuttles.map(s => ({ ...s })));
+
 const routes = computed(() => {
-    const unique = [...new Set(props.shuttles.map(s => s.route).filter(r => r !== '”'))];
+    const unique = [...new Set(localShuttles.value.map(s => s.route).filter(r => r !== '”'))];
     return ['All', ...unique];
 });
 
 const filtered = computed(() =>
-    props.shuttles.filter(s => {
+    localShuttles.value.filter(s => {
         const matchRoute  = routeFilter.value === 'All' || s.route === routeFilter.value;
         const matchSearch = s.code.toLowerCase().includes(searchQuery.value.toLowerCase())
             || s.driver.toLowerCase().includes(searchQuery.value.toLowerCase());
@@ -70,7 +74,7 @@ const statusDot = (status: string) =>
 const routeBadge = (route: string) =>
     ({ South: 'bg-green-500/15 text-green-600 dark:text-green-400', North: 'bg-blue-500/15 text-blue-600 dark:text-blue-400', 'Cebu City': 'bg-orange-500/15 text-orange-600 dark:text-orange-400' }[route] ?? 'bg-muted text-muted-foreground');
 
-const activeCount = computed(() => props.shuttles.filter(s => s.status === 'active').length);
+const activeCount = computed(() => localShuttles.value.filter(s => s.status === 'active').length);
 
 const filteredRequests = computed(() => {
     const list = routeFilter.value === 'All'
@@ -79,12 +83,15 @@ const filteredRequests = computed(() => {
     return list.slice(0, 5);
 });
 
-//  Leaflet map 
+//  Leaflet map
 const mapRef = ref<HTMLDivElement | null>(null);
 let map: L.Map | null = null;
 let tileLayer: L.TileLayer | null = null;
 const shuttleMarkers = new Map<number, L.Marker>();
 const otherMarkers: L.Marker[] = [];
+
+// Pusher real-time connection
+let pusherClient: Pusher | null = null;
 
 const lightTileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 const darkTileUrl  = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
@@ -246,9 +253,31 @@ onMounted(() => {
         // Draw OSRM road-following routes
         drawRoutes(map!);
     });
+
+    // Real-time shuttle location via Pusher
+    const pusherKey = import.meta.env.VITE_PUSHER_APP_KEY as string;
+    const pusherCluster = (import.meta.env.VITE_PUSHER_APP_CLUSTER as string) || 'ap1';
+    if (pusherKey) {
+        pusherClient = new Pusher(pusherKey, { cluster: pusherCluster });
+        const channel = pusherClient.subscribe('shuttle-tracking');
+        channel.bind('LocationUpdated', (data: { id?: number; shuttle_id?: number; latitude: number; longitude: number }) => {
+            const shuttleId = data.id ?? data.shuttle_id;
+            const shuttle = shuttleId !== undefined
+                ? localShuttles.value.find(s => s.id === shuttleId)
+                : localShuttles.value[0]; // fallback: single-bus mode
+            if (!shuttle) return;
+            shuttle.latitude = data.latitude;
+            shuttle.longitude = data.longitude;
+            // Move the existing marker directly — no full redraw needed
+            const marker = shuttleMarkers.get(shuttle.id);
+            marker?.setLatLng([data.latitude, data.longitude]);
+        });
+    }
 });
 
 onUnmounted(() => {
+    pusherClient?.disconnect();
+    pusherClient = null;
     shuttleMarkers.forEach(m => m.remove());
     shuttleMarkers.clear();
     otherMarkers.forEach(m => m.remove());

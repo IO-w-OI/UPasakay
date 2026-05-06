@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Models\Passenger;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class PassengerOnboardingApiTest extends TestCase
@@ -47,14 +46,14 @@ class PassengerOnboardingApiTest extends TestCase
         $user = User::create([
             'name' => 'Student User',
             'email' => 'student-user@example.com',
-            'password_hash' => Hash::make('SecurePassword123!'),
+            'password_hash' => 'SecurePassword123!',
         ]);
 
         $passenger = Passenger::create([
             'user_id' => $user->id,
             'full_name' => 'Student User',
             'email' => $user->email,
-            'password_hash' => Hash::make('SecurePassword123!'),
+            'password_hash' => 'SecurePassword123!',
             'passenger_number' => 'STU-2001',
             'passenger_type' => 'student',
             'verification_status' => 'pending',
@@ -95,7 +94,7 @@ class PassengerOnboardingApiTest extends TestCase
         $passenger = Passenger::create([
             'full_name' => 'Faculty Member',
             'email' => 'faculty@example.com',
-            'password_hash' => Hash::make('SecurePassword123!'),
+            'password_hash' => 'SecurePassword123!',
             'passenger_number' => 'FAC-2001',
             'passenger_type' => 'faculty',
             'verification_status' => 'pending',
@@ -130,14 +129,14 @@ class PassengerOnboardingApiTest extends TestCase
         $user = User::create([
             'name' => 'Verification User',
             'email' => 'verification-user@example.com',
-            'password_hash' => Hash::make('SecurePassword123!'),
+            'password_hash' => 'SecurePassword123!',
         ]);
 
         Passenger::create([
             'user_id' => $user->id,
             'full_name' => 'Verification User',
             'email' => $user->email,
-            'password_hash' => Hash::make('SecurePassword123!'),
+            'password_hash' => 'SecurePassword123!',
             'passenger_number' => 'VER-2001',
             'passenger_type' => 'other',
             'verification_status' => 'pending',
@@ -168,14 +167,14 @@ class PassengerOnboardingApiTest extends TestCase
         $user = User::create([
             'name' => 'Refresh User',
             'email' => 'refresh-user@example.com',
-            'password_hash' => Hash::make('SecurePassword123!'),
+            'password_hash' => 'SecurePassword123!',
         ]);
 
         $passenger = Passenger::create([
             'user_id' => $user->id,
             'full_name' => 'Refresh User',
             'email' => $user->email,
-            'password_hash' => Hash::make('SecurePassword123!'),
+            'password_hash' => 'SecurePassword123!',
             'passenger_number' => 'REF-2001',
             'passenger_type' => 'other',
             'verification_status' => 'pending',

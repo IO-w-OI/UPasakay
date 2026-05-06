@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\Passenger;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class ApiAuthTest extends TestCase
@@ -34,7 +33,7 @@ class ApiAuthTest extends TestCase
         Passenger::create([
             'full_name' => 'Taken Passenger',
             'email' => 'taken@example.com',
-            'password_hash' => Hash::make('password123'),
+            'password_hash' => 'password123',
             'passenger_number' => 'REG-1002',
             'passenger_type' => 'student',
             'passenger_status' => 'active',
@@ -57,7 +56,7 @@ class ApiAuthTest extends TestCase
         Passenger::create([
             'full_name' => 'Auth Passenger',
             'email' => 'user@example.com',
-            'password_hash' => Hash::make('secret123'),
+            'password_hash' => 'secret123',
             'passenger_number' => 'REG-1004',
             'passenger_type' => 'student',
             'passenger_status' => 'active',
@@ -77,7 +76,7 @@ class ApiAuthTest extends TestCase
         Passenger::create([
             'full_name' => 'Auth Passenger',
             'email' => 'user@example.com',
-            'password_hash' => Hash::make('correctpassword'),
+            'password_hash' => 'correctpassword',
             'passenger_number' => 'REG-1005',
             'passenger_type' => 'student',
             'passenger_status' => 'active',
@@ -124,7 +123,7 @@ class ApiAuthTest extends TestCase
         $passenger = Passenger::create([
             'full_name' => 'Protected Passenger',
             'email' => 'protected@example.com',
-            'password_hash' => Hash::make('secret123'),
+            'password_hash' => 'secret123',
             'passenger_number' => 'REG-1006',
             'passenger_type' => 'student',
             'passenger_status' => 'active',
@@ -143,7 +142,7 @@ class ApiAuthTest extends TestCase
         $passenger = Passenger::create([
             'full_name' => 'Logout Passenger',
             'email' => 'logout@example.com',
-            'password_hash' => Hash::make('secret123'),
+            'password_hash' => 'secret123',
             'passenger_number' => 'REG-1007',
             'passenger_type' => 'student',
             'passenger_status' => 'active',

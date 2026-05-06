@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\ShuttleLocation;
+use App\Events\ShuttleLocationUpdated;
 use Illuminate\Http\Request;
 
 class ShuttleLocationController extends Controller
@@ -24,6 +25,13 @@ class ShuttleLocationController extends Controller
 
         $location = ShuttleLocation::create($validated);
 
+        
+        broadcast(new ShuttleLocationUpdated(
+            $validated['shuttle_id'],
+            (float) $validated['latitude'],
+            (float) $validated['longitude'],
+        ));
+        
         return response()->json($location, 201);
     }
 
