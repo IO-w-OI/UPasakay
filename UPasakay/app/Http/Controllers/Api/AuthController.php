@@ -17,9 +17,6 @@ class AuthController extends Controller
 {
     public function register(Request $request): JsonResponse
     {
-        // Keep this error_log! It is your only way to see if the phone is actually sending the keys.
-        error_log("Incoming Request Data: " . json_encode($request->all()));
-
         $passwordRules = ['required', 'confirmed'];
 
         if (! $request->filled('passenger_number')) {
