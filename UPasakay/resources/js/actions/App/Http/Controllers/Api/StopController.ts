@@ -348,7 +348,7 @@ update.patch = (args: { stop: number | { id: number } } | [stop: number | { id: 
     update.form = updateForm
 /**
 * @see \App\Http\Controllers\Api\StopController::destroy
- * @see app/Http/Controllers/Api/StopController.php:77
+ * @see app/Http/Controllers/Api/StopController.php:78
  * @route '/api/stops/{stop}'
  */
 export const destroy = (args: { stop: number | { id: number } } | [stop: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -363,7 +363,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\StopController::destroy
- * @see app/Http/Controllers/Api/StopController.php:77
+ * @see app/Http/Controllers/Api/StopController.php:78
  * @route '/api/stops/{stop}'
  */
 destroy.url = (args: { stop: number | { id: number } } | [stop: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -396,7 +396,7 @@ destroy.url = (args: { stop: number | { id: number } } | [stop: number | { id: n
 
 /**
 * @see \App\Http\Controllers\Api\StopController::destroy
- * @see app/Http/Controllers/Api/StopController.php:77
+ * @see app/Http/Controllers/Api/StopController.php:78
  * @route '/api/stops/{stop}'
  */
 destroy.delete = (args: { stop: number | { id: number } } | [stop: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -406,7 +406,7 @@ destroy.delete = (args: { stop: number | { id: number } } | [stop: number | { id
 
     /**
 * @see \App\Http\Controllers\Api\StopController::destroy
- * @see app/Http/Controllers/Api/StopController.php:77
+ * @see app/Http/Controllers/Api/StopController.php:78
  * @route '/api/stops/{stop}'
  */
     const destroyForm = (args: { stop: number | { id: number } } | [stop: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -421,7 +421,7 @@ destroy.delete = (args: { stop: number | { id: number } } | [stop: number | { id
 
             /**
 * @see \App\Http\Controllers\Api\StopController::destroy
- * @see app/Http/Controllers/Api/StopController.php:77
+ * @see app/Http/Controllers/Api/StopController.php:78
  * @route '/api/stops/{stop}'
  */
         destroyForm.delete = (args: { stop: number | { id: number } } | [stop: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
