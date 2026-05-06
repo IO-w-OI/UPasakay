@@ -2,8 +2,8 @@
 
 namespace Tests\Feature\Auth;
 
-use App\Models\User;
 use App\Models\Passenger;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -281,13 +281,13 @@ class PassengerAuthTest extends TestCase
 
         // Create a token from previous login
         $oldToken = $user->createToken('mobile-app')->plainTextToken;
-        
+
         // Verify token exists
         $this->assertDatabaseHas('personal_access_tokens', [
             'tokenable_id' => $user->id,
             'tokenable_type' => 'App\\Models\\User',
         ]);
-        
+
         $oldTokenCount = $user->tokens()->count();
         $this->assertEquals(1, $oldTokenCount);
 
@@ -302,7 +302,7 @@ class PassengerAuthTest extends TestCase
         // Verify old token was deleted and new token created (should be exactly 1 token)
         $newTokenCount = $user->refresh()->tokens()->count();
         $this->assertEquals(1, $newTokenCount);
-        
+
         // Verify the token in response can be used
         $newToken = $response->json('data.token');
         $this->assertNotEmpty($newToken);

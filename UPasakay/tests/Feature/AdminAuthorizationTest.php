@@ -12,7 +12,9 @@ class AdminAuthorizationTest extends TestCase
     use RefreshDatabase;
 
     private User $superAdmin;
+
     private User $regularAdmin;
+
     private User $otherUser;
 
     protected function setUp(): void

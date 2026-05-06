@@ -24,6 +24,7 @@ class ShuttleLocationController extends Controller
         ]);
 
         $location = ShuttleLocation::create($validated);
+
         
         broadcast(new ShuttleLocationUpdated(
             $validated['shuttle_id'],
@@ -48,12 +49,14 @@ class ShuttleLocationController extends Controller
         ]);
 
         $shuttleLocation->update($validated);
+
         return response()->json($shuttleLocation);
     }
 
     public function destroy(ShuttleLocation $shuttleLocation)
     {
         $shuttleLocation->delete();
+
         return response()->json(['message' => 'Location record deleted successfully']);
     }
 }

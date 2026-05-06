@@ -12,15 +12,16 @@ import {
 } from '../../components/styles';
 import { useRouter } from 'expo-router';
 
-//database
+// database
 import { currentUser } from '../../services/UserStore';
 
 import * as Notifications from 'expo-notifications';
 
 const UserHome = () => {
+    const router = useRouter();
 
     const handleTestNotify = async () => {
-        console.log("Attempting to trigger notification..."); // This will help us see if the button works
+        console.log("Attempting to trigger notification..."); 
         await Notifications.scheduleNotificationAsync({
             content: {
                 title: "UPasakay 🚌",
@@ -30,8 +31,6 @@ const UserHome = () => {
             trigger: null,
         });
     };
-
-    const router = useRouter();
 
     // 1. Updated handleSubmit to accept bus details
     const handleBusSelection = (busName, busId) => {
@@ -57,11 +56,17 @@ const UserHome = () => {
                         height: (406 * 0.5)
                     }} 
                 />
+                
                 <Header>
                     Welcome, <UserName style={{ fontSize: 30 }}>
-                        {currentUser?.name ? currentUser.name.split(' ')[0] : "User"}
+                        {/* * SAFETY CHECK: 
+                          * Uses optional chaining (?.) and a fallback "User" 
+                          * to prevent the "undefined" crash during login transition.
+                        */}
+                        {currentUser?.full_name ? currentUser.full_name.split(' ')[0] : "User"}
                     </UserName>!
                 </Header>
+
                 <SubHeader style={{ marginBottom: 10 }}>
                     Select one of the buses to preview:
                 </SubHeader>
@@ -103,7 +108,7 @@ const UserHome = () => {
                     </ButtonText>
                 </StyledButton>   
 
-                <StyledButton onPress={handleTestNotify}>
+                <StyledButton onPress={handleTestNotify} style={{ marginTop: 10 }}>
                     <ButtonText style={{ fontWeight: 'bold' }}>Test Notification</ButtonText>
                 </StyledButton>       
 

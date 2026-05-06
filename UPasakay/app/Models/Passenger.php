@@ -1,17 +1,21 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
 class Passenger extends Authenticatable
 {
     use HasApiTokens, Notifiable;
 
     public const PASSENGER_TYPES = ['student', 'faculty', 'employee', 'other'];
+
     public const VERIFICATION_STATUSES = ['pending', 'approved', 'rejected'];
+
     public const PASSENGER_STATUSES = ['active', 'inactive', 'blocked'];
+
     public const DEPARTMENT_OFFICES = [
         'Office of the Chancellor',
         'Office of the Vice Chancellor for Academic Affairs (OVCAA)',
@@ -29,6 +33,7 @@ class Passenger extends Authenticatable
     protected $fillable = [
         'user_id',
         'full_name',
+        'name',
         'email',
         'password_hash',
         'passenger_number',
@@ -69,13 +74,13 @@ class Passenger extends Authenticatable
         }
 
         if ($passenger->passenger_type === 'student') {
-            return !empty($passenger->student_id) && !empty($passenger->proof_document_path);
+            return ! empty($passenger->student_id) && ! empty($passenger->proof_document_path);
         }
 
         if (in_array($passenger->passenger_type, ['faculty', 'employee'], true)) {
-            return !empty($passenger->employee_id)
-                && !empty($passenger->department_office)
-                && !empty($passenger->proof_document_path);
+            return ! empty($passenger->employee_id)
+                && ! empty($passenger->department_office)
+                && ! empty($passenger->proof_document_path);
         }
 
         return true;

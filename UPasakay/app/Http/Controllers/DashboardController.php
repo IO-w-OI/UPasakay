@@ -25,23 +25,23 @@ class DashboardController extends Controller
         $shuttles = Shuttle::with(['route', 'driver'])
             ->orderBy('shuttle_code')
             ->get()
-            ->map(fn($s) => [
+            ->map(fn ($s) => [
                 'shuttle_code' => $s->shuttle_code,
                 'driver' => $s->driver?->full_name ?? '—',
                 'route' => $s->route?->name ?? '—',
                 'status' => $s->status,
                 'last_seen' => $s->last_seen_at
-                    ? $s->last_seen_at->diffForHumans(null, true) . ' ago'
+                    ? $s->last_seen_at->diffForHumans(null, true).' ago'
                     : '—',
             ]);
 
         // ── Pickups per route ─────────────────────────────────────────────────
         $pickupsPerRoute = Route::withCount([
-            'pickupRequests as pickups_count' => fn($q) => $q->whereIn('status', ['completed', 'pending']),
+            'pickupRequests as pickups_count' => fn ($q) => $q->whereIn('status', ['completed', 'pending']),
         ])
             ->orderByDesc('pickups_count')
             ->get()
-            ->map(fn($r) => [
+            ->map(fn ($r) => [
                 'name' => $r->name,
                 'count' => $r->pickups_count,
             ]);
@@ -60,7 +60,7 @@ class DashboardController extends Controller
             ->latest('created_at')
             ->take(6)
             ->get()
-            ->map(fn($activity) => [
+            ->map(fn ($activity) => [
                 'icon' => $activity->icon,
                 'text' => $activity->description,
                 'time' => Carbon::parse($activity->created_at)->format('h:i A'),
@@ -79,7 +79,7 @@ class DashboardController extends Controller
             ->latest()
             ->take(6)
             ->get()
-            ->map(fn($r) => [
+            ->map(fn ($r) => [
                 'icon' => 'clock',
                 'type' => 'Pickup',
                 'text' => "Pickup #{$r->id} pending — {$r->user?->email}",
@@ -93,10 +93,10 @@ class DashboardController extends Controller
             ->latest()
             ->take(6)
             ->get()
-            ->map(fn($p) => [
+            ->map(fn ($p) => [
                 'icon' => 'user',
                 'type' => 'Passenger Approval',
-                'text' => 'Approval needed — ' . ($p->user?->email ?? "Passenger #{$p->id}"),
+                'text' => 'Approval needed — '.($p->user?->email ?? "Passenger #{$p->id}"),
                 'time' => Carbon::parse($p->created_at)->diffForHumans(),
                 'href' => '/passengers?tab=pending',
                 'timestamp' => Carbon::parse($p->created_at)->timestamp,
@@ -107,7 +107,7 @@ class DashboardController extends Controller
             ->sortByDesc('timestamp')
             ->take(8)
             ->values()
-            ->map(fn($item) => collect($item)->except('timestamp')->all());
+            ->map(fn ($item) => collect($item)->except('timestamp')->all());
 
         return Inertia::render('Dashboard', [
             'stats' => [

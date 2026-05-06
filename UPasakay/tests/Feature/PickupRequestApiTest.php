@@ -20,15 +20,15 @@ class PickupRequestApiTest extends TestCase
         $sequence++;
 
         $user = User::create([
-            'name' => 'Passenger ' . $sequence,
+            'name' => 'Passenger '.$sequence,
             'email' => "passenger{$sequence}@example.com",
             'password_hash' => 'password123',
         ]);
 
         Passenger::create(array_merge([
             'user_id' => $user->id,
-            'full_name' => 'Passenger ' . $sequence,
-            'passenger_number' => 'PASS-' . $sequence,
+            'full_name' => 'Passenger '.$sequence,
+            'passenger_number' => 'PASS-'.$sequence,
             'passenger_type' => 'student',
             'passenger_status' => 'active',
             'verification_status' => 'approved',
@@ -40,6 +40,7 @@ class PickupRequestApiTest extends TestCase
     private function getAuthHeaders(User $user): array
     {
         $token = $user->createToken('test')->plainTextToken;
+
         return ['Authorization' => "Bearer {$token}"];
     }
 
@@ -91,7 +92,7 @@ class PickupRequestApiTest extends TestCase
             ]);
 
         $response->assertStatus(201);
-        
+
         // Verify the booking belongs to the authenticated user, not the one in the payload
         $this->assertDatabaseHas('pickup_requests', [
             'user_id' => $authenticatedUser->id,

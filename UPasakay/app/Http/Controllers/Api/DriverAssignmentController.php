@@ -10,9 +10,7 @@ use InvalidArgumentException;
 
 class DriverAssignmentController extends Controller
 {
-    public function __construct(private readonly DriverAssignmentService $assignmentService)
-    {
-    }
+    public function __construct(private readonly DriverAssignmentService $assignmentService) {}
 
     public function index()
     {

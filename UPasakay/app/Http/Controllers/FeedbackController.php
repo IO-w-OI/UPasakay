@@ -59,9 +59,10 @@ class FeedbackController extends Controller
         $feedback = $completed->take(20)->values()->map(function ($r, $i) use ($ratings, $comments, $statuses) {
             $rating = $ratings[$i % count($ratings)];
             $commentList = $comments[$rating];
+
             return [
                 'id' => $r->id,
-                'passenger' => $r->user?->email ?? 'Passenger ' . ($i + 1),
+                'passenger' => $r->user?->email ?? 'Passenger '.($i + 1),
                 'rating' => $rating,
                 'comment' => $commentList[$i % count($commentList)],
                 'route' => $r->route?->name ?? '—',
@@ -86,8 +87,9 @@ class FeedbackController extends Controller
             $date = Carbon::today()->subDays($daysAgo);
             $q = PickupRequest::whereDate('created_at', $date)->where('status', 'completed');
             if ($reportRouteFilter && $reportRouteFilter !== 'All') {
-                $q->whereHas('route', fn($rq) => $rq->where('name', $reportRouteFilter));
+                $q->whereHas('route', fn ($rq) => $rq->where('name', $reportRouteFilter));
             }
+
             return [
                 'label' => $date->format('M j'),
                 'count' => $q->count(),
@@ -96,7 +98,7 @@ class FeedbackController extends Controller
 
         // Route performance (respecting route filter)
         $rpQuery = Route::withCount([
-            'pickupRequests as pickups_count' => function ($q) use ($request, $rangeDays) {
+            'pickupRequests as pickups_count' => function ($q) use ($rangeDays) {
                 $q->where('status', 'completed');
                 if ($rangeDays) {
                     $q->where('created_at', '>=', Carbon::now()->subDays($rangeDays));
@@ -108,7 +110,7 @@ class FeedbackController extends Controller
             $rpQuery->where('name', $reportRouteFilter);
         }
 
-        $routePerformance = $rpQuery->get()->map(fn($r) => [
+        $routePerformance = $rpQuery->get()->map(fn ($r) => [
             'name' => $r->name,
             'count' => $r->pickups_count,
         ]);
@@ -118,18 +120,21 @@ class FeedbackController extends Controller
             ->whereNotNull('driver_id')
             ->get()
             ->flatMap(function ($shuttle) use ($rangeDays) {
-                $dates = collect(range(0, min($rangeDays - 1, 3)))->map(fn($d) => Carbon::today()->subDays($d));
+                $dates = collect(range(0, min($rangeDays - 1, 3)))->map(fn ($d) => Carbon::today()->subDays($d));
+
                 return $dates->map(function ($date) use ($shuttle) {
                     $pickups = PickupRequest::where('route_id', $shuttle->route_id)
                         ->whereDate('created_at', $date)
                         ->where('status', 'completed')
                         ->count();
-                    if ($pickups === 0)
+                    if ($pickups === 0) {
                         return null;
+                    }
+
                     return [
                         'date' => $date->format('M j'),
                         'shuttle' => $shuttle->shuttle_code,
-                        'driver' => $shuttle->driver?->full_name ? mb_substr($shuttle->driver->full_name, 0, 1) . '. ' . explode(' ', $shuttle->driver->full_name)[1] ?? '' : '—',
+                        'driver' => $shuttle->driver?->full_name ? mb_substr($shuttle->driver->full_name, 0, 1).'. '.explode(' ', $shuttle->driver->full_name)[1] ?? '' : '—',
                         'route' => $shuttle->route?->name ?? '—',
                         'start' => '05:30',
                         'end' => $date->isToday() ? '—' : '17:00',

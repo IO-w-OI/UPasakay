@@ -50,7 +50,7 @@ class ActivityLog extends Model
         ];
 
         try {
-            if (!Schema::hasTable((new static)->getTable())) {
+            if (! Schema::hasTable((new static)->getTable())) {
                 return new static($payload);
             }
 

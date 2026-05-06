@@ -2,10 +2,10 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Driver;
 use App\Models\Route;
 use App\Models\Shuttle;
+use Illuminate\Database\Seeder;
 
 class ShuttleSeeder extends Seeder
 {

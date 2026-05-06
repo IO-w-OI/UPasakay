@@ -8,6 +8,7 @@ use App\Models\Shuttle;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 
@@ -63,7 +64,7 @@ class DriverController extends Controller
                 if ($diffMinutes < 2) {
                     $lastActive = 'Online now';
                 } elseif ($diffMinutes < 60) {
-                    $lastActive = $diffMinutes . ' min ago';
+                    $lastActive = $diffMinutes.' min ago';
                 } else {
                     $lastActive = $lastActiveRaw->diffForHumans();
                 }
@@ -71,7 +72,7 @@ class DriverController extends Controller
 
             return [
                 'id' => $d->id,
-                'employee_id' => 'D-' . str_pad($d->id, 3, '0', STR_PAD_LEFT),
+                'employee_id' => 'D-'.str_pad($d->id, 3, '0', STR_PAD_LEFT),
                 'full_name' => $d->full_name ?? '—',
                 'email' => $d->user?->email ?? '—',
                 'license_number' => $d->license_number ?? '—',
@@ -89,7 +90,7 @@ class DriverController extends Controller
         $routes = Route::where('is_active', true)->pluck('name');
 
         // All shuttles for the shuttle management table
-        $shuttles = Shuttle::with(['route', 'driver'])->orderBy('shuttle_code')->get()->map(fn($s) => [
+        $shuttles = Shuttle::with(['route', 'driver'])->orderBy('shuttle_code')->get()->map(fn ($s) => [
             'id' => $s->id,
             'shuttle_code' => $s->shuttle_code,
             'shuttle_type' => $s->shuttle_type ?? 'van',
@@ -107,12 +108,12 @@ class DriverController extends Controller
         $unassignedShuttles = Shuttle::whereNull('driver_id')
             ->where('is_active', true)
             ->get()
-            ->map(fn($s) => ['id' => $s->id, 'shuttle_code' => $s->shuttle_code]);
+            ->map(fn ($s) => ['id' => $s->id, 'shuttle_code' => $s->shuttle_code]);
 
         // All drivers list (for shuttle-driver assignment)
         $allDrivers = Driver::where('driver_status', '!=', 'suspended')
             ->get()
-            ->map(fn($d) => ['id' => $d->id, 'full_name' => $d->full_name]);
+            ->map(fn ($d) => ['id' => $d->id, 'full_name' => $d->full_name]);
 
         return Inertia::render('Drivers/Index', [
             'drivers' => $drivers,
@@ -141,7 +142,7 @@ class DriverController extends Controller
             ->latest()
             ->take(20)
             ->get()
-            ->map(fn($a) => [
+            ->map(fn ($a) => [
                 'date' => Carbon::parse($a->created_at)->format('M j'),
                 'event' => match ($a->pickupRequest?->status ?? 'unknown') {
                     'completed' => 'Pickup completed',
@@ -155,7 +156,7 @@ class DriverController extends Controller
         return Inertia::render('Drivers/Show', [
             'driver' => [
                 'id' => $driver->id,
-                'employee_id' => 'D-' . str_pad($driver->id, 3, '0', STR_PAD_LEFT),
+                'employee_id' => 'D-'.str_pad($driver->id, 3, '0', STR_PAD_LEFT),
                 'full_name' => $driver->full_name ?? '—',
                 'license' => $driver->license_number,
                 'status' => $driver->driver_status ?? ($driver->is_available ? 'active' : 'offline'),
@@ -174,7 +175,7 @@ class DriverController extends Controller
             'unassignedShuttles' => Shuttle::whereNull('driver_id')
                 ->where('is_active', true)
                 ->get()
-                ->map(fn($s) => ['id' => $s->id, 'shuttle_code' => $s->shuttle_code]),
+                ->map(fn ($s) => ['id' => $s->id, 'shuttle_code' => $s->shuttle_code]),
         ]);
     }
 
@@ -271,11 +272,13 @@ class DriverController extends Controller
             $driver->update(['driver_status' => 'offline', 'is_available' => false]);
             // Unassign shuttle
             Shuttle::where('driver_id', $driver->id)->update(['driver_id' => null]);
+
             return back()->with('success', 'Driver archived.');
         }
 
         // Default: deactivate
         $driver->update(['driver_status' => 'offline', 'is_available' => false]);
+
         return back()->with('success', 'Driver deactivated.');
     }
 }

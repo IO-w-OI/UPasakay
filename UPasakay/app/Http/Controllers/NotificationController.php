@@ -58,7 +58,7 @@ class NotificationController extends Controller
             ->orderByDesc('created_at')
             ->take(50)
             ->get()
-            ->map(fn($notification) => [
+            ->map(fn ($notification) => [
                 'time' => $notification->getFormattedTime(),
                 'type' => $notification->type,
                 'label' => $notification->getTypeLabel(),
@@ -74,7 +74,7 @@ class NotificationController extends Controller
             ->orderBy('is_active', 'desc')
             ->orderBy('time')
             ->get()
-            ->map(fn($schedule) => [
+            ->map(fn ($schedule) => [
                 'id' => $schedule->id,
                 'title' => $schedule->name,
                 'schedule' => $schedule->getScheduleDisplay(),
@@ -109,7 +109,7 @@ class NotificationController extends Controller
         if ($validated['delivery_type'] === 'scheduled') {
             $scheduledAt = \Carbon\Carbon::createFromFormat(
                 'Y-m-d H:i',
-                $validated['schedule_date'] . ' ' . $validated['schedule_time']
+                $validated['schedule_date'].' '.$validated['schedule_time']
             );
 
             Notification::create([
@@ -134,7 +134,7 @@ class NotificationController extends Controller
             ]);
         }
 
-        return back()->with('success', 'Notification ' . ($validated['delivery_type'] === 'scheduled' ? 'scheduled' : 'sent') . ' successfully.');
+        return back()->with('success', 'Notification '.($validated['delivery_type'] === 'scheduled' ? 'scheduled' : 'sent').' successfully.');
     }
 
     /**
@@ -201,7 +201,7 @@ class NotificationController extends Controller
         $schedule = NotificationSchedule::findOrFail($id);
         $schedule->toggleActive();
 
-        return back()->with('success', 'Schedule ' . ($schedule->is_active ? 'activated' : 'deactivated') . ' successfully.');
+        return back()->with('success', 'Schedule '.($schedule->is_active ? 'activated' : 'deactivated').' successfully.');
     }
 
     /**
@@ -215,4 +215,3 @@ class NotificationController extends Controller
         return back()->with('success', 'Schedule deleted successfully.');
     }
 }
-

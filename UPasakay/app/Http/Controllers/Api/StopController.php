@@ -61,6 +61,7 @@ class StopController extends Controller
                 'min:1',
                 Rule::unique('stops')->where(function ($query) use ($request, $stop) {
                     $routeId = $request->input('route_id', $stop->route_id);
+
                     return $query->where('route_id', $routeId);
                 })->ignore($stop->id),
             ],

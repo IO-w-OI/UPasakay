@@ -28,13 +28,13 @@ class PickupRequestController extends Controller
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q->whereHas('user', fn($u) => $u->where('email', 'like', "%$search%"))
-                    ->orWhereHas('user.passenger', fn($p) => $p->where('passenger_number', 'like', "%$search%"));
+                $q->whereHas('user', fn ($u) => $u->where('email', 'like', "%$search%"))
+                    ->orWhereHas('user.passenger', fn ($p) => $p->where('passenger_number', 'like', "%$search%"));
             });
         }
 
         if ($request->filled('route') && $request->route !== 'All') {
-            $query->whereHas('route', fn($q) => $q->where('name', $request->route));
+            $query->whereHas('route', fn ($q) => $q->where('name', $request->route));
         }
 
         if ($request->filled('status') && $request->status !== 'All') {
@@ -69,7 +69,7 @@ class PickupRequestController extends Controller
         $availableDrivers = Driver::whereIn('driver_status', ['active', 'idle'])
             ->orderBy('full_name')
             ->get()
-            ->map(fn($d) => [
+            ->map(fn ($d) => [
                 'id' => $d->id,
                 'name' => $d->full_name,
             ]);

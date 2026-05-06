@@ -42,6 +42,7 @@ class AdminPolicy
                 // Prevent downgrading oneself
                 return false;
             }
+
             return true;
         }
 

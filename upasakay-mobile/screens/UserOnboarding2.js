@@ -4,7 +4,7 @@ import { View, TouchableOpacity, ActionSheetIOS, Platform, Alert } from 'react-n
 import Icon from 'react-native-vector-icons/FontAwesome';
 
 // Import your service and components
-import { addUser } from '../services/UserStore';
+import { addUser, setCurrentUser } from '../services/UserStore';
 import { 
     StyledContainer, 
     InnerContainer, 
@@ -15,16 +15,18 @@ import {
     ButtonText, 
     Colors, 
     LeftIcon,
-    ExtraText // Assuming you have this for the header
+    ExtraText 
 } from '../components/styles';
 
 const UserOnboarding2 = () => {
     const router = useRouter();
-    const allData = useLocalSearchParams(); // Inherits name, email, pass, phone, passenger_type
     
-    const [dept, setDept] = useState('');
+    // Safety: ensure allData is never undefined by using an empty object as fallback
+    const allData = useLocalSearchParams() || {}; 
+    
+    const [department_office, setDept] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Filtered lists based on the role selected in Onboarding 1
     const academicList = [
         "College of Communication, Art, and Design",
         "School of Management",
@@ -43,7 +45,7 @@ const UserOnboarding2 = () => {
         "others"
     ];
 
-    // Determine which list to show based on the "passenger_type" param
+    // Safety: Default to academic list if passenger_type is missing
     const options = (allData.passenger_type === 'employee') ? employeeList : academicList;
 
     const showPicker = () => {
@@ -67,24 +69,36 @@ const UserOnboarding2 = () => {
         }
     };
 
-    const handleFinish = () => {
-        if (!dept) return Alert.alert("Missing Info", "Please select your college or office.");
+    const handleFinish = async () => {
+        if (!department_office) return Alert.alert("Missing Info", "Please select your college or office.");
+        if (!allData.email) return Alert.alert("Data Error", "Registration data lost.");
 
-        // FINAL STEP: Save to your temporary database
-        const result = addUser(
-            allData.name, 
+        setIsSubmitting(true); 
+        
+        console.log("DEBUG - What is in allData?", allData);
+        const result = await addUser( 
+            allData.full_name,
             allData.email, 
             allData.password, 
             allData.phone, 
             allData.passenger_type, 
-            dept
+            department_office, // Correctly passing the selected college/office
         );
+        
+        setIsSubmitting(false);
 
         if (result.success) {
-            console.log("Signup Complete!");
-            router.replace('/UserOnboarding3'); // To the "Success" screen
+            // Syncing with 'full_name' so the Home screen greeting works immediately
+            setCurrentUser({
+                full_name: allData.full_name,
+                name: allData.full_name, 
+                email: allData.email,
+                passenger_type: allData.passenger_type,
+                department_office: department_office,
+            });
+            router.replace('/UserOnboarding3');
         } else {
-            Alert.alert("Error", result.message);
+            Alert.alert("Registration Failed", result.message);
         }
     };
 
@@ -97,7 +111,6 @@ const UserOnboarding2 = () => {
                     style={{ width: 723 * 0.35, height: 406 * 0.35, marginBottom: 40 }} 
                 />
                 
-                {/* Header text from your screenshot */}
                 <View style={{ marginBottom: 30 }}>
                     <ExtraText style={{ fontSize: 28, textAlign: 'center', fontWeight: 'bold' }}>
                         Select your affiliation
@@ -105,28 +118,28 @@ const UserOnboarding2 = () => {
                 </View>
 
                 <StyledFormArea>
-                    {/* --- DYNAMIC DROPDOWN --- */}
                     <TouchableOpacity onPress={showPicker} activeOpacity={0.8} style={{ marginBottom: 15 }}>
                         <View style={{ justifyContent: 'center' }}>
                             <LeftIcon>
                                 <Icon name="university" size={20} color={Colors.text_idle} />
                             </LeftIcon>
                             <StyledTextInput
-                                placeholder="Select"
+                                placeholder="Select College/Office"
                                 placeholderTextColor={Colors.text_idle}
-                                value={dept}
+                                value={department_office}
                                 editable={false}
                                 pointerEvents="none"
                             />
                         </View>
                     </TouchableOpacity>
 
-                    <StyledButton onPress={handleFinish} style={{ marginTop: 20 }}>
-                        <ButtonText style={{ 
-                            fontFamily: 'Nunito-Bold', // Match the Signup button exactly
-                            fontSize: 18 // Adjusting slightly to make the Nunito pop
-                        }}>
-                            Next
+                    <StyledButton 
+                        onPress={handleFinish} 
+                        disabled={isSubmitting} 
+                        style={{ marginTop: 20, opacity: isSubmitting ? 0.5 : 1 }}
+                    >
+                        <ButtonText style={{ fontFamily: 'Nunito-Bold', fontSize: 18 }}>
+                            {isSubmitting ? "Registering..." : "Finish Setup"}
                         </ButtonText>
                     </StyledButton>
                 </StyledFormArea>

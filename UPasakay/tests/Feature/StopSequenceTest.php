@@ -44,7 +44,7 @@ class StopSequenceTest extends TestCase
         Stop::create(['route_id' => $route->id, 'name' => 'Second', 'sequence' => 2, 'latitude' => 10.3, 'longitude' => 123.9, 'is_active' => true]);
 
         $response = $this->withHeaders($this->authHeaders())
-            ->getJson('/api/stops?route_id=' . $route->id);
+            ->getJson('/api/stops?route_id='.$route->id);
 
         $response->assertOk();
 

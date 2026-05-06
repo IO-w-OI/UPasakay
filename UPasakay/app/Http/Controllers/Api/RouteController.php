@@ -25,6 +25,7 @@ class RouteController extends Controller
         ]);
 
         $route = Route::create($validated);
+
         return response()->json($route, 201);
     }
 
@@ -45,12 +46,14 @@ class RouteController extends Controller
         ]);
 
         $route->update($validated);
+
         return response()->json($route);
     }
 
     public function destroy(Route $route)
     {
         $route->delete();
+
         return response()->json(['message' => 'Route deleted successfully']);
     }
 }

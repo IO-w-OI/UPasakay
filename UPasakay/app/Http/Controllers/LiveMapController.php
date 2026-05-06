@@ -12,11 +12,11 @@ class LiveMapController extends Controller
     public function index()
     {
         // Active & idle shuttles with latest location
-        $shuttles = Shuttle::with(['route', 'driver', 'locations' => fn($q) => $q->latest('recorded_at')->limit(1)])
+        $shuttles = Shuttle::with(['route', 'driver', 'locations' => fn ($q) => $q->latest('recorded_at')->limit(1)])
             ->whereIn('status', ['active', 'idle'])
             ->orderBy('shuttle_code')
             ->get()
-            ->map(fn($s) => [
+            ->map(fn ($s) => [
                 'id' => $s->id,
                 'code' => $s->shuttle_code,
                 'driver' => $s->driver?->full_name ?? '—',
@@ -24,7 +24,7 @@ class LiveMapController extends Controller
                 'status' => $s->status,
                 'speed' => $s->locations->first()?->speed_kmh ?? 0,
                 'last_seen' => $s->last_seen_at
-                    ? $s->last_seen_at->diffForHumans(null, true) . ' ago'
+                    ? $s->last_seen_at->diffForHumans(null, true).' ago'
                     : '—',
                 'latitude' => $s->locations->first()?->latitude,
                 'longitude' => $s->locations->first()?->longitude,
@@ -35,7 +35,7 @@ class LiveMapController extends Controller
             ->where('status', 'offline')
             ->orderBy('shuttle_code')
             ->get()
-            ->map(fn($s) => [
+            ->map(fn ($s) => [
                 'id' => $s->id,
                 'code' => $s->shuttle_code,
                 'driver' => $s->driver?->full_name ?? '—',
@@ -43,7 +43,7 @@ class LiveMapController extends Controller
                 'status' => $s->status,
                 'speed' => 0,
                 'last_seen' => $s->last_seen_at
-                    ? $s->last_seen_at->diffForHumans(null, true) . ' ago'
+                    ? $s->last_seen_at->diffForHumans(null, true).' ago'
                     : '—',
                 'latitude' => null,
                 'longitude' => null,
@@ -57,7 +57,7 @@ class LiveMapController extends Controller
             ->latest()
             ->take(10)
             ->get()
-            ->map(fn($r) => [
+            ->map(fn ($r) => [
                 'id' => $r->id,
                 'passenger' => $r->user?->name ?? '—',
                 'route' => $r->route?->name ?? '—',
