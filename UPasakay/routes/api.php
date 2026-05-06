@@ -11,10 +11,7 @@ use App\Http\Controllers\Api\ShuttleController;
 use App\Http\Controllers\Api\PassengerController;
 use App\Http\Controllers\Api\PassengerProfileController;
 use App\Http\Controllers\Api\PickupRequestController;
-use App\Http\Controllers\Api\RouteController;
-use App\Http\Controllers\Api\ShuttleController;
 use App\Http\Controllers\Api\ShuttleLocationController;
-use App\Http\Controllers\Api\StopController;
 use Illuminate\Support\Facades\Route;
 
 // Public auth routes
