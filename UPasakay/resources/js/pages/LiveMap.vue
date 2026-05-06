@@ -2,7 +2,7 @@
 import { Head } from '@inertiajs/vue3';
 import * as L from 'leaflet';
 import { Map as MapIcon, Bus, MapPin, RefreshCw, ArrowRight } from 'lucide-vue-next';
-import Pusher from 'pusher-js';
+import { echo } from '@/echo';
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { useAppearance } from '@/composables/useAppearance';
 import { liveMapRoutes, type RouteConfig } from '@/data/routeData';
@@ -90,8 +90,7 @@ let tileLayer: L.TileLayer | null = null;
 const shuttleMarkers = new Map<number, L.Marker>();
 const otherMarkers: L.Marker[] = [];
 
-// Pusher real-time connection
-let pusherClient: Pusher | null = null;
+// Echo real-time connection (uses resources/js/echo.ts)
 
 const lightTileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 const darkTileUrl  = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
@@ -254,30 +253,35 @@ onMounted(() => {
         drawRoutes(map!);
     });
 
-    // Real-time shuttle location via Pusher
-    const pusherKey = import.meta.env.VITE_PUSHER_APP_KEY as string;
-    const pusherCluster = (import.meta.env.VITE_PUSHER_APP_CLUSTER as string) || 'ap1';
-    if (pusherKey) {
-        pusherClient = new Pusher(pusherKey, { cluster: pusherCluster });
-        const channel = pusherClient.subscribe('shuttle-tracking');
-        channel.bind('LocationUpdated', (data: { id?: number; shuttle_id?: number; latitude: number; longitude: number }) => {
+    // Real-time shuttle location via Echo
+    const subscribeChannel = 'driver-tracking';
+    if ((echo as any)) {
+        const channel = echo.channel(subscribeChannel);
+        channel.listen('LocationUpdated', (data: { id?: number; shuttle_id?: number; latitude: number; longitude: number; status?: string }) => {
             const shuttleId = data.id ?? data.shuttle_id;
             const shuttle = shuttleId !== undefined
                 ? localShuttles.value.find(s => s.id === shuttleId)
-                : localShuttles.value[0]; // fallback: single-bus mode
+                : localShuttles.value[0];
             if (!shuttle) return;
             shuttle.latitude = data.latitude;
             shuttle.longitude = data.longitude;
-            // Move the existing marker directly — no full redraw needed
+            if (data.status) shuttle.status = data.status;
             const marker = shuttleMarkers.get(shuttle.id);
-            marker?.setLatLng([data.latitude, data.longitude]);
+            if (marker) {
+                marker.setLatLng([data.latitude, data.longitude]);
+                marker.setIcon(makeShuttleIcon(shuttle.status));
+            } else if (map) {
+                const m = L.marker([data.latitude, data.longitude], { icon: makeShuttleIcon(shuttle.status) })
+                    .bindPopup(`<div style="font-size:13px;"><b>${shuttle.code}</b><br>Driver: ${shuttle.driver}<br>Route: ${shuttle.route}</div>`)
+                    .addTo(map);
+                shuttleMarkers.set(shuttle.id, m);
+            }
         });
     }
 });
 
 onUnmounted(() => {
-    pusherClient?.disconnect();
-    pusherClient = null;
+    try { echo.leave('driver-tracking'); } catch {}
     shuttleMarkers.forEach(m => m.remove());
     shuttleMarkers.clear();
     otherMarkers.forEach(m => m.remove());
