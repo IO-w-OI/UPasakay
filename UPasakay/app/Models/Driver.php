@@ -20,4 +20,9 @@ class Driver extends Model
     {
         return $this->hasMany(DriverAssignment::class, 'driver_id');
     }
+
+    public function shuttle()
+    {
+        return $this->hasOne(Shuttle::class);
+    }
 }

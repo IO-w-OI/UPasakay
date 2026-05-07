@@ -82,7 +82,7 @@ class DriverAssignmentServiceTest extends TestCase
         $this->assertSame($driverA->id, $firstAssignment->driver_id);
 
         $pickupRequest->refresh();
-        $this->assertSame('assigned', $pickupRequest->status);
+        $this->assertSame('accepted', $pickupRequest->status);
         $this->assertNotNull($pickupRequest->assigned_at);
 
         $secondAssignment = $service->assignByIds($driverB->id, $pickupRequest->id);
@@ -122,7 +122,7 @@ class DriverAssignmentServiceTest extends TestCase
         ]);
 
         $pickupRequest->update([
-            'status' => 'assigned',
+            'status' => 'accepted',
             'assigned_at' => now(),
         ]);
 
@@ -135,7 +135,7 @@ class DriverAssignmentServiceTest extends TestCase
         $this->assertNotNull($pickupRequest->completed_at);
     }
 
-    public function test_delete_resets_assigned_pickup_request_to_pending(): void
+    public function test_delete_resets_accepted_pickup_request_to_pending(): void
     {
         $service = app(DriverAssignmentService::class);
         $driver = $this->createDriver(5);
@@ -149,7 +149,7 @@ class DriverAssignmentServiceTest extends TestCase
         ]);
 
         $pickupRequest->update([
-            'status' => 'assigned',
+            'status' => 'accepted',
             'assigned_at' => now(),
         ]);
 
@@ -176,7 +176,7 @@ class DriverAssignmentServiceTest extends TestCase
         ]);
 
         $pickupRequest->update([
-            'status' => 'assigned',
+            'status' => 'accepted',
             'assigned_at' => now(),
         ]);
 

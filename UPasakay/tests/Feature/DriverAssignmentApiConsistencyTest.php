@@ -95,7 +95,7 @@ class DriverAssignmentApiConsistencyTest extends TestCase
             ->assertJsonPath('driver_id', $driverA->id);
 
         $pickupRequest->refresh();
-        $this->assertSame('assigned', $pickupRequest->status);
+        $this->assertSame('accepted', $pickupRequest->status);
         $this->assertNotNull($pickupRequest->assigned_at);
 
         $secondResponse = $this->withHeaders($this->authHeaders())
@@ -128,7 +128,7 @@ class DriverAssignmentApiConsistencyTest extends TestCase
         ]);
 
         $pickupRequest->update([
-            'status' => 'assigned',
+            'status' => 'accepted',
             'assigned_at' => now(),
         ]);
 
@@ -144,7 +144,7 @@ class DriverAssignmentApiConsistencyTest extends TestCase
         $this->assertNotNull($pickupRequest->completed_at);
     }
 
-    public function test_destroy_resets_pending_status_when_pickup_was_assigned(): void
+    public function test_destroy_resets_pending_status_when_pickup_was_accepted(): void
     {
         $driver = $this->createDriver(4);
         $pickupRequest = $this->createPickupRequest(3);
@@ -157,7 +157,7 @@ class DriverAssignmentApiConsistencyTest extends TestCase
         ]);
 
         $pickupRequest->update([
-            'status' => 'assigned',
+            'status' => 'accepted',
             'assigned_at' => now(),
         ]);
 

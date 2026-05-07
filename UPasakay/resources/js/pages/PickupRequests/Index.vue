@@ -124,10 +124,10 @@ const submitAssign = () => {
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 const statusColor  = (s: string) =>
-    ({ pending: 'bg-yellow-500/15 text-yellow-700 dark:text-yellow-300', assigned: 'bg-blue-500/15 text-blue-700 dark:text-blue-300', completed: 'bg-green-500/15 text-green-600 dark:text-green-400', cancelled: 'bg-red-500/15 text-red-600 dark:text-red-400' }[s] ?? 'bg-muted text-muted-foreground');
+    ({ pending: 'bg-yellow-500/15 text-yellow-700 dark:text-yellow-300', accepted: 'bg-blue-500/15 text-blue-700 dark:text-blue-300', completed: 'bg-green-500/15 text-green-600 dark:text-green-400', cancelled: 'bg-red-500/15 text-red-600 dark:text-red-400' }[s] ?? 'bg-muted text-muted-foreground');
 
 const statusIcon = (s: string) =>
-    ({ pending: Map, assigned: Check, completed: Check, cancelled: X }[s] ?? Map);
+    ({ pending: Map, accepted: Check, completed: Check, cancelled: X }[s] ?? Map);
 
 const routeBadge = (r: string) =>
     ({ South: 'bg-green-500/15 text-green-600 dark:text-green-400', North: 'bg-blue-500/15 text-blue-600 dark:text-blue-400', 'Cebu City': 'bg-orange-500/15 text-orange-600 dark:text-orange-400' }[r] ?? 'bg-muted text-muted-foreground');
@@ -180,7 +180,7 @@ const statCards = [
                     class="rounded-lg border border-border/70 bg-card px-3 py-2 text-sm text-foreground focus:outline-none">
                     <option value="All">Status: All</option>
                     <option value="pending">Pending</option>
-                    <option value="assigned">Assigned</option>
+                    <option value="accepted">Accepted</option>
                     <option value="completed">Completed</option>
                     <option value="cancelled">Cancelled</option>
                 </select>
@@ -243,7 +243,7 @@ const statCards = [
                                     <td class="px-4 py-3">
                                         <div class="flex items-center gap-1" @click.stop>
                                             <button
-                                                v-if="r.status === 'pending' || r.status === 'assigned'"
+                                                v-if="r.status === 'pending' || r.status === 'accepted'"
                                                 class="rounded-lg bg-[#8B0000] px-2.5 py-1 text-xs font-semibold text-white hover:bg-[#700000]"
                                                 @click="openAssignModal(r.id)"
                                             >

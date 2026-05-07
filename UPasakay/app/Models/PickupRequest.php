@@ -10,7 +10,7 @@ class PickupRequest extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['user_id', 'route_id', 'pickup_stop_id', 'dropoff_stop_id', 'status', 'assigned_at', 'completed_at'];
+    protected $fillable = ['user_id', 'route_id', 'pickup_stop_id', 'dropoff_stop_id', 'status', 'eta_minutes', 'assigned_at', 'completed_at'];
 
     /**
      * Scope: Filter only active pickup requests.

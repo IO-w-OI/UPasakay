@@ -4,11 +4,11 @@ namespace App\Events;
 
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class ShuttleLocationUpdated implements ShouldBroadcast
+class ShuttleLocationUpdated implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
@@ -20,7 +20,7 @@ class ShuttleLocationUpdated implements ShouldBroadcast
 
     public function broadcastOn(): Channel
     {
-        return new Channel('shuttle-tracking');
+        return new Channel('driver-tracking');
     }
 
     public function broadcastAs(): string
@@ -31,8 +31,8 @@ class ShuttleLocationUpdated implements ShouldBroadcast
     public function broadcastWith(): array
     {
         return [
-            'id'        => $this->shuttleId,
-            'latitude'  => $this->latitude,
+            'id' => $this->shuttleId,
+            'latitude' => $this->latitude,
             'longitude' => $this->longitude,
         ];
     }
