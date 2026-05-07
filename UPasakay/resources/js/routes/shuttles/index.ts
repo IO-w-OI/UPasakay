@@ -134,7 +134,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     store.form = storeForm
 /**
 * @see \App\Http\Controllers\Api\ShuttleController::show
- * @see app/Http/Controllers/Api/ShuttleController.php:28
+ * @see app/Http/Controllers/Api/ShuttleController.php:29
  * @route '/api/shuttles/{shuttle}'
  */
 export const show = (args: { shuttle: number | { id: number } } | [shuttle: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -149,7 +149,7 @@ show.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\ShuttleController::show
- * @see app/Http/Controllers/Api/ShuttleController.php:28
+ * @see app/Http/Controllers/Api/ShuttleController.php:29
  * @route '/api/shuttles/{shuttle}'
  */
 show.url = (args: { shuttle: number | { id: number } } | [shuttle: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -182,7 +182,7 @@ show.url = (args: { shuttle: number | { id: number } } | [shuttle: number | { id
 
 /**
 * @see \App\Http\Controllers\Api\ShuttleController::show
- * @see app/Http/Controllers/Api/ShuttleController.php:28
+ * @see app/Http/Controllers/Api/ShuttleController.php:29
  * @route '/api/shuttles/{shuttle}'
  */
 show.get = (args: { shuttle: number | { id: number } } | [shuttle: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -191,7 +191,7 @@ show.get = (args: { shuttle: number | { id: number } } | [shuttle: number | { id
 })
 /**
 * @see \App\Http\Controllers\Api\ShuttleController::show
- * @see app/Http/Controllers/Api/ShuttleController.php:28
+ * @see app/Http/Controllers/Api/ShuttleController.php:29
  * @route '/api/shuttles/{shuttle}'
  */
 show.head = (args: { shuttle: number | { id: number } } | [shuttle: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -201,7 +201,7 @@ show.head = (args: { shuttle: number | { id: number } } | [shuttle: number | { i
 
     /**
 * @see \App\Http\Controllers\Api\ShuttleController::show
- * @see app/Http/Controllers/Api/ShuttleController.php:28
+ * @see app/Http/Controllers/Api/ShuttleController.php:29
  * @route '/api/shuttles/{shuttle}'
  */
     const showForm = (args: { shuttle: number | { id: number } } | [shuttle: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -211,7 +211,7 @@ show.head = (args: { shuttle: number | { id: number } } | [shuttle: number | { i
 
             /**
 * @see \App\Http\Controllers\Api\ShuttleController::show
- * @see app/Http/Controllers/Api/ShuttleController.php:28
+ * @see app/Http/Controllers/Api/ShuttleController.php:29
  * @route '/api/shuttles/{shuttle}'
  */
         showForm.get = (args: { shuttle: number | { id: number } } | [shuttle: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -220,7 +220,7 @@ show.head = (args: { shuttle: number | { id: number } } | [shuttle: number | { i
         })
             /**
 * @see \App\Http\Controllers\Api\ShuttleController::show
- * @see app/Http/Controllers/Api/ShuttleController.php:28
+ * @see app/Http/Controllers/Api/ShuttleController.php:29
  * @route '/api/shuttles/{shuttle}'
  */
         showForm.head = (args: { shuttle: number | { id: number } } | [shuttle: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -236,7 +236,7 @@ show.head = (args: { shuttle: number | { id: number } } | [shuttle: number | { i
     show.form = showForm
 /**
 * @see \App\Http\Controllers\Api\ShuttleController::update
- * @see app/Http/Controllers/Api/ShuttleController.php:33
+ * @see app/Http/Controllers/Api/ShuttleController.php:34
  * @route '/api/shuttles/{shuttle}'
  */
 export const update = (args: { shuttle: number | { id: number } } | [shuttle: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -251,7 +251,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\ShuttleController::update
- * @see app/Http/Controllers/Api/ShuttleController.php:33
+ * @see app/Http/Controllers/Api/ShuttleController.php:34
  * @route '/api/shuttles/{shuttle}'
  */
 update.url = (args: { shuttle: number | { id: number } } | [shuttle: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -284,7 +284,7 @@ update.url = (args: { shuttle: number | { id: number } } | [shuttle: number | { 
 
 /**
 * @see \App\Http\Controllers\Api\ShuttleController::update
- * @see app/Http/Controllers/Api/ShuttleController.php:33
+ * @see app/Http/Controllers/Api/ShuttleController.php:34
  * @route '/api/shuttles/{shuttle}'
  */
 update.put = (args: { shuttle: number | { id: number } } | [shuttle: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -293,7 +293,7 @@ update.put = (args: { shuttle: number | { id: number } } | [shuttle: number | { 
 })
 /**
 * @see \App\Http\Controllers\Api\ShuttleController::update
- * @see app/Http/Controllers/Api/ShuttleController.php:33
+ * @see app/Http/Controllers/Api/ShuttleController.php:34
  * @route '/api/shuttles/{shuttle}'
  */
 update.patch = (args: { shuttle: number | { id: number } } | [shuttle: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -303,7 +303,7 @@ update.patch = (args: { shuttle: number | { id: number } } | [shuttle: number | 
 
     /**
 * @see \App\Http\Controllers\Api\ShuttleController::update
- * @see app/Http/Controllers/Api/ShuttleController.php:33
+ * @see app/Http/Controllers/Api/ShuttleController.php:34
  * @route '/api/shuttles/{shuttle}'
  */
     const updateForm = (args: { shuttle: number | { id: number } } | [shuttle: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -318,7 +318,7 @@ update.patch = (args: { shuttle: number | { id: number } } | [shuttle: number | 
 
             /**
 * @see \App\Http\Controllers\Api\ShuttleController::update
- * @see app/Http/Controllers/Api/ShuttleController.php:33
+ * @see app/Http/Controllers/Api/ShuttleController.php:34
  * @route '/api/shuttles/{shuttle}'
  */
         updateForm.put = (args: { shuttle: number | { id: number } } | [shuttle: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -332,7 +332,7 @@ update.patch = (args: { shuttle: number | { id: number } } | [shuttle: number | 
         })
             /**
 * @see \App\Http\Controllers\Api\ShuttleController::update
- * @see app/Http/Controllers/Api/ShuttleController.php:33
+ * @see app/Http/Controllers/Api/ShuttleController.php:34
  * @route '/api/shuttles/{shuttle}'
  */
         updateForm.patch = (args: { shuttle: number | { id: number } } | [shuttle: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -348,7 +348,7 @@ update.patch = (args: { shuttle: number | { id: number } } | [shuttle: number | 
     update.form = updateForm
 /**
 * @see \App\Http\Controllers\ShuttleWebController::update
- * @see app/Http/Controllers/ShuttleWebController.php:11
+ * @see app/Http/Controllers/ShuttleWebController.php:10
  * @route '/shuttles/{shuttle}'
  */
 export const update = (args: { shuttle: number | { id: number } } | [shuttle: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -363,7 +363,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\ShuttleWebController::update
- * @see app/Http/Controllers/ShuttleWebController.php:11
+ * @see app/Http/Controllers/ShuttleWebController.php:10
  * @route '/shuttles/{shuttle}'
  */
 update.url = (args: { shuttle: number | { id: number } } | [shuttle: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -396,7 +396,7 @@ update.url = (args: { shuttle: number | { id: number } } | [shuttle: number | { 
 
 /**
 * @see \App\Http\Controllers\ShuttleWebController::update
- * @see app/Http/Controllers/ShuttleWebController.php:11
+ * @see app/Http/Controllers/ShuttleWebController.php:10
  * @route '/shuttles/{shuttle}'
  */
 update.patch = (args: { shuttle: number | { id: number } } | [shuttle: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -406,7 +406,7 @@ update.patch = (args: { shuttle: number | { id: number } } | [shuttle: number | 
 
     /**
 * @see \App\Http\Controllers\ShuttleWebController::update
- * @see app/Http/Controllers/ShuttleWebController.php:11
+ * @see app/Http/Controllers/ShuttleWebController.php:10
  * @route '/shuttles/{shuttle}'
  */
     const updateForm = (args: { shuttle: number | { id: number } } | [shuttle: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -421,7 +421,7 @@ update.patch = (args: { shuttle: number | { id: number } } | [shuttle: number | 
 
             /**
 * @see \App\Http\Controllers\ShuttleWebController::update
- * @see app/Http/Controllers/ShuttleWebController.php:11
+ * @see app/Http/Controllers/ShuttleWebController.php:10
  * @route '/shuttles/{shuttle}'
  */
         updateForm.patch = (args: { shuttle: number | { id: number } } | [shuttle: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -437,7 +437,7 @@ update.patch = (args: { shuttle: number | { id: number } } | [shuttle: number | 
     update.form = updateForm
 /**
 * @see \App\Http\Controllers\Api\ShuttleController::destroy
- * @see app/Http/Controllers/Api/ShuttleController.php:45
+ * @see app/Http/Controllers/Api/ShuttleController.php:47
  * @route '/api/shuttles/{shuttle}'
  */
 export const destroy = (args: { shuttle: number | { id: number } } | [shuttle: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -452,7 +452,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\ShuttleController::destroy
- * @see app/Http/Controllers/Api/ShuttleController.php:45
+ * @see app/Http/Controllers/Api/ShuttleController.php:47
  * @route '/api/shuttles/{shuttle}'
  */
 destroy.url = (args: { shuttle: number | { id: number } } | [shuttle: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -485,7 +485,7 @@ destroy.url = (args: { shuttle: number | { id: number } } | [shuttle: number | {
 
 /**
 * @see \App\Http\Controllers\Api\ShuttleController::destroy
- * @see app/Http/Controllers/Api/ShuttleController.php:45
+ * @see app/Http/Controllers/Api/ShuttleController.php:47
  * @route '/api/shuttles/{shuttle}'
  */
 destroy.delete = (args: { shuttle: number | { id: number } } | [shuttle: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -495,7 +495,7 @@ destroy.delete = (args: { shuttle: number | { id: number } } | [shuttle: number 
 
     /**
 * @see \App\Http\Controllers\Api\ShuttleController::destroy
- * @see app/Http/Controllers/Api/ShuttleController.php:45
+ * @see app/Http/Controllers/Api/ShuttleController.php:47
  * @route '/api/shuttles/{shuttle}'
  */
     const destroyForm = (args: { shuttle: number | { id: number } } | [shuttle: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -510,7 +510,7 @@ destroy.delete = (args: { shuttle: number | { id: number } } | [shuttle: number 
 
             /**
 * @see \App\Http\Controllers\Api\ShuttleController::destroy
- * @see app/Http/Controllers/Api/ShuttleController.php:45
+ * @see app/Http/Controllers/Api/ShuttleController.php:47
  * @route '/api/shuttles/{shuttle}'
  */
         destroyForm.delete = (args: { shuttle: number | { id: number } } | [shuttle: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -526,7 +526,7 @@ destroy.delete = (args: { shuttle: number | { id: number } } | [shuttle: number 
     destroy.form = destroyForm
 /**
 * @see \App\Http\Controllers\ShuttleWebController::assignDriver
- * @see app/Http/Controllers/ShuttleWebController.php:51
+ * @see app/Http/Controllers/ShuttleWebController.php:50
  * @route '/shuttles/{shuttle}/assign-driver'
  */
 export const assignDriver = (args: { shuttle: number | { id: number } } | [shuttle: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -541,7 +541,7 @@ assignDriver.definition = {
 
 /**
 * @see \App\Http\Controllers\ShuttleWebController::assignDriver
- * @see app/Http/Controllers/ShuttleWebController.php:51
+ * @see app/Http/Controllers/ShuttleWebController.php:50
  * @route '/shuttles/{shuttle}/assign-driver'
  */
 assignDriver.url = (args: { shuttle: number | { id: number } } | [shuttle: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -574,7 +574,7 @@ assignDriver.url = (args: { shuttle: number | { id: number } } | [shuttle: numbe
 
 /**
 * @see \App\Http\Controllers\ShuttleWebController::assignDriver
- * @see app/Http/Controllers/ShuttleWebController.php:51
+ * @see app/Http/Controllers/ShuttleWebController.php:50
  * @route '/shuttles/{shuttle}/assign-driver'
  */
 assignDriver.patch = (args: { shuttle: number | { id: number } } | [shuttle: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -584,7 +584,7 @@ assignDriver.patch = (args: { shuttle: number | { id: number } } | [shuttle: num
 
     /**
 * @see \App\Http\Controllers\ShuttleWebController::assignDriver
- * @see app/Http/Controllers/ShuttleWebController.php:51
+ * @see app/Http/Controllers/ShuttleWebController.php:50
  * @route '/shuttles/{shuttle}/assign-driver'
  */
     const assignDriverForm = (args: { shuttle: number | { id: number } } | [shuttle: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -599,7 +599,7 @@ assignDriver.patch = (args: { shuttle: number | { id: number } } | [shuttle: num
 
             /**
 * @see \App\Http\Controllers\ShuttleWebController::assignDriver
- * @see app/Http/Controllers/ShuttleWebController.php:51
+ * @see app/Http/Controllers/ShuttleWebController.php:50
  * @route '/shuttles/{shuttle}/assign-driver'
  */
         assignDriverForm.patch = (args: { shuttle: number | { id: number } } | [shuttle: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -615,7 +615,7 @@ assignDriver.patch = (args: { shuttle: number | { id: number } } | [shuttle: num
     assignDriver.form = assignDriverForm
 /**
 * @see \App\Http\Controllers\ShuttleWebController::updateStatus
- * @see app/Http/Controllers/ShuttleWebController.php:74
+ * @see app/Http/Controllers/ShuttleWebController.php:73
  * @route '/shuttles/{shuttle}/status'
  */
 export const updateStatus = (args: { shuttle: number | { id: number } } | [shuttle: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -630,7 +630,7 @@ updateStatus.definition = {
 
 /**
 * @see \App\Http\Controllers\ShuttleWebController::updateStatus
- * @see app/Http/Controllers/ShuttleWebController.php:74
+ * @see app/Http/Controllers/ShuttleWebController.php:73
  * @route '/shuttles/{shuttle}/status'
  */
 updateStatus.url = (args: { shuttle: number | { id: number } } | [shuttle: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -663,7 +663,7 @@ updateStatus.url = (args: { shuttle: number | { id: number } } | [shuttle: numbe
 
 /**
 * @see \App\Http\Controllers\ShuttleWebController::updateStatus
- * @see app/Http/Controllers/ShuttleWebController.php:74
+ * @see app/Http/Controllers/ShuttleWebController.php:73
  * @route '/shuttles/{shuttle}/status'
  */
 updateStatus.patch = (args: { shuttle: number | { id: number } } | [shuttle: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -673,7 +673,7 @@ updateStatus.patch = (args: { shuttle: number | { id: number } } | [shuttle: num
 
     /**
 * @see \App\Http\Controllers\ShuttleWebController::updateStatus
- * @see app/Http/Controllers/ShuttleWebController.php:74
+ * @see app/Http/Controllers/ShuttleWebController.php:73
  * @route '/shuttles/{shuttle}/status'
  */
     const updateStatusForm = (args: { shuttle: number | { id: number } } | [shuttle: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -688,7 +688,7 @@ updateStatus.patch = (args: { shuttle: number | { id: number } } | [shuttle: num
 
             /**
 * @see \App\Http\Controllers\ShuttleWebController::updateStatus
- * @see app/Http/Controllers/ShuttleWebController.php:74
+ * @see app/Http/Controllers/ShuttleWebController.php:73
  * @route '/shuttles/{shuttle}/status'
  */
         updateStatusForm.patch = (args: { shuttle: number | { id: number } } | [shuttle: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

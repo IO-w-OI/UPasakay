@@ -134,7 +134,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     store.form = storeForm
 /**
 * @see \App\Http\Controllers\Api\DriverController::show
- * @see app/Http/Controllers/Api/DriverController.php:28
+ * @see app/Http/Controllers/Api/DriverController.php:29
  * @route '/api/drivers/{driver}'
  */
 export const show = (args: { driver: number | { id: number } } | [driver: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -149,7 +149,7 @@ show.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\DriverController::show
- * @see app/Http/Controllers/Api/DriverController.php:28
+ * @see app/Http/Controllers/Api/DriverController.php:29
  * @route '/api/drivers/{driver}'
  */
 show.url = (args: { driver: number | { id: number } } | [driver: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -182,7 +182,7 @@ show.url = (args: { driver: number | { id: number } } | [driver: number | { id: 
 
 /**
 * @see \App\Http\Controllers\Api\DriverController::show
- * @see app/Http/Controllers/Api/DriverController.php:28
+ * @see app/Http/Controllers/Api/DriverController.php:29
  * @route '/api/drivers/{driver}'
  */
 show.get = (args: { driver: number | { id: number } } | [driver: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -191,7 +191,7 @@ show.get = (args: { driver: number | { id: number } } | [driver: number | { id: 
 })
 /**
 * @see \App\Http\Controllers\Api\DriverController::show
- * @see app/Http/Controllers/Api/DriverController.php:28
+ * @see app/Http/Controllers/Api/DriverController.php:29
  * @route '/api/drivers/{driver}'
  */
 show.head = (args: { driver: number | { id: number } } | [driver: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -201,7 +201,7 @@ show.head = (args: { driver: number | { id: number } } | [driver: number | { id:
 
     /**
 * @see \App\Http\Controllers\Api\DriverController::show
- * @see app/Http/Controllers/Api/DriverController.php:28
+ * @see app/Http/Controllers/Api/DriverController.php:29
  * @route '/api/drivers/{driver}'
  */
     const showForm = (args: { driver: number | { id: number } } | [driver: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -211,7 +211,7 @@ show.head = (args: { driver: number | { id: number } } | [driver: number | { id:
 
             /**
 * @see \App\Http\Controllers\Api\DriverController::show
- * @see app/Http/Controllers/Api/DriverController.php:28
+ * @see app/Http/Controllers/Api/DriverController.php:29
  * @route '/api/drivers/{driver}'
  */
         showForm.get = (args: { driver: number | { id: number } } | [driver: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -220,7 +220,7 @@ show.head = (args: { driver: number | { id: number } } | [driver: number | { id:
         })
             /**
 * @see \App\Http\Controllers\Api\DriverController::show
- * @see app/Http/Controllers/Api/DriverController.php:28
+ * @see app/Http/Controllers/Api/DriverController.php:29
  * @route '/api/drivers/{driver}'
  */
         showForm.head = (args: { driver: number | { id: number } } | [driver: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -236,7 +236,7 @@ show.head = (args: { driver: number | { id: number } } | [driver: number | { id:
     show.form = showForm
 /**
 * @see \App\Http\Controllers\Api\DriverController::update
- * @see app/Http/Controllers/Api/DriverController.php:33
+ * @see app/Http/Controllers/Api/DriverController.php:34
  * @route '/api/drivers/{driver}'
  */
 export const update = (args: { driver: number | { id: number } } | [driver: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -251,7 +251,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\DriverController::update
- * @see app/Http/Controllers/Api/DriverController.php:33
+ * @see app/Http/Controllers/Api/DriverController.php:34
  * @route '/api/drivers/{driver}'
  */
 update.url = (args: { driver: number | { id: number } } | [driver: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -284,7 +284,7 @@ update.url = (args: { driver: number | { id: number } } | [driver: number | { id
 
 /**
 * @see \App\Http\Controllers\Api\DriverController::update
- * @see app/Http/Controllers/Api/DriverController.php:33
+ * @see app/Http/Controllers/Api/DriverController.php:34
  * @route '/api/drivers/{driver}'
  */
 update.put = (args: { driver: number | { id: number } } | [driver: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -293,7 +293,7 @@ update.put = (args: { driver: number | { id: number } } | [driver: number | { id
 })
 /**
 * @see \App\Http\Controllers\Api\DriverController::update
- * @see app/Http/Controllers/Api/DriverController.php:33
+ * @see app/Http/Controllers/Api/DriverController.php:34
  * @route '/api/drivers/{driver}'
  */
 update.patch = (args: { driver: number | { id: number } } | [driver: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -303,7 +303,7 @@ update.patch = (args: { driver: number | { id: number } } | [driver: number | { 
 
     /**
 * @see \App\Http\Controllers\Api\DriverController::update
- * @see app/Http/Controllers/Api/DriverController.php:33
+ * @see app/Http/Controllers/Api/DriverController.php:34
  * @route '/api/drivers/{driver}'
  */
     const updateForm = (args: { driver: number | { id: number } } | [driver: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -318,7 +318,7 @@ update.patch = (args: { driver: number | { id: number } } | [driver: number | { 
 
             /**
 * @see \App\Http\Controllers\Api\DriverController::update
- * @see app/Http/Controllers/Api/DriverController.php:33
+ * @see app/Http/Controllers/Api/DriverController.php:34
  * @route '/api/drivers/{driver}'
  */
         updateForm.put = (args: { driver: number | { id: number } } | [driver: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -332,7 +332,7 @@ update.patch = (args: { driver: number | { id: number } } | [driver: number | { 
         })
             /**
 * @see \App\Http\Controllers\Api\DriverController::update
- * @see app/Http/Controllers/Api/DriverController.php:33
+ * @see app/Http/Controllers/Api/DriverController.php:34
  * @route '/api/drivers/{driver}'
  */
         updateForm.patch = (args: { driver: number | { id: number } } | [driver: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -348,7 +348,7 @@ update.patch = (args: { driver: number | { id: number } } | [driver: number | { 
     update.form = updateForm
 /**
 * @see \App\Http\Controllers\Api\DriverController::destroy
- * @see app/Http/Controllers/Api/DriverController.php:44
+ * @see app/Http/Controllers/Api/DriverController.php:46
  * @route '/api/drivers/{driver}'
  */
 export const destroy = (args: { driver: number | { id: number } } | [driver: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -363,7 +363,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\DriverController::destroy
- * @see app/Http/Controllers/Api/DriverController.php:44
+ * @see app/Http/Controllers/Api/DriverController.php:46
  * @route '/api/drivers/{driver}'
  */
 destroy.url = (args: { driver: number | { id: number } } | [driver: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -396,7 +396,7 @@ destroy.url = (args: { driver: number | { id: number } } | [driver: number | { i
 
 /**
 * @see \App\Http\Controllers\Api\DriverController::destroy
- * @see app/Http/Controllers/Api/DriverController.php:44
+ * @see app/Http/Controllers/Api/DriverController.php:46
  * @route '/api/drivers/{driver}'
  */
 destroy.delete = (args: { driver: number | { id: number } } | [driver: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -406,7 +406,7 @@ destroy.delete = (args: { driver: number | { id: number } } | [driver: number | 
 
     /**
 * @see \App\Http\Controllers\Api\DriverController::destroy
- * @see app/Http/Controllers/Api/DriverController.php:44
+ * @see app/Http/Controllers/Api/DriverController.php:46
  * @route '/api/drivers/{driver}'
  */
     const destroyForm = (args: { driver: number | { id: number } } | [driver: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -421,7 +421,7 @@ destroy.delete = (args: { driver: number | { id: number } } | [driver: number | 
 
             /**
 * @see \App\Http\Controllers\Api\DriverController::destroy
- * @see app/Http/Controllers/Api/DriverController.php:44
+ * @see app/Http/Controllers/Api/DriverController.php:46
  * @route '/api/drivers/{driver}'
  */
         destroyForm.delete = (args: { driver: number | { id: number } } | [driver: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

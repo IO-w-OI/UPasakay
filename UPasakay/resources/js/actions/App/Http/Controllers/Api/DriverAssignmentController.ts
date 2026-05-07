@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\DriverAssignmentController::index
- * @see app/Http/Controllers/Api/DriverAssignmentController.php:17
+ * @see app/Http/Controllers/Api/DriverAssignmentController.php:15
  * @route '/api/driver-assignments'
  */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\DriverAssignmentController::index
- * @see app/Http/Controllers/Api/DriverAssignmentController.php:17
+ * @see app/Http/Controllers/Api/DriverAssignmentController.php:15
  * @route '/api/driver-assignments'
  */
 index.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\DriverAssignmentController::index
- * @see app/Http/Controllers/Api/DriverAssignmentController.php:17
+ * @see app/Http/Controllers/Api/DriverAssignmentController.php:15
  * @route '/api/driver-assignments'
  */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -34,7 +34,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\Api\DriverAssignmentController::index
- * @see app/Http/Controllers/Api/DriverAssignmentController.php:17
+ * @see app/Http/Controllers/Api/DriverAssignmentController.php:15
  * @route '/api/driver-assignments'
  */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -44,7 +44,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\DriverAssignmentController::index
- * @see app/Http/Controllers/Api/DriverAssignmentController.php:17
+ * @see app/Http/Controllers/Api/DriverAssignmentController.php:15
  * @route '/api/driver-assignments'
  */
     const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -54,7 +54,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\DriverAssignmentController::index
- * @see app/Http/Controllers/Api/DriverAssignmentController.php:17
+ * @see app/Http/Controllers/Api/DriverAssignmentController.php:15
  * @route '/api/driver-assignments'
  */
         indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -63,7 +63,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\Api\DriverAssignmentController::index
- * @see app/Http/Controllers/Api/DriverAssignmentController.php:17
+ * @see app/Http/Controllers/Api/DriverAssignmentController.php:15
  * @route '/api/driver-assignments'
  */
         indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -79,7 +79,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     index.form = indexForm
 /**
 * @see \App\Http\Controllers\Api\DriverAssignmentController::store
- * @see app/Http/Controllers/Api/DriverAssignmentController.php:24
+ * @see app/Http/Controllers/Api/DriverAssignmentController.php:22
  * @route '/api/driver-assignments'
  */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -94,7 +94,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\DriverAssignmentController::store
- * @see app/Http/Controllers/Api/DriverAssignmentController.php:24
+ * @see app/Http/Controllers/Api/DriverAssignmentController.php:22
  * @route '/api/driver-assignments'
  */
 store.url = (options?: RouteQueryOptions) => {
@@ -103,7 +103,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\DriverAssignmentController::store
- * @see app/Http/Controllers/Api/DriverAssignmentController.php:24
+ * @see app/Http/Controllers/Api/DriverAssignmentController.php:22
  * @route '/api/driver-assignments'
  */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -113,7 +113,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\DriverAssignmentController::store
- * @see app/Http/Controllers/Api/DriverAssignmentController.php:24
+ * @see app/Http/Controllers/Api/DriverAssignmentController.php:22
  * @route '/api/driver-assignments'
  */
     const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -123,7 +123,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\DriverAssignmentController::store
- * @see app/Http/Controllers/Api/DriverAssignmentController.php:24
+ * @see app/Http/Controllers/Api/DriverAssignmentController.php:22
  * @route '/api/driver-assignments'
  */
         storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -134,7 +134,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     store.form = storeForm
 /**
 * @see \App\Http\Controllers\Api\DriverAssignmentController::show
- * @see app/Http/Controllers/Api/DriverAssignmentController.php:45
+ * @see app/Http/Controllers/Api/DriverAssignmentController.php:43
  * @route '/api/driver-assignments/{driver_assignment}'
  */
 export const show = (args: { driver_assignment: string | number } | [driver_assignment: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -149,7 +149,7 @@ show.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\DriverAssignmentController::show
- * @see app/Http/Controllers/Api/DriverAssignmentController.php:45
+ * @see app/Http/Controllers/Api/DriverAssignmentController.php:43
  * @route '/api/driver-assignments/{driver_assignment}'
  */
 show.url = (args: { driver_assignment: string | number } | [driver_assignment: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -177,7 +177,7 @@ show.url = (args: { driver_assignment: string | number } | [driver_assignment: s
 
 /**
 * @see \App\Http\Controllers\Api\DriverAssignmentController::show
- * @see app/Http/Controllers/Api/DriverAssignmentController.php:45
+ * @see app/Http/Controllers/Api/DriverAssignmentController.php:43
  * @route '/api/driver-assignments/{driver_assignment}'
  */
 show.get = (args: { driver_assignment: string | number } | [driver_assignment: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -186,7 +186,7 @@ show.get = (args: { driver_assignment: string | number } | [driver_assignment: s
 })
 /**
 * @see \App\Http\Controllers\Api\DriverAssignmentController::show
- * @see app/Http/Controllers/Api/DriverAssignmentController.php:45
+ * @see app/Http/Controllers/Api/DriverAssignmentController.php:43
  * @route '/api/driver-assignments/{driver_assignment}'
  */
 show.head = (args: { driver_assignment: string | number } | [driver_assignment: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -196,7 +196,7 @@ show.head = (args: { driver_assignment: string | number } | [driver_assignment: 
 
     /**
 * @see \App\Http\Controllers\Api\DriverAssignmentController::show
- * @see app/Http/Controllers/Api/DriverAssignmentController.php:45
+ * @see app/Http/Controllers/Api/DriverAssignmentController.php:43
  * @route '/api/driver-assignments/{driver_assignment}'
  */
     const showForm = (args: { driver_assignment: string | number } | [driver_assignment: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -206,7 +206,7 @@ show.head = (args: { driver_assignment: string | number } | [driver_assignment: 
 
             /**
 * @see \App\Http\Controllers\Api\DriverAssignmentController::show
- * @see app/Http/Controllers/Api/DriverAssignmentController.php:45
+ * @see app/Http/Controllers/Api/DriverAssignmentController.php:43
  * @route '/api/driver-assignments/{driver_assignment}'
  */
         showForm.get = (args: { driver_assignment: string | number } | [driver_assignment: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -215,7 +215,7 @@ show.head = (args: { driver_assignment: string | number } | [driver_assignment: 
         })
             /**
 * @see \App\Http\Controllers\Api\DriverAssignmentController::show
- * @see app/Http/Controllers/Api/DriverAssignmentController.php:45
+ * @see app/Http/Controllers/Api/DriverAssignmentController.php:43
  * @route '/api/driver-assignments/{driver_assignment}'
  */
         showForm.head = (args: { driver_assignment: string | number } | [driver_assignment: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -231,7 +231,7 @@ show.head = (args: { driver_assignment: string | number } | [driver_assignment: 
     show.form = showForm
 /**
 * @see \App\Http\Controllers\Api\DriverAssignmentController::update
- * @see app/Http/Controllers/Api/DriverAssignmentController.php:50
+ * @see app/Http/Controllers/Api/DriverAssignmentController.php:48
  * @route '/api/driver-assignments/{driver_assignment}'
  */
 export const update = (args: { driver_assignment: string | number } | [driver_assignment: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -246,7 +246,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\DriverAssignmentController::update
- * @see app/Http/Controllers/Api/DriverAssignmentController.php:50
+ * @see app/Http/Controllers/Api/DriverAssignmentController.php:48
  * @route '/api/driver-assignments/{driver_assignment}'
  */
 update.url = (args: { driver_assignment: string | number } | [driver_assignment: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -274,7 +274,7 @@ update.url = (args: { driver_assignment: string | number } | [driver_assignment:
 
 /**
 * @see \App\Http\Controllers\Api\DriverAssignmentController::update
- * @see app/Http/Controllers/Api/DriverAssignmentController.php:50
+ * @see app/Http/Controllers/Api/DriverAssignmentController.php:48
  * @route '/api/driver-assignments/{driver_assignment}'
  */
 update.put = (args: { driver_assignment: string | number } | [driver_assignment: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -283,7 +283,7 @@ update.put = (args: { driver_assignment: string | number } | [driver_assignment:
 })
 /**
 * @see \App\Http\Controllers\Api\DriverAssignmentController::update
- * @see app/Http/Controllers/Api/DriverAssignmentController.php:50
+ * @see app/Http/Controllers/Api/DriverAssignmentController.php:48
  * @route '/api/driver-assignments/{driver_assignment}'
  */
 update.patch = (args: { driver_assignment: string | number } | [driver_assignment: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -293,7 +293,7 @@ update.patch = (args: { driver_assignment: string | number } | [driver_assignmen
 
     /**
 * @see \App\Http\Controllers\Api\DriverAssignmentController::update
- * @see app/Http/Controllers/Api/DriverAssignmentController.php:50
+ * @see app/Http/Controllers/Api/DriverAssignmentController.php:48
  * @route '/api/driver-assignments/{driver_assignment}'
  */
     const updateForm = (args: { driver_assignment: string | number } | [driver_assignment: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -308,7 +308,7 @@ update.patch = (args: { driver_assignment: string | number } | [driver_assignmen
 
             /**
 * @see \App\Http\Controllers\Api\DriverAssignmentController::update
- * @see app/Http/Controllers/Api/DriverAssignmentController.php:50
+ * @see app/Http/Controllers/Api/DriverAssignmentController.php:48
  * @route '/api/driver-assignments/{driver_assignment}'
  */
         updateForm.put = (args: { driver_assignment: string | number } | [driver_assignment: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -322,7 +322,7 @@ update.patch = (args: { driver_assignment: string | number } | [driver_assignmen
         })
             /**
 * @see \App\Http\Controllers\Api\DriverAssignmentController::update
- * @see app/Http/Controllers/Api/DriverAssignmentController.php:50
+ * @see app/Http/Controllers/Api/DriverAssignmentController.php:48
  * @route '/api/driver-assignments/{driver_assignment}'
  */
         updateForm.patch = (args: { driver_assignment: string | number } | [driver_assignment: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -338,7 +338,7 @@ update.patch = (args: { driver_assignment: string | number } | [driver_assignmen
     update.form = updateForm
 /**
 * @see \App\Http\Controllers\Api\DriverAssignmentController::destroy
- * @see app/Http/Controllers/Api/DriverAssignmentController.php:65
+ * @see app/Http/Controllers/Api/DriverAssignmentController.php:63
  * @route '/api/driver-assignments/{driver_assignment}'
  */
 export const destroy = (args: { driver_assignment: string | number } | [driver_assignment: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -353,7 +353,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\DriverAssignmentController::destroy
- * @see app/Http/Controllers/Api/DriverAssignmentController.php:65
+ * @see app/Http/Controllers/Api/DriverAssignmentController.php:63
  * @route '/api/driver-assignments/{driver_assignment}'
  */
 destroy.url = (args: { driver_assignment: string | number } | [driver_assignment: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -381,7 +381,7 @@ destroy.url = (args: { driver_assignment: string | number } | [driver_assignment
 
 /**
 * @see \App\Http\Controllers\Api\DriverAssignmentController::destroy
- * @see app/Http/Controllers/Api/DriverAssignmentController.php:65
+ * @see app/Http/Controllers/Api/DriverAssignmentController.php:63
  * @route '/api/driver-assignments/{driver_assignment}'
  */
 destroy.delete = (args: { driver_assignment: string | number } | [driver_assignment: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -391,7 +391,7 @@ destroy.delete = (args: { driver_assignment: string | number } | [driver_assignm
 
     /**
 * @see \App\Http\Controllers\Api\DriverAssignmentController::destroy
- * @see app/Http/Controllers/Api/DriverAssignmentController.php:65
+ * @see app/Http/Controllers/Api/DriverAssignmentController.php:63
  * @route '/api/driver-assignments/{driver_assignment}'
  */
     const destroyForm = (args: { driver_assignment: string | number } | [driver_assignment: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -406,7 +406,7 @@ destroy.delete = (args: { driver_assignment: string | number } | [driver_assignm
 
             /**
 * @see \App\Http\Controllers\Api\DriverAssignmentController::destroy
- * @see app/Http/Controllers/Api/DriverAssignmentController.php:65
+ * @see app/Http/Controllers/Api/DriverAssignmentController.php:63
  * @route '/api/driver-assignments/{driver_assignment}'
  */
         destroyForm.delete = (args: { driver_assignment: string | number } | [driver_assignment: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

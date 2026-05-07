@@ -2,9 +2,12 @@
 
 namespace App\Services;
 
+use App\Events\RideAccepted;
+use App\Mail\BookingConfirmed;
 use App\Models\DriverAssignment;
 use App\Models\PickupRequest;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use InvalidArgumentException;
 
 class DriverAssignmentService
@@ -28,7 +31,7 @@ class DriverAssignmentService
             throw new InvalidArgumentException('Completed or cancelled requests cannot be reassigned.');
         }
 
-        return DB::transaction(function () use ($driverId, $pickupRequest, $status) {
+        $assignment = DB::transaction(function () use ($driverId, $pickupRequest, $status) {
             $assignment = DriverAssignment::updateOrCreate(
                 ['pickup_request_id' => $pickupRequest->id],
                 [
@@ -40,8 +43,31 @@ class DriverAssignmentService
 
             $pickupRequest->update($this->pickupUpdatesForStatus($status));
 
-            return $assignment->fresh(['driver', 'pickupRequest']);
+            return $assignment->fresh([
+                'driver.user',
+                'driver.shuttle',
+                'pickupRequest',
+            ]);
         });
+
+        $pickupRequestForNotify = PickupRequest::query()
+            ->with([
+                'user.passenger',
+                'route',
+                'pickupStop',
+                'dropoffStop',
+                'assignment.driver.user',
+                'assignment.driver.shuttle',
+            ])
+            ->findOrFail($pickupRequest->id);
+
+        broadcast(new RideAccepted($pickupRequestForNotify));
+
+        if ($pickupRequestForNotify->user?->email) {
+            Mail::to($pickupRequestForNotify->user->email)->send(new BookingConfirmed($pickupRequestForNotify));
+        }
+
+        return $assignment;
     }
 
     /**
@@ -61,7 +87,7 @@ class DriverAssignmentService
     }
 
     /**
-     * Delete an assignment and reset pickup request status if it was assigned.
+     * Delete an assignment and reset pickup request status if it was accepted.
      */
     public function delete(DriverAssignment $assignment): void
     {
@@ -70,7 +96,7 @@ class DriverAssignmentService
 
             $assignment->delete();
 
-            if ($pickupRequest && $pickupRequest->status === 'assigned') {
+            if ($pickupRequest && $pickupRequest->status === 'accepted') {
                 $pickupRequest->update([
                     'status' => 'pending',
                     'assigned_at' => null,
@@ -89,7 +115,7 @@ class DriverAssignmentService
         return match ($status) {
             'completed' => ['status' => 'completed', 'completed_at' => now()],
             'cancelled' => ['status' => 'cancelled'],
-            default => ['status' => 'assigned', 'assigned_at' => now(), 'completed_at' => null],
+            default => ['status' => 'accepted', 'assigned_at' => now(), 'completed_at' => null],
         };
     }
 }

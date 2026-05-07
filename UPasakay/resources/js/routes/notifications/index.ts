@@ -80,7 +80,7 @@ stats.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     stats.form = statsForm
 /**
 * @see \App\Http\Controllers\Api\NotificationController::scheduled
- * @see app/Http/Controllers/Api/NotificationController.php:108
+ * @see app/Http/Controllers/Api/NotificationController.php:107
  * @route '/api/notifications/scheduled'
  */
 export const scheduled = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -95,7 +95,7 @@ scheduled.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\NotificationController::scheduled
- * @see app/Http/Controllers/Api/NotificationController.php:108
+ * @see app/Http/Controllers/Api/NotificationController.php:107
  * @route '/api/notifications/scheduled'
  */
 scheduled.url = (options?: RouteQueryOptions) => {
@@ -104,7 +104,7 @@ scheduled.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\NotificationController::scheduled
- * @see app/Http/Controllers/Api/NotificationController.php:108
+ * @see app/Http/Controllers/Api/NotificationController.php:107
  * @route '/api/notifications/scheduled'
  */
 scheduled.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -113,7 +113,7 @@ scheduled.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\Api\NotificationController::scheduled
- * @see app/Http/Controllers/Api/NotificationController.php:108
+ * @see app/Http/Controllers/Api/NotificationController.php:107
  * @route '/api/notifications/scheduled'
  */
 scheduled.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -123,7 +123,7 @@ scheduled.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\NotificationController::scheduled
- * @see app/Http/Controllers/Api/NotificationController.php:108
+ * @see app/Http/Controllers/Api/NotificationController.php:107
  * @route '/api/notifications/scheduled'
  */
     const scheduledForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -133,7 +133,7 @@ scheduled.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\NotificationController::scheduled
- * @see app/Http/Controllers/Api/NotificationController.php:108
+ * @see app/Http/Controllers/Api/NotificationController.php:107
  * @route '/api/notifications/scheduled'
  */
         scheduledForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -142,7 +142,7 @@ scheduled.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\Api\NotificationController::scheduled
- * @see app/Http/Controllers/Api/NotificationController.php:108
+ * @see app/Http/Controllers/Api/NotificationController.php:107
  * @route '/api/notifications/scheduled'
  */
         scheduledForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -213,7 +213,7 @@ processScheduled.post = (options?: RouteQueryOptions): RouteDefinition<'post'> =
     processScheduled.form = processScheduledForm
 /**
 * @see \App\Http\Controllers\Api\NotificationController::index
- * @see app/Http/Controllers/Api/NotificationController.php:12
+ * @see app/Http/Controllers/Api/NotificationController.php:11
  * @route '/api/notifications'
  */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -228,7 +228,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\NotificationController::index
- * @see app/Http/Controllers/Api/NotificationController.php:12
+ * @see app/Http/Controllers/Api/NotificationController.php:11
  * @route '/api/notifications'
  */
 index.url = (options?: RouteQueryOptions) => {
@@ -237,7 +237,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\NotificationController::index
- * @see app/Http/Controllers/Api/NotificationController.php:12
+ * @see app/Http/Controllers/Api/NotificationController.php:11
  * @route '/api/notifications'
  */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -246,7 +246,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\Api\NotificationController::index
- * @see app/Http/Controllers/Api/NotificationController.php:12
+ * @see app/Http/Controllers/Api/NotificationController.php:11
  * @route '/api/notifications'
  */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -256,7 +256,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\NotificationController::index
- * @see app/Http/Controllers/Api/NotificationController.php:12
+ * @see app/Http/Controllers/Api/NotificationController.php:11
  * @route '/api/notifications'
  */
     const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -266,7 +266,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\NotificationController::index
- * @see app/Http/Controllers/Api/NotificationController.php:12
+ * @see app/Http/Controllers/Api/NotificationController.php:11
  * @route '/api/notifications'
  */
         indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -275,7 +275,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\Api\NotificationController::index
- * @see app/Http/Controllers/Api/NotificationController.php:12
+ * @see app/Http/Controllers/Api/NotificationController.php:11
  * @route '/api/notifications'
  */
         indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -369,7 +369,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     index.form = indexForm
 /**
 * @see \App\Http\Controllers\Api\NotificationController::store
- * @see app/Http/Controllers/Api/NotificationController.php:34
+ * @see app/Http/Controllers/Api/NotificationController.php:32
  * @route '/api/notifications'
  */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -384,7 +384,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\NotificationController::store
- * @see app/Http/Controllers/Api/NotificationController.php:34
+ * @see app/Http/Controllers/Api/NotificationController.php:32
  * @route '/api/notifications'
  */
 store.url = (options?: RouteQueryOptions) => {
@@ -393,7 +393,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\NotificationController::store
- * @see app/Http/Controllers/Api/NotificationController.php:34
+ * @see app/Http/Controllers/Api/NotificationController.php:32
  * @route '/api/notifications'
  */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -403,7 +403,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\NotificationController::store
- * @see app/Http/Controllers/Api/NotificationController.php:34
+ * @see app/Http/Controllers/Api/NotificationController.php:32
  * @route '/api/notifications'
  */
     const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -413,7 +413,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\NotificationController::store
- * @see app/Http/Controllers/Api/NotificationController.php:34
+ * @see app/Http/Controllers/Api/NotificationController.php:32
  * @route '/api/notifications'
  */
         storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -479,7 +479,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     store.form = storeForm
 /**
 * @see \App\Http\Controllers\Api\NotificationController::show
- * @see app/Http/Controllers/Api/NotificationController.php:53
+ * @see app/Http/Controllers/Api/NotificationController.php:51
  * @route '/api/notifications/{notification}'
  */
 export const show = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -494,7 +494,7 @@ show.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\NotificationController::show
- * @see app/Http/Controllers/Api/NotificationController.php:53
+ * @see app/Http/Controllers/Api/NotificationController.php:51
  * @route '/api/notifications/{notification}'
  */
 show.url = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -527,7 +527,7 @@ show.url = (args: { notification: number | { id: number } } | [notification: num
 
 /**
 * @see \App\Http\Controllers\Api\NotificationController::show
- * @see app/Http/Controllers/Api/NotificationController.php:53
+ * @see app/Http/Controllers/Api/NotificationController.php:51
  * @route '/api/notifications/{notification}'
  */
 show.get = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -536,7 +536,7 @@ show.get = (args: { notification: number | { id: number } } | [notification: num
 })
 /**
 * @see \App\Http\Controllers\Api\NotificationController::show
- * @see app/Http/Controllers/Api/NotificationController.php:53
+ * @see app/Http/Controllers/Api/NotificationController.php:51
  * @route '/api/notifications/{notification}'
  */
 show.head = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -546,7 +546,7 @@ show.head = (args: { notification: number | { id: number } } | [notification: nu
 
     /**
 * @see \App\Http\Controllers\Api\NotificationController::show
- * @see app/Http/Controllers/Api/NotificationController.php:53
+ * @see app/Http/Controllers/Api/NotificationController.php:51
  * @route '/api/notifications/{notification}'
  */
     const showForm = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -556,7 +556,7 @@ show.head = (args: { notification: number | { id: number } } | [notification: nu
 
             /**
 * @see \App\Http\Controllers\Api\NotificationController::show
- * @see app/Http/Controllers/Api/NotificationController.php:53
+ * @see app/Http/Controllers/Api/NotificationController.php:51
  * @route '/api/notifications/{notification}'
  */
         showForm.get = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -565,7 +565,7 @@ show.head = (args: { notification: number | { id: number } } | [notification: nu
         })
             /**
 * @see \App\Http\Controllers\Api\NotificationController::show
- * @see app/Http/Controllers/Api/NotificationController.php:53
+ * @see app/Http/Controllers/Api/NotificationController.php:51
  * @route '/api/notifications/{notification}'
  */
         showForm.head = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -581,7 +581,7 @@ show.head = (args: { notification: number | { id: number } } | [notification: nu
     show.form = showForm
 /**
 * @see \App\Http\Controllers\Api\NotificationController::update
- * @see app/Http/Controllers/Api/NotificationController.php:58
+ * @see app/Http/Controllers/Api/NotificationController.php:56
  * @route '/api/notifications/{notification}'
  */
 export const update = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -596,7 +596,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\NotificationController::update
- * @see app/Http/Controllers/Api/NotificationController.php:58
+ * @see app/Http/Controllers/Api/NotificationController.php:56
  * @route '/api/notifications/{notification}'
  */
 update.url = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -629,7 +629,7 @@ update.url = (args: { notification: number | { id: number } } | [notification: n
 
 /**
 * @see \App\Http\Controllers\Api\NotificationController::update
- * @see app/Http/Controllers/Api/NotificationController.php:58
+ * @see app/Http/Controllers/Api/NotificationController.php:56
  * @route '/api/notifications/{notification}'
  */
 update.put = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -638,7 +638,7 @@ update.put = (args: { notification: number | { id: number } } | [notification: n
 })
 /**
 * @see \App\Http\Controllers\Api\NotificationController::update
- * @see app/Http/Controllers/Api/NotificationController.php:58
+ * @see app/Http/Controllers/Api/NotificationController.php:56
  * @route '/api/notifications/{notification}'
  */
 update.patch = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -648,7 +648,7 @@ update.patch = (args: { notification: number | { id: number } } | [notification:
 
     /**
 * @see \App\Http\Controllers\Api\NotificationController::update
- * @see app/Http/Controllers/Api/NotificationController.php:58
+ * @see app/Http/Controllers/Api/NotificationController.php:56
  * @route '/api/notifications/{notification}'
  */
     const updateForm = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -663,7 +663,7 @@ update.patch = (args: { notification: number | { id: number } } | [notification:
 
             /**
 * @see \App\Http\Controllers\Api\NotificationController::update
- * @see app/Http/Controllers/Api/NotificationController.php:58
+ * @see app/Http/Controllers/Api/NotificationController.php:56
  * @route '/api/notifications/{notification}'
  */
         updateForm.put = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -677,7 +677,7 @@ update.patch = (args: { notification: number | { id: number } } | [notification:
         })
             /**
 * @see \App\Http\Controllers\Api\NotificationController::update
- * @see app/Http/Controllers/Api/NotificationController.php:58
+ * @see app/Http/Controllers/Api/NotificationController.php:56
  * @route '/api/notifications/{notification}'
  */
         updateForm.patch = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -693,7 +693,7 @@ update.patch = (args: { notification: number | { id: number } } | [notification:
     update.form = updateForm
 /**
 * @see \App\Http\Controllers\Api\NotificationController::destroy
- * @see app/Http/Controllers/Api/NotificationController.php:78
+ * @see app/Http/Controllers/Api/NotificationController.php:76
  * @route '/api/notifications/{notification}'
  */
 export const destroy = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -708,7 +708,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\NotificationController::destroy
- * @see app/Http/Controllers/Api/NotificationController.php:78
+ * @see app/Http/Controllers/Api/NotificationController.php:76
  * @route '/api/notifications/{notification}'
  */
 destroy.url = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -741,7 +741,7 @@ destroy.url = (args: { notification: number | { id: number } } | [notification: 
 
 /**
 * @see \App\Http\Controllers\Api\NotificationController::destroy
- * @see app/Http/Controllers/Api/NotificationController.php:78
+ * @see app/Http/Controllers/Api/NotificationController.php:76
  * @route '/api/notifications/{notification}'
  */
 destroy.delete = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -751,7 +751,7 @@ destroy.delete = (args: { notification: number | { id: number } } | [notificatio
 
     /**
 * @see \App\Http\Controllers\Api\NotificationController::destroy
- * @see app/Http/Controllers/Api/NotificationController.php:78
+ * @see app/Http/Controllers/Api/NotificationController.php:76
  * @route '/api/notifications/{notification}'
  */
     const destroyForm = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -766,7 +766,7 @@ destroy.delete = (args: { notification: number | { id: number } } | [notificatio
 
             /**
 * @see \App\Http\Controllers\Api\NotificationController::destroy
- * @see app/Http/Controllers/Api/NotificationController.php:78
+ * @see app/Http/Controllers/Api/NotificationController.php:76
  * @route '/api/notifications/{notification}'
  */
         destroyForm.delete = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -866,7 +866,7 @@ destroy.delete = (args: { id: string | number } | [id: string | number ] | strin
     destroy.form = destroyForm
 /**
 * @see \App\Http\Controllers\Api\NotificationController::send
- * @see app/Http/Controllers/Api/NotificationController.php:98
+ * @see app/Http/Controllers/Api/NotificationController.php:97
  * @route '/api/notifications/{notification}/send'
  */
 export const send = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -881,7 +881,7 @@ send.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\NotificationController::send
- * @see app/Http/Controllers/Api/NotificationController.php:98
+ * @see app/Http/Controllers/Api/NotificationController.php:97
  * @route '/api/notifications/{notification}/send'
  */
 send.url = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -914,7 +914,7 @@ send.url = (args: { notification: number | { id: number } } | [notification: num
 
 /**
 * @see \App\Http\Controllers\Api\NotificationController::send
- * @see app/Http/Controllers/Api/NotificationController.php:98
+ * @see app/Http/Controllers/Api/NotificationController.php:97
  * @route '/api/notifications/{notification}/send'
  */
 send.post = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -924,7 +924,7 @@ send.post = (args: { notification: number | { id: number } } | [notification: nu
 
     /**
 * @see \App\Http\Controllers\Api\NotificationController::send
- * @see app/Http/Controllers/Api/NotificationController.php:98
+ * @see app/Http/Controllers/Api/NotificationController.php:97
  * @route '/api/notifications/{notification}/send'
  */
     const sendForm = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -934,7 +934,7 @@ send.post = (args: { notification: number | { id: number } } | [notification: nu
 
             /**
 * @see \App\Http\Controllers\Api\NotificationController::send
- * @see app/Http/Controllers/Api/NotificationController.php:98
+ * @see app/Http/Controllers/Api/NotificationController.php:97
  * @route '/api/notifications/{notification}/send'
  */
         sendForm.post = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -945,7 +945,7 @@ send.post = (args: { notification: number | { id: number } } | [notification: nu
     send.form = sendForm
 /**
 * @see \App\Http\Controllers\Api\NotificationController::schedule
- * @see app/Http/Controllers/Api/NotificationController.php:84
+ * @see app/Http/Controllers/Api/NotificationController.php:83
  * @route '/api/notifications/{notification}/schedule'
  */
 export const schedule = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -960,7 +960,7 @@ schedule.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\NotificationController::schedule
- * @see app/Http/Controllers/Api/NotificationController.php:84
+ * @see app/Http/Controllers/Api/NotificationController.php:83
  * @route '/api/notifications/{notification}/schedule'
  */
 schedule.url = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -993,7 +993,7 @@ schedule.url = (args: { notification: number | { id: number } } | [notification:
 
 /**
 * @see \App\Http\Controllers\Api\NotificationController::schedule
- * @see app/Http/Controllers/Api/NotificationController.php:84
+ * @see app/Http/Controllers/Api/NotificationController.php:83
  * @route '/api/notifications/{notification}/schedule'
  */
 schedule.post = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -1003,7 +1003,7 @@ schedule.post = (args: { notification: number | { id: number } } | [notification
 
     /**
 * @see \App\Http\Controllers\Api\NotificationController::schedule
- * @see app/Http/Controllers/Api/NotificationController.php:84
+ * @see app/Http/Controllers/Api/NotificationController.php:83
  * @route '/api/notifications/{notification}/schedule'
  */
     const scheduleForm = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -1013,7 +1013,7 @@ schedule.post = (args: { notification: number | { id: number } } | [notification
 
             /**
 * @see \App\Http\Controllers\Api\NotificationController::schedule
- * @see app/Http/Controllers/Api/NotificationController.php:84
+ * @see app/Http/Controllers/Api/NotificationController.php:83
  * @route '/api/notifications/{notification}/schedule'
  */
         scheduleForm.post = (args: { notification: number | { id: number } } | [notification: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
