@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
 import * as L from 'leaflet';
-import { Map as MapIcon, Bus, MapPin, RefreshCw, ArrowRight } from 'lucide-vue-next';
+import { Map as MapIcon, Bus, MapPin, RefreshCw, ArrowRight, Plus, Trash2, X, ChevronDown, ChevronUp } from 'lucide-vue-next';
 import { echo } from '@/echo';
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { useAppearance } from '@/composables/useAppearance';
@@ -92,6 +92,75 @@ const filteredRequests = computed(() => {
         : props.pendingRequests.filter(r => r.route === routeFilter.value);
     return list.slice(0, 5);
 });
+
+// ── Edit mode ─────────────────────────────────────────────────────────────
+const isAddStopMode = ref(false);
+function toggleAddStopMode() {
+    isAddStopMode.value = !isAddStopMode.value;
+    if (map) map.getContainer().style.cursor = isAddStopMode.value ? 'crosshair' : '';
+}
+
+// ── Add Stop Modal ───────────────────────────────────────────────────────
+type ModalRouteKey = 'north' | 'south' | 'cebuCity';
+const showAddStopModal = ref(false);
+const pendingLatlng    = ref<L.LatLng | null>(null);
+const modalRouteChoice = ref<ModalRouteKey>('north');
+const modalError       = ref('');
+const modalRouteOptions: { key: ModalRouteKey; label: string; pinColor: string }[] = [
+    { key: 'north',    label: 'North Route',     pinColor: '#3b82f6' },
+    { key: 'south',    label: 'South Route',     pinColor: '#22c55e' },
+    { key: 'cebuCity', label: 'Cebu City Route', pinColor: '#f97316' },
+];
+function openAddStopModal(latlng: L.LatLng) {
+    pendingLatlng.value    = latlng;
+    modalRouteChoice.value = 'north';
+    modalError.value       = '';
+    showAddStopModal.value = true;
+}
+function cancelStop() {
+    showAddStopModal.value = false;
+    pendingLatlng.value    = null;
+    modalError.value       = '';
+}
+function saveStop() {
+    if (!pendingLatlng.value || !map) return;
+    const latlng = pendingLatlng.value;
+    const key    = modalRouteChoice.value;
+    const polylineMap: Record<ModalRouteKey, L.Polyline | null> = {
+        north: northPolyline, south: southPolyline, cebuCity: cityPolyline,
+    };
+    const chosenPolyline = polylineMap[key];
+    const option = modalRouteOptions.find(o => o.key === key)!;
+    if (!chosenPolyline) { modalError.value = 'Route not yet loaded. Please wait and try again.'; return; }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const closestPoint     = (L as any).GeometryUtil.closest(map, chosenPolyline, latlng);
+    const distanceInMeters = latlng.distanceTo(closestPoint);
+    if (distanceInMeters > 300) {
+        modalError.value = `\u274C ${Math.round(distanceInMeters)} m away — must be within 300 m of the route.`;
+        return;
+    }
+    const icon = L.divIcon({
+        className: 'custom-stop',
+        html: `<div style="background:${option.pinColor};width:14px;height:14px;border-radius:50%;border:2px solid white;box-shadow:0 0 6px rgba(0,0,0,0.4);"></div>`,
+        iconSize: [14, 14], iconAnchor: [7, 7],
+    });
+    L.marker(latlng, { icon })
+        .bindPopup(`<b>New Custom Stop</b><br>${option.label}<br><span style="font-size:11px;color:#6b7280;">Added by Admin</span>`)
+        .addTo(map).openPopup();
+    isAddStopMode.value = false;
+    map.getContainer().style.cursor = '';
+    showAddStopModal.value = false;
+    pendingLatlng.value    = null;
+    modalError.value       = '';
+}
+
+// ── Route stops accordion ────────────────────────────────────────────────
+const routesPanelOpen = ref(true);
+const routeGroupDefs = [
+    { key: 'north',    label: 'North Route',     dot: 'bg-blue-500',   badge: 'bg-blue-500/15 text-blue-700 dark:text-blue-300' },
+    { key: 'south',    label: 'South Route',     dot: 'bg-green-500',  badge: 'bg-green-500/15 text-green-700 dark:text-green-300' },
+    { key: 'cebuCity', label: 'Cebu City Route', dot: 'bg-orange-500', badge: 'bg-orange-500/15 text-orange-700 dark:text-orange-300' },
+] as const;
 
 //  Leaflet map
 const mapRef = ref<HTMLDivElement | null>(null);
@@ -306,50 +375,10 @@ onMounted(() => {
         // Draw OSRM road-following routes
         drawRoutes(map!);
 
-        // ── Geofenced "Click to Add Stop" (admin) ──────────────────────────────
+        // ── Map click: only fires when Add Stop mode is active ─────────────────
         map!.on('click', (e: L.LeafletMouseEvent) => {
-            const choice = prompt("Add stop to which route? Type 'N' for North, 'S' for South, 'C' for City:");
-            if (!choice) return;
-
-            const key = choice.trim().toUpperCase();
-            let selectedPolyline: L.Polyline | null = null;
-            let pinColor = '#3b82f6';
-
-            if      (key === 'N') { selectedPolyline = northPolyline; pinColor = '#3b82f6'; }
-            else if (key === 'S') { selectedPolyline = southPolyline; pinColor = '#22c55e'; }
-            else if (key === 'C') { selectedPolyline = cityPolyline;  pinColor = '#f97316'; }
-            else { alert('Invalid choice.'); return; }
-
-            if (!selectedPolyline) {
-                alert('Route not yet loaded. Please wait a moment and try again.');
-                return;
-            }
-
-            // Find closest point on the polyline, then measure distance
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const closestPoint = (L as any).GeometryUtil.closest(map!, selectedPolyline, e.latlng);
-            const distanceInMeters = e.latlng.distanceTo(closestPoint);
-
-            if (distanceInMeters > 300) {
-                alert(
-                    '\u274C Error: This location is ' +
-                    Math.round(distanceInMeters) +
-                    ' meters away from the route. It must be within 300 meters!',
-                );
-                return;
-            }
-
-            const icon = L.divIcon({
-                className: 'custom-stop',
-                html: `<div style="background: ${pinColor}; width: 14px; height: 14px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 4px rgba(0,0,0,0.5);"></div>`,
-                iconSize:   [14, 14],
-                iconAnchor: [7, 7],
-            });
-
-            L.marker(e.latlng, { icon })
-                .bindPopup('<b>New Custom Stop</b><br>Added by Admin')
-                .addTo(map!)
-                .openPopup();
+            if (!isAddStopMode.value) return;
+            openAddStopModal(e.latlng);
         });
     });
 
@@ -478,6 +507,84 @@ watch(resolvedAppearance, () => {
                         </p>
                     </div>
 
+                    <!-- Floating edit controls -->
+                    <div class="absolute left-3 top-3 z-[500] flex flex-col gap-2">
+                        <button
+                            id="btn-add-stop"
+                            :class="[
+                                'flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold shadow-lg transition-all duration-200',
+                                isAddStopMode
+                                    ? 'bg-blue-600 text-white ring-2 ring-blue-400 ring-offset-1'
+                                    : 'bg-card text-foreground border border-border/70 hover:bg-accent',
+                            ]"
+                            @click="toggleAddStopMode"
+                        >
+                            <Plus class="h-3.5 w-3.5" />
+                            {{ isAddStopMode ? 'Cancel' : 'Add Stop' }}
+                        </button>
+                        <button
+                            id="btn-delete-route"
+                            class="flex items-center gap-1.5 rounded-xl border border-border/70 bg-card px-3 py-2 text-xs font-semibold text-red-500 shadow-lg hover:bg-red-500/10 transition-all duration-200"
+                        >
+                            <Trash2 class="h-3.5 w-3.5" />
+                            Delete Route
+                        </button>
+                    </div>
+
+                    <!-- Add Stop Modal overlay -->
+                    <Transition name="modal-fade">
+                        <div
+                            v-if="showAddStopModal"
+                            class="absolute inset-0 z-[900] flex items-center justify-center bg-black/40 backdrop-blur-sm"
+                            @click.self="cancelStop"
+                        >
+                            <div class="w-80 rounded-2xl border border-border/70 bg-card p-5 shadow-2xl">
+                                <div class="mb-4 flex items-center justify-between">
+                                    <h3 class="text-sm font-bold text-foreground">Add Custom Stop</h3>
+                                    <button @click="cancelStop" class="rounded-lg p-1 hover:bg-accent">
+                                        <X class="h-4 w-4 text-muted-foreground" />
+                                    </button>
+                                </div>
+                                <p class="mb-3 text-xs text-muted-foreground">Select the route this stop belongs to:</p>
+                                <div class="space-y-2">
+                                    <label
+                                        v-for="opt in modalRouteOptions"
+                                        :key="opt.key"
+                                        :for="'modal-route-' + opt.key"
+                                        class="flex cursor-pointer items-center gap-3 rounded-xl border p-3 transition-all"
+                                        :class="modalRouteChoice === opt.key ? 'border-blue-500/60 bg-blue-500/10' : 'border-border/50 hover:border-border'"
+                                    >
+                                        <input
+                                            :id="'modal-route-' + opt.key"
+                                            v-model="modalRouteChoice"
+                                            type="radio"
+                                            :value="opt.key"
+                                            class="hidden"
+                                        />
+                                        <span
+                                            class="h-3.5 w-3.5 shrink-0 rounded-full border-2 border-white shadow"
+                                            :style="{ background: opt.pinColor }"
+                                        />
+                                        <span class="text-sm font-medium text-foreground">{{ opt.label }}</span>
+                                    </label>
+                                </div>
+                                <p v-if="modalError" class="mt-3 rounded-lg bg-red-500/10 px-3 py-2 text-xs font-medium text-red-600 dark:text-red-400">
+                                    {{ modalError }}
+                                </p>
+                                <div class="mt-4 flex gap-2">
+                                    <button
+                                        class="flex-1 rounded-xl border border-border/70 py-2 text-xs font-semibold text-muted-foreground hover:bg-accent transition"
+                                        @click="cancelStop"
+                                    >Cancel</button>
+                                    <button
+                                        class="flex-1 rounded-xl bg-blue-600 py-2 text-xs font-semibold text-white hover:bg-blue-700 transition"
+                                        @click="saveStop"
+                                    >Save Stop</button>
+                                </div>
+                            </div>
+                        </div>
+                    </Transition>
+
                     <!-- Leaflet map -->
                     <div ref="mapRef" class="relative flex-1 z-0">
                         <!-- No data overlay -->
@@ -515,7 +622,7 @@ watch(resolvedAppearance, () => {
                     <!-- Click hint -->
                     <div class="flex items-center gap-2 border-t border-blue-500/20 bg-blue-500/10 px-4 py-2 text-xs text-blue-600 dark:text-blue-400">
                         <MapIcon class="h-3.5 w-3.5" />
-                        Click a shuttle/pin for details &middot; Click the map to add a custom stop (admin)
+                        Click a shuttle/pin for details &middot; Use <b>Add Stop</b> mode to place geofenced stops &middot; Shift-scroll to zoom
                     </div>
                 </div>
 
@@ -583,9 +690,53 @@ watch(resolvedAppearance, () => {
                         </a>
                     </div>
 
+                    <!-- Route Stops accordion -->
+                    <div class="rounded-2xl border border-border/70 bg-card shadow-sm shadow-black/5 dark:shadow-black/20">
+                        <button
+                            class="flex w-full items-center justify-between px-4 py-3 text-xs font-bold uppercase tracking-wide text-muted-foreground hover:bg-accent/50 rounded-2xl transition"
+                            @click="routesPanelOpen = !routesPanelOpen"
+                        >
+                            Route Stops
+                            <ChevronUp v-if="routesPanelOpen" class="h-3.5 w-3.5" />
+                            <ChevronDown v-else class="h-3.5 w-3.5" />
+                        </button>
+                        <div v-if="routesPanelOpen" class="divide-y divide-border/40 px-4 pb-3">
+                            <div v-for="group in routeGroupDefs" :key="group.key" class="py-2.5">
+                                <div class="mb-2 flex items-center gap-2">
+                                    <span :class="['h-2.5 w-2.5 rounded-full', group.dot]" />
+                                    <span :class="['rounded-full px-2 py-0.5 text-[10px] font-semibold', group.badge]">{{ group.label }}</span>
+                                </div>
+                                <ul class="space-y-1 pl-4">
+                                    <li
+                                        v-for="lm in (routeStops[group.key]?.landmarks ?? [])"
+                                        :key="lm.name"
+                                        class="flex items-start gap-1.5 text-xs text-muted-foreground"
+                                    >
+                                        <MapPin class="mt-0.5 h-3 w-3 shrink-0 opacity-60" />
+                                        {{ lm.name }}
+                                    </li>
+                                    <li v-if="!(routeStops[group.key]?.landmarks?.length)" class="text-xs italic text-muted-foreground/50">
+                                        No stops defined
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>
     </AppLayout>
 </template>
 
+<style scoped>
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+    opacity: 0;
+    transform: scale(0.97);
+}
+</style>
