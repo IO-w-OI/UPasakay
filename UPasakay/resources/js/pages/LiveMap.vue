@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
+import { Head, router, useForm } from '@inertiajs/vue3';
+import axios from 'axios';
 import * as L from 'leaflet';
 import { Map as MapIcon, Bus, MapPin, RefreshCw, ArrowRight, Plus, Trash2, X, ChevronDown, ChevronUp } from 'lucide-vue-next';
-import { echo } from '@/echo';
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { useAppearance } from '@/composables/useAppearance';
 import { liveMapRoutes, type RouteConfig } from '@/data/routeData';
+import { echo } from '@/echo';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { dashboard } from '@/routes';
 import { type BreadcrumbItem } from '@/types';
@@ -17,25 +18,67 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Live Map', href: '/live-map' },
 ];
 
+type RouteFilterKey = 'all' | 'north' | 'south' | 'cebu_city';
+type RouteName = 'North' | 'South' | 'Cebu City';
+
+interface RouteItem {
+    id: number;
+    name: RouteName;
+}
+
+interface StopItem {
+    id: number;
+    route_id: number;
+    name: string;
+    sequence: number;
+    latitude: number;
+    longitude: number;
+    is_active: boolean;
+    route: RouteItem | null;
+}
+
+interface ShuttleItem {
+    id: number;
+    code: string;
+    driver: string;
+    route: string;
+    status: string;
+    speed: number;
+    last_seen: string;
+    latitude: number | null;
+    longitude: number | null;
+}
+
+interface PendingRequestItem {
+    id: number;
+    passenger: string;
+    route: string;
+    stop: string;
+    time: string;
+}
+
+interface NominatimReverseResponse {
+    name?: string;
+    display_name?: string;
+    address?: {
+        amenity?: string;
+        building?: string;
+        road?: string;
+        neighbourhood?: string;
+        suburb?: string;
+        quarter?: string;
+        city?: string;
+        town?: string;
+        village?: string;
+        municipality?: string;
+    };
+}
+
 const props = defineProps<{
-    shuttles: Array<{
-        id: number;
-        code: string;
-        driver: string;
-        route: string;
-        status: string;
-        speed: number;
-        last_seen: string;
-        latitude: number | null;
-        longitude: number | null;
-    }>;
-    pendingRequests: Array<{
-        id: number;
-        passenger: string;
-        route: string;
-        stop: string;
-        time: string;
-    }>;
+    shuttles: ShuttleItem[];
+    pendingRequests: PendingRequestItem[];
+    routes: RouteItem[];
+    stops: StopItem[];
 }>();
 
 // Filter / search — fixed route list
@@ -44,7 +87,6 @@ const availableRoutes = ref([
     { id: 'north',     name: 'North Route' },
     { id: 'south',     name: 'South Route' },
     { id: 'cebu_city', name: 'Cebu City Route' },
-    { id: 'demo',      name: 'Demo Route' },
 ]);
 const selectedRoute = ref('all');
 
@@ -94,73 +136,177 @@ const filteredRequests = computed(() => {
 });
 
 // ── Edit mode ─────────────────────────────────────────────────────────────
+const routeKeyToName: Record<Exclude<RouteFilterKey, 'all'>, RouteName> = {
+    north: 'North',
+    south: 'South',
+    cebu_city: 'Cebu City',
+};
+
+const routeSortOrder: RouteName[] = ['North', 'South', 'Cebu City'];
+
 const isAddStopMode = ref(false);
+const showAddStopModal = ref(false);
+const pendingLatlng = ref<L.LatLng | null>(null);
+const isGeocodingStopName = ref(false);
+const stopModalError = ref('');
+
+const stopForm = useForm({
+    route_id: null as number | null,
+    name: '',
+    latitude: 0,
+    longitude: 0,
+});
+
+const availableRouteOptions = computed(() =>
+    [...props.routes].sort((left, right) => {
+        const leftIndex = routeSortOrder.indexOf(left.name);
+        const rightIndex = routeSortOrder.indexOf(right.name);
+        return leftIndex - rightIndex;
+    }),
+);
+
+const selectedRouteId = computed(() => {
+    const routeName = selectedRoute.value === 'all'
+        ? null
+        : routeKeyToName[selectedRoute.value as Exclude<RouteFilterKey, 'all'>];
+
+    if (routeName) {
+        return props.routes.find(route => route.name === routeName)?.id ?? null;
+    }
+
+    return availableRouteOptions.value[0]?.id ?? null;
+});
+
+const routeGroupDefs = [
+    { key: 'north', routeName: 'North', label: 'North Route', dot: 'bg-blue-500', badge: 'bg-blue-500/15 text-blue-700 dark:text-blue-300' },
+    { key: 'south', routeName: 'South', label: 'South Route', dot: 'bg-green-500', badge: 'bg-green-500/15 text-green-700 dark:text-green-300' },
+    { key: 'cebu_city', routeName: 'Cebu City', label: 'Cebu City Route', dot: 'bg-orange-500', badge: 'bg-orange-500/15 text-orange-700 dark:text-orange-300' },
+] as const;
+
+const routeNameToColor: Record<RouteName, string> = {
+    North: '#3b82f6',
+    South: '#22c55e',
+    'Cebu City': '#f97316',
+};
+
+const groupedStops = computed(() => {
+    const grouped: Record<RouteName, StopItem[]> = {
+        North: [],
+        South: [],
+        'Cebu City': [],
+    };
+
+    props.stops.forEach((stop) => {
+        const routeName = stop.route?.name;
+        if (routeName && grouped[routeName]) {
+            grouped[routeName].push(stop);
+        }
+    });
+
+    return grouped;
+});
+
 function toggleAddStopMode() {
     isAddStopMode.value = !isAddStopMode.value;
-    if (map) map.getContainer().style.cursor = isAddStopMode.value ? 'crosshair' : '';
+    if (map) {
+        map.getContainer().style.cursor = isAddStopMode.value ? 'crosshair' : '';
+    }
 }
 
-// ── Add Stop Modal ───────────────────────────────────────────────────────
-type ModalRouteKey = 'north' | 'south' | 'cebuCity';
-const showAddStopModal = ref(false);
-const pendingLatlng    = ref<L.LatLng | null>(null);
-const modalRouteChoice = ref<ModalRouteKey>('north');
-const modalError       = ref('');
-const modalRouteOptions: { key: ModalRouteKey; label: string; pinColor: string }[] = [
-    { key: 'north',    label: 'North Route',     pinColor: '#3b82f6' },
-    { key: 'south',    label: 'South Route',     pinColor: '#22c55e' },
-    { key: 'cebuCity', label: 'Cebu City Route', pinColor: '#f97316' },
-];
+function resetStopForm() {
+    stopForm.clearErrors();
+    stopForm.reset();
+    stopForm.route_id = selectedRouteId.value;
+}
+
+function extractStopName(response: NominatimReverseResponse, fallbackLatlng: L.LatLng): string {
+    const addressCandidates = [
+        response.name,
+        response.address?.amenity,
+        response.address?.building,
+        response.address?.road,
+        response.address?.neighbourhood,
+        response.address?.suburb,
+        response.address?.quarter,
+        response.address?.city,
+        response.address?.town,
+        response.address?.municipality,
+        response.address?.village,
+        response.display_name,
+    ];
+
+    const firstMatch = addressCandidates.find((value) => value?.trim());
+    if (firstMatch?.trim()) {
+        return firstMatch.trim();
+    }
+
+    return `Custom Stop ${fallbackLatlng.lat.toFixed(5)}, ${fallbackLatlng.lng.toFixed(5)}`;
+}
+
+async function fetchReverseGeocode(latlng: L.LatLng) {
+    try {
+        const { data } = await axios.get<NominatimReverseResponse>('https://nominatim.openstreetmap.org/reverse', {
+            params: {
+                format: 'jsonv2',
+                lat: latlng.lat,
+                lon: latlng.lng,
+                addressdetails: 1,
+            },
+        });
+
+        stopForm.name = extractStopName(data, latlng);
+    } catch {
+        stopForm.name = `Custom Stop ${latlng.lat.toFixed(5)}, ${latlng.lng.toFixed(5)}`;
+    } finally {
+        isGeocodingStopName.value = false;
+    }
+}
+
 function openAddStopModal(latlng: L.LatLng) {
-    pendingLatlng.value    = latlng;
-    modalRouteChoice.value = 'north';
-    modalError.value       = '';
+    pendingLatlng.value = latlng;
+    stopModalError.value = '';
+    resetStopForm();
+    stopForm.latitude = latlng.lat;
+    stopForm.longitude = latlng.lng;
+    stopForm.name = '';
     showAddStopModal.value = true;
+    isGeocodingStopName.value = true;
+    void fetchReverseGeocode(latlng);
 }
-function cancelStop() {
+
+function closeStopModal() {
     showAddStopModal.value = false;
-    pendingLatlng.value    = null;
-    modalError.value       = '';
+    pendingLatlng.value = null;
+    stopModalError.value = '';
+    isGeocodingStopName.value = false;
+    stopForm.clearErrors();
 }
-function saveStop() {
-    if (!pendingLatlng.value || !map) return;
-    const latlng = pendingLatlng.value;
-    const key    = modalRouteChoice.value;
-    const polylineMap: Record<ModalRouteKey, L.Polyline | null> = {
-        north: northPolyline, south: southPolyline, cebuCity: cityPolyline,
-    };
-    const chosenPolyline = polylineMap[key];
-    const option = modalRouteOptions.find(o => o.key === key)!;
-    if (!chosenPolyline) { modalError.value = 'Route not yet loaded. Please wait and try again.'; return; }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const closestPoint     = (L as any).GeometryUtil.closest(map, chosenPolyline, latlng);
-    const distanceInMeters = latlng.distanceTo(closestPoint);
-    if (distanceInMeters > 300) {
-        modalError.value = `\u274C ${Math.round(distanceInMeters)} m away — must be within 300 m of the route.`;
+
+function submitStop() {
+    if (!pendingLatlng.value || !stopForm.route_id) {
         return;
     }
-    const icon = L.divIcon({
-        className: 'custom-stop',
-        html: `<div style="background:${option.pinColor};width:14px;height:14px;border-radius:50%;border:2px solid white;box-shadow:0 0 6px rgba(0,0,0,0.4);"></div>`,
-        iconSize: [14, 14], iconAnchor: [7, 7],
+
+    stopForm.post('/live-map/stops', {
+        preserveScroll: true,
+        onSuccess: () => {
+            closeStopModal();
+        },
     });
-    L.marker(latlng, { icon })
-        .bindPopup(`<b>New Custom Stop</b><br>${option.label}<br><span style="font-size:11px;color:#6b7280;">Added by Admin</span>`)
-        .addTo(map).openPopup();
-    isAddStopMode.value = false;
-    map.getContainer().style.cursor = '';
-    showAddStopModal.value = false;
-    pendingLatlng.value    = null;
-    modalError.value       = '';
+}
+
+function confirmDeleteStop(stop: StopItem) {
+    if (!window.confirm(`Delete stop "${stop.name}"? This cannot be undone.`)) {
+        return;
+    }
+
+    router.delete(`/live-map/stops/${stop.id}`, {
+        preserveScroll: true,
+    });
 }
 
 // ── Route stops accordion ────────────────────────────────────────────────
 const routesPanelOpen = ref(true);
-const routeGroupDefs = [
-    { key: 'north',    label: 'North Route',     dot: 'bg-blue-500',   badge: 'bg-blue-500/15 text-blue-700 dark:text-blue-300' },
-    { key: 'south',    label: 'South Route',     dot: 'bg-green-500',  badge: 'bg-green-500/15 text-green-700 dark:text-green-300' },
-    { key: 'cebuCity', label: 'Cebu City Route', dot: 'bg-orange-500', badge: 'bg-orange-500/15 text-orange-700 dark:text-orange-300' },
-] as const;
 
 //  Leaflet map
 const mapRef = ref<HTMLDivElement | null>(null);
@@ -168,12 +314,9 @@ let map: L.Map | null = null;
 let tileLayer: L.TileLayer | null = null;
 const shuttleMarkers = new Map<number, L.Marker>();
 const otherMarkers: L.Marker[] = [];
+const customStopMarkers = new Map<number, L.CircleMarker>();
 
 // Named polyline refs for geofenced custom-stop distance checks
-let northPolyline: L.Polyline | null = null;
-let southPolyline: L.Polyline | null = null;
-let cityPolyline:  L.Polyline | null = null;
-
 /** Smooth marker moves between ~5s GPS updates (CSS on Leaflet icon element). */
 const SHUTTLE_MARKER_MOVE_MS = 600;
 
@@ -183,6 +326,33 @@ function applyShuttleMarkerMove(marker: L.Marker, lat: number, lng: number): voi
         el.style.transition = `transform ${SHUTTLE_MARKER_MOVE_MS}ms ease-out`;
     }
     marker.setLatLng([lat, lng]);
+}
+
+function syncCustomStopMarkers() {
+    if (!map) return;
+
+    customStopMarkers.forEach((marker) => marker.remove());
+    customStopMarkers.clear();
+
+    props.stops.forEach((stop) => {
+        if (!stop.is_active || !stop.route) {
+            return;
+        }
+
+        const color = routeNameToColor[stop.route.name];
+        const marker = L.circleMarker([stop.latitude, stop.longitude], {
+            radius: 7,
+            color,
+            fillColor: color,
+            fillOpacity: 1,
+            weight: 2,
+            bubblingMouseEvents: false,
+        })
+            .bindPopup(`<div style="font-size:13px;"><b>${stop.name}</b><br>Route: ${stop.route?.name ?? '—'}<br><span style="font-size:11px;color:#6b7280;">Stop #${stop.sequence}</span></div>`)
+            .addTo(map!);
+
+        customStopMarkers.set(stop.id, marker);
+    });
 }
 
 // Ride accepted toast (admin-rides channel)
@@ -238,11 +408,11 @@ const syncMarkers = () => {
     filtered.value.forEach((s, i) => {
         const lat = s.latitude ?? 10.3157 + (i * 0.004);
         const lng = s.longitude ?? 123.8854 + (i * 0.005);
-        const marker = L.marker([lat, lng], { icon: makeShuttleIcon(s.status) })
+        const shuttleMarker = L.marker([lat, lng], { icon: makeShuttleIcon(s.status), bubblingMouseEvents: false })
             .bindPopup(`<div style="font-size:13px;"><b>${s.code}</b><br>Driver: ${s.driver}<br>Route: ${s.route}<br>Speed: ${s.speed} km/h<br>Status: ${s.status}</div>`)
             .addTo(map!);
-        marker.on('click', () => selectShuttle(s));
-        shuttleMarkers.set(s.id, marker);
+        shuttleMarker.on('click', () => selectShuttle(s));
+        shuttleMarkers.set(s.id, shuttleMarker);
     });
 
     const visibleRequests = routeFilter.value === 'All'
@@ -252,7 +422,7 @@ const syncMarkers = () => {
     visibleRequests.forEach((r, i) => {
         const lat = 10.3140 + (i * 0.003);
         const lng = 123.8870 + (i * 0.004);
-        const m = L.marker([lat, lng], { icon: passengerIcon })
+        const m = L.marker([lat, lng], { icon: passengerIcon, bubblingMouseEvents: false })
             .bindPopup(`<div style="font-size:13px;"><b>#${r.id}</b> ${r.passenger}<br>${r.route} - ${r.stop}</div>`)
             .addTo(map!);
         otherMarkers.push(m);
@@ -260,6 +430,16 @@ const syncMarkers = () => {
 };
 
 watch(filtered, () => syncMarkers());
+watch(
+    () => props.stops,
+    () => syncCustomStopMarkers(),
+    { deep: true },
+);
+watch(isAddStopMode, (active) => {
+    if (map) {
+        map.getContainer().style.cursor = active ? 'crosshair' : '';
+    }
+});
 
 // Route data (imported from @/data/routeData)
 const routeStops: RouteConfig = liveMapRoutes;
@@ -271,7 +451,7 @@ const routeStopMarkers = new Map<string, L.CircleMarker[]>();
 const filterKeyToRouteKey: Record<string, string> = {
     'South': 'south',
     'North': 'north',
-    'Cebu City': 'cebuCity',
+    'Cebu City': 'cebu_city',
 };
 
 function syncRouteVisibility() {
@@ -333,16 +513,9 @@ async function drawRoutes(targetMap: L.Map) {
             const path = route.path ?? await fetchSegmentedRoute(route.stops);
             const pl = L.polyline(path, { color: route.color, weight: 5, opacity: 0.65, smoothFactor: 1.5 }).addTo(targetMap);
             routePolylines.set(key, pl);
-            // Store named references for geofencing
-            if (key === 'north') northPolyline = pl;
-            else if (key === 'south') southPolyline = pl;
-            else if (key === 'cebuCity') cityPolyline = pl;
         } catch {
             const pl = L.polyline(route.stops, { color: route.color, weight: 4, opacity: 0.65 }).addTo(targetMap);
             routePolylines.set(key, pl);
-            if (key === 'north') northPolyline = pl;
-            else if (key === 'south') southPolyline = pl;
-            else if (key === 'cebuCity') cityPolyline = pl;
         }
         const markers: L.CircleMarker[] = [];
         route.landmarks.forEach((landmark) => {
@@ -374,6 +547,7 @@ onMounted(() => {
 
         // Draw OSRM road-following routes
         drawRoutes(map!);
+        syncCustomStopMarkers();
 
         // ── Map click: only fires when Add Stop mode is active ─────────────────
         map!.on('click', (e: L.LeafletMouseEvent) => {
@@ -438,6 +612,8 @@ onUnmounted(() => {
     routePolylines.clear();
     routeStopMarkers.forEach(markers => markers.forEach(cm => cm.remove()));
     routeStopMarkers.clear();
+    customStopMarkers.forEach(marker => marker.remove());
+    customStopMarkers.clear();
     tileLayer?.remove();
     tileLayer = null;
     map?.remove();
@@ -507,79 +683,82 @@ watch(resolvedAppearance, () => {
                         </p>
                     </div>
 
-                    <!-- Floating edit controls -->
-                    <div class="absolute left-3 top-3 z-[500] flex flex-col gap-2">
-                        <button
-                            id="btn-add-stop"
-                            :class="[
-                                'flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold shadow-lg transition-all duration-200',
-                                isAddStopMode
-                                    ? 'bg-blue-600 text-white ring-2 ring-blue-400 ring-offset-1'
-                                    : 'bg-card text-foreground border border-border/70 hover:bg-accent',
-                            ]"
-                            @click="toggleAddStopMode"
-                        >
-                            <Plus class="h-3.5 w-3.5" />
-                            {{ isAddStopMode ? 'Cancel' : 'Add Stop' }}
-                        </button>
-                        <button
-                            id="btn-delete-route"
-                            class="flex items-center gap-1.5 rounded-xl border border-border/70 bg-card px-3 py-2 text-xs font-semibold text-red-500 shadow-lg hover:bg-red-500/10 transition-all duration-200"
-                        >
-                            <Trash2 class="h-3.5 w-3.5" />
-                            Delete Route
-                        </button>
-                    </div>
-
                     <!-- Add Stop Modal overlay -->
                     <Transition name="modal-fade">
                         <div
                             v-if="showAddStopModal"
                             class="absolute inset-0 z-[900] flex items-center justify-center bg-black/40 backdrop-blur-sm"
-                            @click.self="cancelStop"
+                            @click.self="closeStopModal"
                         >
-                            <div class="w-80 rounded-2xl border border-border/70 bg-card p-5 shadow-2xl">
-                                <div class="mb-4 flex items-center justify-between">
-                                    <h3 class="text-sm font-bold text-foreground">Add Custom Stop</h3>
-                                    <button @click="cancelStop" class="rounded-lg p-1 hover:bg-accent">
+                            <div class="w-full max-w-md rounded-2xl border border-border/70 bg-card p-5 shadow-2xl">
+                                <div class="mb-4 flex items-start justify-between gap-4">
+                                    <div>
+                                        <h3 class="text-sm font-bold text-foreground">Add Custom Stop</h3>
+                                        <p class="mt-1 text-xs text-muted-foreground">
+                                            {{ pendingLatlng ? `Lat ${pendingLatlng.lat.toFixed(5)}, Lng ${pendingLatlng.lng.toFixed(5)}` : 'Select a point on the map' }}
+                                        </p>
+                                    </div>
+                                    <button @click="closeStopModal" class="rounded-lg p-1 hover:bg-accent">
                                         <X class="h-4 w-4 text-muted-foreground" />
                                     </button>
                                 </div>
-                                <p class="mb-3 text-xs text-muted-foreground">Select the route this stop belongs to:</p>
-                                <div class="space-y-2">
-                                    <label
-                                        v-for="opt in modalRouteOptions"
-                                        :key="opt.key"
-                                        :for="'modal-route-' + opt.key"
-                                        class="flex cursor-pointer items-center gap-3 rounded-xl border p-3 transition-all"
-                                        :class="modalRouteChoice === opt.key ? 'border-blue-500/60 bg-blue-500/10' : 'border-border/50 hover:border-border'"
-                                    >
+
+                                <div class="space-y-4">
+                                    <div>
+                                        <label for="stop-name" class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                            Stop Name
+                                        </label>
                                         <input
-                                            :id="'modal-route-' + opt.key"
-                                            v-model="modalRouteChoice"
-                                            type="radio"
-                                            :value="opt.key"
-                                            class="hidden"
+                                            id="stop-name"
+                                            v-model="stopForm.name"
+                                            type="text"
+                                            class="w-full rounded-xl border border-border/70 bg-background px-3 py-2 text-sm text-foreground outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                                            :placeholder="isGeocodingStopName ? 'Resolving nearby place...' : 'Enter stop name'"
                                         />
-                                        <span
-                                            class="h-3.5 w-3.5 shrink-0 rounded-full border-2 border-white shadow"
-                                            :style="{ background: opt.pinColor }"
-                                        />
-                                        <span class="text-sm font-medium text-foreground">{{ opt.label }}</span>
-                                    </label>
-                                </div>
-                                <p v-if="modalError" class="mt-3 rounded-lg bg-red-500/10 px-3 py-2 text-xs font-medium text-red-600 dark:text-red-400">
-                                    {{ modalError }}
-                                </p>
-                                <div class="mt-4 flex gap-2">
-                                    <button
-                                        class="flex-1 rounded-xl border border-border/70 py-2 text-xs font-semibold text-muted-foreground hover:bg-accent transition"
-                                        @click="cancelStop"
-                                    >Cancel</button>
-                                    <button
-                                        class="flex-1 rounded-xl bg-blue-600 py-2 text-xs font-semibold text-white hover:bg-blue-700 transition"
-                                        @click="saveStop"
-                                    >Save Stop</button>
+                                        <p v-if="stopForm.errors.name" class="mt-1 text-xs text-red-500">
+                                            {{ stopForm.errors.name }}
+                                        </p>
+                                    </div>
+
+                                    <div>
+                                        <label for="stop-route" class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                            Route Category
+                                        </label>
+                                        <select
+                                            id="stop-route"
+                                            v-model.number="stopForm.route_id"
+                                            class="w-full rounded-xl border border-border/70 bg-background px-3 py-2 text-sm text-foreground outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                                        >
+                                            <option v-for="route in availableRouteOptions" :key="route.id" :value="route.id">
+                                                {{ route.name }}
+                                            </option>
+                                        </select>
+                                        <p v-if="stopForm.errors.route_id" class="mt-1 text-xs text-red-500">
+                                            {{ stopForm.errors.route_id }}
+                                        </p>
+                                    </div>
+
+                                    <p v-if="stopModalError" class="rounded-lg bg-red-500/10 px-3 py-2 text-xs font-medium text-red-600 dark:text-red-400">
+                                        {{ stopModalError }}
+                                    </p>
+
+                                    <div class="flex gap-2">
+                                        <button
+                                            type="button"
+                                            class="flex-1 rounded-xl border border-border/70 py-2 text-xs font-semibold text-muted-foreground transition hover:bg-accent"
+                                            @click="closeStopModal"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            type="button"
+                                            class="flex-1 rounded-xl bg-blue-600 py-2 text-xs font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                            :disabled="stopForm.processing || isGeocodingStopName || !stopForm.name.trim() || !stopForm.route_id"
+                                            @click="submitStop"
+                                        >
+                                            {{ stopForm.processing ? 'Saving...' : 'Save' }}
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -628,6 +807,45 @@ watch(resolvedAppearance, () => {
 
                 <!-- Right sidebar -->
                 <div class="flex w-72 shrink-0 flex-col gap-4 overflow-y-auto">
+
+                    <!-- Stop management controls -->
+                    <div class="rounded-2xl border border-border/70 bg-card p-4 shadow-sm shadow-black/5 dark:shadow-black/20">
+                        <div class="flex items-center justify-between gap-2">
+                            <div>
+                                <p class="text-xs font-bold uppercase tracking-wide text-muted-foreground">Stop Tools</p>
+                                <p class="mt-1 text-xs text-muted-foreground">
+                                    Add geocoded stops or remove custom ones.
+                                </p>
+                            </div>
+                            <span
+                                class="rounded-full px-2.5 py-1 text-[10px] font-semibold"
+                                :class="isAddStopMode ? 'bg-blue-500/15 text-blue-700 dark:text-blue-300' : 'bg-muted text-muted-foreground'"
+                            >
+                                {{ isAddStopMode ? 'Add mode on' : 'Add mode off' }}
+                            </span>
+                        </div>
+                        <div class="mt-3 grid grid-cols-2 gap-2">
+                            <button
+                                type="button"
+                                class="flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold shadow-sm transition-all duration-200"
+                                :class="isAddStopMode
+                                    ? 'bg-blue-600 text-white ring-2 ring-blue-400 ring-offset-1'
+                                    : 'border border-border/70 bg-card text-foreground hover:bg-accent'"
+                                @click="toggleAddStopMode"
+                            >
+                                <Plus class="h-3.5 w-3.5" />
+                                {{ isAddStopMode ? 'Exit Add Stop' : 'Add Stop' }}
+                            </button>
+                            <button
+                                id="btn-delete-route"
+                                type="button"
+                                class="flex items-center justify-center gap-1.5 rounded-xl border border-dashed border-border/70 bg-card px-3 py-2 text-xs font-semibold text-red-500 opacity-75 shadow-sm transition-all duration-200 hover:bg-red-500/10"
+                            >
+                                <Trash2 class="h-3.5 w-3.5" />
+                                Delete Route
+                            </button>
+                        </div>
+                    </div>
 
                     <!-- Active Shuttles panel -->
                     <div class="rounded-2xl border border-border/70 bg-card p-4 shadow-sm shadow-black/5 dark:shadow-black/20">
@@ -708,14 +926,27 @@ watch(resolvedAppearance, () => {
                                 </div>
                                 <ul class="space-y-1 pl-4">
                                     <li
-                                        v-for="lm in (routeStops[group.key]?.landmarks ?? [])"
-                                        :key="lm.name"
-                                        class="flex items-start gap-1.5 text-xs text-muted-foreground"
+                                        v-for="stop in groupedStops[group.routeName]"
+                                        :key="stop.id"
+                                        class="flex items-start justify-between gap-2 rounded-lg px-2 py-1 text-xs text-muted-foreground transition hover:bg-accent/60"
                                     >
-                                        <MapPin class="mt-0.5 h-3 w-3 shrink-0 opacity-60" />
-                                        {{ lm.name }}
+                                        <span class="flex items-start gap-1.5">
+                                            <MapPin class="mt-0.5 h-3 w-3 shrink-0 opacity-60" />
+                                            <span>
+                                                <span class="block font-medium text-foreground">{{ stop.name }}</span>
+                                                <span class="block text-[11px] text-muted-foreground/70">Stop #{{ stop.sequence }}</span>
+                                            </span>
+                                        </span>
+                                        <button
+                                            type="button"
+                                            class="rounded-md p-1 text-muted-foreground transition hover:bg-red-500/10 hover:text-red-500"
+                                            title="Delete stop"
+                                            @click.stop="confirmDeleteStop(stop)"
+                                        >
+                                            <Trash2 class="h-3.5 w-3.5" />
+                                        </button>
                                     </li>
-                                    <li v-if="!(routeStops[group.key]?.landmarks?.length)" class="text-xs italic text-muted-foreground/50">
+                                    <li v-if="!groupedStops[group.routeName].length" class="text-xs italic text-muted-foreground/50">
                                         No stops defined
                                     </li>
                                 </ul>
