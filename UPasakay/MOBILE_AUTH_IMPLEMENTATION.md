@@ -395,6 +395,76 @@ If you get "could not find driver" error when running tests:
 - [ ] Email notifications configured (for future features)
 - [ ] Performance testing completed
 
+## Driver Location API (Mobile to Web Live Map)
+
+Driver apps post GPS updates to the backend; Laravel broadcasts to Pusher on the **`driver-tracking`** channel so the Vue Live Map can update markers without a page refresh.
+
+### Endpoint
+
+- **Method / URL:** `POST /api/driver/location`
+- **Authentication:** Required — `Authorization: Bearer {token}` (Laravel Sanctum; same pattern as other protected API routes).
+
+### Request body
+
+Send **either** `driver_id` **or** `shuttle_id` (not required to send both). Coordinates are required.
+
+| Field | Type | Required | Notes |
+|-------|------|----------|--------|
+| `driver_id` | integer | One of `driver_id` / `shuttle_id` | Must exist in `drivers`. The server resolves the driver’s assigned shuttle (`shuttles.driver_id`). Returns **422** if the driver has no shuttle. |
+| `shuttle_id` | integer | One of `driver_id` / `shuttle_id` | Must exist in `shuttles`. If `driver_id` is also sent, it must match the shuttle’s `driver_id` or the API returns **422**. |
+| `latitude` | number | Yes | |
+| `longitude` | number | Yes | |
+| `speed_kmh` | number | No | Optional |
+
+**Example (by driver):**
+
+```json
+{
+  "driver_id": 1,
+  "latitude": 10.3157,
+  "longitude": 123.8854,
+  "speed_kmh": 25.5
+}
+```
+
+**Example (by shuttle):**
+
+```json
+{
+  "shuttle_id": 3,
+  "latitude": 10.3157,
+  "longitude": 123.8854
+}
+```
+
+### Success response (201)
+
+JSON includes the created `shuttle_locations` row fields plus:
+
+- `shuttle_id` — resolved shuttle
+- `driver_id` — from the shuttle when available (may be `null` if the shuttle has no driver)
+
+### Legacy / alternate endpoint
+
+- `POST /api/shuttle-locations` — still supported; body must include `shuttle_id`, `latitude`, `longitude`.
+
+### Pusher / Laravel Echo (for Dev 2 / web dashboard)
+
+| Item | Value |
+|------|--------|
+| **Channel** | `driver-tracking` (public channel) |
+| **Event name** | `LocationUpdated` (from `broadcastAs()` on `ShuttleLocationUpdated`) |
+| **Payload (JSON)** | `{ "id": <shuttle_id>, "latitude": <float>, "longitude": <float> }` — `id` is the shuttle id (same as `shuttle_id` in the API). |
+
+In Echo (Vue), subscribe with `echo.channel('driver-tracking').listen('LocationUpdated', (data) => { ... })`.
+
+### Related code
+
+- Route: [routes/api.php](routes/api.php) — `POST driver/location` inside `auth:sanctum`.
+- Controller: [app/Http/Controllers/Api/ShuttleLocationController.php](app/Http/Controllers/Api/ShuttleLocationController.php) — `storeFromDriver()`.
+- Event: [app/Events/ShuttleLocationUpdated.php](app/Events/ShuttleLocationUpdated.php).
+- Tests: [tests/Feature/DriverLocationApiTest.php](tests/Feature/DriverLocationApiTest.php).
+
 ## Support & Documentation
 
 For more detailed information, see:
