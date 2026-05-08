@@ -465,6 +465,47 @@ In Echo (Vue), subscribe with `echo.channel('driver-tracking').listen('LocationU
 - Event: [app/Events/ShuttleLocationUpdated.php](app/Events/ShuttleLocationUpdated.php).
 - Tests: [tests/Feature/DriverLocationApiTest.php](tests/Feature/DriverLocationApiTest.php).
 
+### Live Map: ride accepted toast (admin dashboard)
+
+When a pickup is assigned (status becomes `accepted`), the backend broadcasts `RideAccepted` on:
+
+| Item | Value |
+|------|--------|
+| **Channel** | `admin-rides` (public) |
+| **Event name** | `.ride.accepted` (custom `broadcastAs`; use leading dot in Echo) |
+| **Payload** | `pickup_request_id`, `driver_name`, `eta_minutes`, `shuttle_id`, etc. |
+
+The Live Map page listens and shows a short **"Shuttle on the way!"** toast (auto-dismiss ~5s).
+
+### Heroku keepalive (cron-job.org)
+
+- **URL:** `GET https://<your-app>.herokuapp.com/api/ping`
+- **Response:** `{ "status": "ok", "time": "<ISO8601>" }` — no database access.
+- Schedule every ~10 minutes in cron-job.org so a free dyno is less likely to sleep during a demo.
+
+### Demo accounts (Expo seed)
+
+Run once on staging or production DB (not part of default `DatabaseSeeder`):
+
+```bash
+php artisan db:seed --class=DemoSeeder
+```
+
+| Role | Email | Password | Notes |
+|------|-------|----------|--------|
+| Admin | `demo.admin@upasakay.com` | `password123` | Web admin |
+| Driver | `demo.driver@upasakay.com` | `password123` | Linked to shuttle `DEMO-1`; use Sanctum token for `POST /api/driver/location` |
+| Passenger | `demo.passenger@upasakay.com` | `password123` | `verification_status`: approved |
+
+Seeder: [database/seeders/DemoSeeder.php](database/seeders/DemoSeeder.php).
+
+### 60-second smoke test (before judges)
+
+1. Log in as demo driver (or create a Sanctum token for `demo.driver@upasakay.com`).
+2. Open **Live Map** in the browser.
+3. From Postman, `POST /api/driver/location` twice (~5s apart) with `driver_id` + lat/lng — marker should move smoothly.
+4. Assign a driver to a pending pickup from the admin UI — toast should appear on Live Map.
+
 ## Support & Documentation
 
 For more detailed information, see:

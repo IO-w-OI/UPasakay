@@ -30,6 +30,7 @@ class RideAccepted implements ShouldBroadcastNow
 
         return [
             new Channel('passenger-'.$channelId),
+            new Channel('admin-rides'),
         ];
     }
 

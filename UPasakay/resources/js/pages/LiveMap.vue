@@ -90,6 +90,38 @@ let tileLayer: L.TileLayer | null = null;
 const shuttleMarkers = new Map<number, L.Marker>();
 const otherMarkers: L.Marker[] = [];
 
+/** Smooth marker moves between ~5s GPS updates (CSS on Leaflet icon element). */
+const SHUTTLE_MARKER_MOVE_MS = 600;
+
+function applyShuttleMarkerMove(marker: L.Marker, lat: number, lng: number): void {
+    const el = marker.getElement();
+    if (el) {
+        el.style.transition = `transform ${SHUTTLE_MARKER_MOVE_MS}ms ease-out`;
+    }
+    marker.setLatLng([lat, lng]);
+}
+
+// Ride accepted toast (admin-rides channel)
+type AcceptedToast = {
+    pickup_request_id: number;
+    driver_name: string | null;
+    eta_minutes: number | null;
+};
+const acceptedToast = ref<AcceptedToast | null>(null);
+let acceptedToastTimer: ReturnType<typeof setTimeout> | null = null;
+
+function showAcceptedToast(payload: AcceptedToast): void {
+    if (acceptedToastTimer) {
+        clearTimeout(acceptedToastTimer);
+        acceptedToastTimer = null;
+    }
+    acceptedToast.value = payload;
+    acceptedToastTimer = setTimeout(() => {
+        acceptedToast.value = null;
+        acceptedToastTimer = null;
+    }, 5000);
+}
+
 // Echo real-time connection (uses resources/js/echo.ts)
 
 const lightTileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
@@ -268,7 +300,7 @@ onMounted(() => {
             if (data.status) shuttle.status = data.status;
             const marker = shuttleMarkers.get(shuttle.id);
             if (marker) {
-                marker.setLatLng([data.latitude, data.longitude]);
+                applyShuttleMarkerMove(marker, data.latitude, data.longitude);
                 marker.setIcon(makeShuttleIcon(shuttle.status));
             } else if (map) {
                 const m = L.marker([data.latitude, data.longitude], { icon: makeShuttleIcon(shuttle.status) })
@@ -277,11 +309,30 @@ onMounted(() => {
                 shuttleMarkers.set(shuttle.id, m);
             }
         });
+
+        const adminRides = echo.channel('admin-rides');
+        adminRides.listen('.ride.accepted', (e: {
+            pickup_request_id: number;
+            driver_name?: string | null;
+            eta_minutes?: number | null;
+        }) => {
+            showAcceptedToast({
+                pickup_request_id: e.pickup_request_id,
+                driver_name: e.driver_name ?? null,
+                eta_minutes: e.eta_minutes ?? null,
+            });
+        });
     }
 });
 
 onUnmounted(() => {
+    if (acceptedToastTimer) {
+        clearTimeout(acceptedToastTimer);
+        acceptedToastTimer = null;
+    }
+    acceptedToast.value = null;
     try { echo.leave('driver-tracking'); } catch {}
+    try { echo.leave('admin-rides'); } catch {}
     shuttleMarkers.forEach(m => m.remove());
     shuttleMarkers.clear();
     otherMarkers.forEach(m => m.remove());
@@ -345,6 +396,19 @@ watch(resolvedAppearance, () => {
 
                 <!-- Map area -->
                 <div class="relative flex flex-1 flex-col overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm shadow-black/5 dark:shadow-black/20">
+
+                    <!-- Ride accepted (admin) toast -->
+                    <div
+                        v-if="acceptedToast"
+                        class="pointer-events-none absolute right-4 top-4 z-[1000] max-w-sm rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-4 py-3 text-sm text-emerald-900 shadow-lg backdrop-blur-sm dark:border-emerald-400/30 dark:bg-emerald-950/80 dark:text-emerald-100"
+                    >
+                        <p class="font-semibold">Shuttle on the way!</p>
+                        <p class="mt-1 text-xs opacity-90">
+                            Pickup #{{ acceptedToast.pickup_request_id }} accepted
+                            <span v-if="acceptedToast.driver_name"> — {{ acceptedToast.driver_name }}</span>
+                            <span v-if="acceptedToast.eta_minutes != null"> — ETA ~{{ acceptedToast.eta_minutes }} min</span>
+                        </p>
+                    </div>
 
                     <!-- Leaflet map -->
                     <div ref="mapRef" class="relative flex-1 z-0">

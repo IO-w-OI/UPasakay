@@ -14,6 +14,12 @@ use App\Http\Controllers\Api\ShuttleLocationController;
 use App\Http\Controllers\Api\StopController;
 use Illuminate\Support\Facades\Route;
 
+// Heroku keepalive / health (no DB) — use with cron-job.org every ~10 minutes
+Route::get('ping', fn () => response()->json([
+    'status' => 'ok',
+    'time' => now()->toIso8601String(),
+]));
+
 // Public auth routes
 Route::post('register', [AuthController::class, 'register']);
 Route::post('login', [AuthController::class, 'login']);
