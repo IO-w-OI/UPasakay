@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
 import * as L from 'leaflet';
 import { Map as MapIcon, Bus, MapPin, RefreshCw, ArrowRight } from 'lucide-vue-next';
@@ -10,6 +10,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { dashboard } from '@/routes';
 import { type BreadcrumbItem } from '@/types';
 import 'leaflet/dist/leaflet.css';
+import 'leaflet-geometryutil';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Home', href: dashboard().url },
@@ -37,18 +38,27 @@ const props = defineProps<{
     }>;
 }>();
 
-// Filter / search
-const routeFilter = ref('All');
+// Filter / search — fixed route list
+const availableRoutes = ref([
+    { id: 'all',       name: 'All Routes' },
+    { id: 'north',     name: 'North Route' },
+    { id: 'south',     name: 'South Route' },
+    { id: 'cebu_city', name: 'Cebu City Route' },
+    { id: 'demo',      name: 'Demo Route' },
+]);
+const selectedRoute = ref('all');
+
+// Map dropdown id → shuttle label used by existing computed logic
+const routeIdToLabel: Record<string, string> = {
+    all: 'All', north: 'North', south: 'South', cebu_city: 'Cebu City', demo: 'All',
+};
+const routeFilter = computed(() => routeIdToLabel[selectedRoute.value] ?? 'All');
+
 const searchQuery  = ref('');
 const autoRefresh  = ref(true);
 
 // Local copy so Pusher updates can mutate coordinates without touching props
 const localShuttles = ref(props.shuttles.map(s => ({ ...s })));
-
-const routes = computed(() => {
-    const unique = [...new Set(localShuttles.value.map(s => s.route).filter(r => r !== '”'))];
-    return ['All', ...unique];
-});
 
 const filtered = computed(() =>
     localShuttles.value.filter(s => {
@@ -89,6 +99,11 @@ let map: L.Map | null = null;
 let tileLayer: L.TileLayer | null = null;
 const shuttleMarkers = new Map<number, L.Marker>();
 const otherMarkers: L.Marker[] = [];
+
+// Named polyline refs for geofenced custom-stop distance checks
+let northPolyline: L.Polyline | null = null;
+let southPolyline: L.Polyline | null = null;
+let cityPolyline:  L.Polyline | null = null;
 
 /** Smooth marker moves between ~5s GPS updates (CSS on Leaflet icon element). */
 const SHUTTLE_MARKER_MOVE_MS = 600;
@@ -249,9 +264,16 @@ async function drawRoutes(targetMap: L.Map) {
             const path = route.path ?? await fetchSegmentedRoute(route.stops);
             const pl = L.polyline(path, { color: route.color, weight: 5, opacity: 0.65, smoothFactor: 1.5 }).addTo(targetMap);
             routePolylines.set(key, pl);
+            // Store named references for geofencing
+            if (key === 'north') northPolyline = pl;
+            else if (key === 'south') southPolyline = pl;
+            else if (key === 'cebuCity') cityPolyline = pl;
         } catch {
             const pl = L.polyline(route.stops, { color: route.color, weight: 4, opacity: 0.65 }).addTo(targetMap);
             routePolylines.set(key, pl);
+            if (key === 'north') northPolyline = pl;
+            else if (key === 'south') southPolyline = pl;
+            else if (key === 'cebuCity') cityPolyline = pl;
         }
         const markers: L.CircleMarker[] = [];
         route.landmarks.forEach((landmark) => {
@@ -283,6 +305,52 @@ onMounted(() => {
 
         // Draw OSRM road-following routes
         drawRoutes(map!);
+
+        // ── Geofenced "Click to Add Stop" (admin) ──────────────────────────────
+        map!.on('click', (e: L.LeafletMouseEvent) => {
+            const choice = prompt("Add stop to which route? Type 'N' for North, 'S' for South, 'C' for City:");
+            if (!choice) return;
+
+            const key = choice.trim().toUpperCase();
+            let selectedPolyline: L.Polyline | null = null;
+            let pinColor = '#3b82f6';
+
+            if      (key === 'N') { selectedPolyline = northPolyline; pinColor = '#3b82f6'; }
+            else if (key === 'S') { selectedPolyline = southPolyline; pinColor = '#22c55e'; }
+            else if (key === 'C') { selectedPolyline = cityPolyline;  pinColor = '#f97316'; }
+            else { alert('Invalid choice.'); return; }
+
+            if (!selectedPolyline) {
+                alert('Route not yet loaded. Please wait a moment and try again.');
+                return;
+            }
+
+            // Find closest point on the polyline, then measure distance
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const closestPoint = (L as any).GeometryUtil.closest(map!, selectedPolyline, e.latlng);
+            const distanceInMeters = e.latlng.distanceTo(closestPoint);
+
+            if (distanceInMeters > 300) {
+                alert(
+                    '\u274C Error: This location is ' +
+                    Math.round(distanceInMeters) +
+                    ' meters away from the route. It must be within 300 meters!',
+                );
+                return;
+            }
+
+            const icon = L.divIcon({
+                className: 'custom-stop',
+                html: `<div style="background: ${pinColor}; width: 14px; height: 14px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 4px rgba(0,0,0,0.5);"></div>`,
+                iconSize:   [14, 14],
+                iconAnchor: [7, 7],
+            });
+
+            L.marker(e.latlng, { icon })
+                .bindPopup('<b>New Custom Stop</b><br>Added by Admin')
+                .addTo(map!)
+                .openPopup();
+        });
     });
 
     // Real-time shuttle location via Echo
@@ -368,10 +436,10 @@ watch(resolvedAppearance, () => {
             <!--  Filters row  -->
             <div class="mb-3 flex items-center gap-2">
                 <select
-                    v-model="routeFilter"
+                    v-model="selectedRoute"
                     class="rounded-lg border border-border/70 bg-card px-3 py-1.5 text-sm text-foreground shadow-sm shadow-black/5 dark:shadow-black/20 focus:outline-none"
                 >
-                    <option v-for="r in routes" :key="r">{{ r }}</option>
+                    <option v-for="r in availableRoutes" :key="r.id" :value="r.id">{{ r.name }}</option>
                 </select>
                 <div class="flex items-center gap-1.5 rounded-lg border border-border/70 bg-card px-3 py-1.5 shadow-sm shadow-black/5 dark:shadow-black/20">
                     <input
@@ -447,7 +515,7 @@ watch(resolvedAppearance, () => {
                     <!-- Click hint -->
                     <div class="flex items-center gap-2 border-t border-blue-500/20 bg-blue-500/10 px-4 py-2 text-xs text-blue-600 dark:text-blue-400">
                         <MapIcon class="h-3.5 w-3.5" />
-                        Click any shuttle or pin on the map to view details in a popup
+                        Click a shuttle/pin for details &middot; Click the map to add a custom stop (admin)
                     </div>
                 </div>
 
