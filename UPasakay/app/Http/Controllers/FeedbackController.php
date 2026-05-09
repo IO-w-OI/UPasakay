@@ -7,6 +7,7 @@ use App\Models\Route;
 use App\Models\Shuttle;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use Inertia\Inertia;
 
 class FeedbackController extends Controller
@@ -39,38 +40,37 @@ class FeedbackController extends Controller
         $completed = $query->take(50)->get();
 
         $total = $completed->count();
-        $avgRating = 4.2;
 
-        $allRequests = PickupRequest::whereIn('status', ['completed', 'cancelled'])->count() ?: 1;
-        $boardedPct = $total > 0 ? round(($completed->count() / $allRequests) * 100) : 0;
-        $failedPct = 100 - $boardedPct;
+        $requestTable = (new PickupRequest())->getTable();
+        $hasRatingColumn = Schema::hasColumn($requestTable, 'rating');
+        $avgRating = $hasRatingColumn
+            ? (float) (PickupRequest::query()->whereNotNull('rating')->avg('rating') ?? 0)
+            : 0;
 
-        // Generate realistic feedback from real completed requests
-        $ratings = [5, 4, 5, 3, 4, 5, 2, 4, 5, 3];
-        $comments = [
-            5 => ['Very punctual and smooth ride!', 'Excellent service, highly recommended!', 'Driver was very courteous.', 'On time as always, great job!'],
-            4 => ['Good service overall.', 'Mostly on time, minor delay.', 'Comfortable ride, would use again.'],
-            3 => ['Driver was friendly but shuttle was late.', 'Average experience, could improve timing.', 'Okay ride, nothing special.'],
-            2 => ['Missed shuttle, app notification was late.', 'Waited too long at the stop.', 'Shuttle was overcrowded.'],
-            1 => ['Very disappointing experience.', 'Shuttle never arrived.'],
-        ];
-        $statuses = ['boarded', 'boarded', 'boarded', 'boarded', 'failed'];
+        $allRequests = PickupRequest::whereIn('status', ['completed', 'cancelled'])->count();
+        if ($allRequests === 0) {
+            $boardedPct = 0;
+            $failedPct = 0;
+        } else {
+            $boardedPct = round(($completed->count() / $allRequests) * 100);
+            $failedPct = 100 - $boardedPct;
+        }
 
-        $feedback = $completed->take(20)->values()->map(function ($r, $i) use ($ratings, $comments, $statuses) {
-            $rating = $ratings[$i % count($ratings)];
-            $commentList = $comments[$rating];
-
-            return [
-                'id' => $r->id,
-                'passenger' => $r->user?->email ?? 'Passenger '.($i + 1),
-                'rating' => $rating,
-                'comment' => $commentList[$i % count($commentList)],
-                'route' => $r->route?->name ?? '—',
-                'status' => $statuses[$i % count($statuses)],
-                'date' => Carbon::parse($r->created_at)->format('M j'),
-                'replied' => $i % 4 === 0,
-            ];
-        });
+        $feedback = [];
+        if ($hasRatingColumn) {
+            $feedback = $completed->take(20)->values()->map(function ($r) {
+                return [
+                    'id' => $r->id,
+                    'passenger' => $r->user?->email ?? 'Passenger',
+                    'rating' => (int) ($r->rating ?? 0),
+                    'comment' => $r->comment ?? '',
+                    'route' => $r->route?->name ?? '—',
+                    'status' => 'boarded',
+                    'date' => Carbon::parse($r->created_at)->format('M j'),
+                    'replied' => (bool) ($r->replied ?? false),
+                ];
+            })->all();
+        }
 
         // Daily pickups chart (respecting time range)
         $rangeDays = 7;

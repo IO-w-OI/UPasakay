@@ -210,7 +210,8 @@ const allStopsByRoute = computed(() => {
     };
 
     for (const [key, routeName] of Object.entries(routeKeyToRoute)) {
-        const routeConfig = liveMapRoutes[key as 'north' | 'south' | 'cebu_city'];
+        const dataKey = key === 'cebu_city' ? 'cebuCity' : key;
+        const routeConfig = liveMapRoutes[dataKey as 'cebuCity' | 'north' | 'south'];
         if (routeConfig && routeConfig.landmarks) {
             routeConfig.landmarks.forEach((landmark, idx) => {
                 grouped[routeName].push({
