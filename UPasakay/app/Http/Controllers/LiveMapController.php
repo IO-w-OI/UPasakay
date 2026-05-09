@@ -15,8 +15,6 @@ class LiveMapController extends Controller
 {
     public function index()
     {
-        $routeOrder = ['North', 'South', 'Cebu City'];
-
         // Active & idle shuttles with latest location
         $shuttles = Shuttle::with(['route', 'driver', 'locations' => fn ($q) => $q->latest('recorded_at')->limit(1)])
             ->whereIn('status', ['active', 'idle'])
@@ -72,17 +70,15 @@ class LiveMapController extends Controller
             ]);
 
         $routes = Route::query()
-            ->whereIn('name', $routeOrder)
+            ->where('is_active', true)
+            ->orderByRaw("CASE name WHEN 'North' THEN 1 WHEN 'South' THEN 2 WHEN 'Cebu City' THEN 3 ELSE 4 END")
             ->get()
-            ->sortBy(fn (Route $route) => array_search($route->name, $routeOrder, true))
-            ->values()
             ->map(fn (Route $route) => [
                 'id' => $route->id,
                 'name' => $route->name,
             ]);
 
         $stops = Stop::with('route')
-            ->whereHas('route', fn ($query) => $query->whereIn('name', $routeOrder))
             ->orderBy('route_id')
             ->orderBy('sequence')
             ->get()
@@ -98,6 +94,7 @@ class LiveMapController extends Controller
                     'id' => $stop->route->id,
                     'name' => $stop->route->name,
                 ] : null,
+                'route_name' => $stop->route?->name,
             ]);
 
         return Inertia::render('LiveMap', [

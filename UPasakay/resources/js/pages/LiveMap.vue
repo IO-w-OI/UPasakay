@@ -35,6 +35,7 @@ interface StopItem {
     longitude: number;
     is_active: boolean;
     route: RouteItem | null;
+    route_name?: RouteName | null;
 }
 
 interface ShuttleItem {
@@ -197,7 +198,7 @@ const groupedStops = computed(() => {
     };
 
     props.stops.forEach((stop) => {
-        const routeName = stop.route?.name;
+        const routeName = stop.route?.name ?? stop.route_name;
         if (routeName && grouped[routeName]) {
             grouped[routeName].push(stop);
         }
@@ -729,6 +730,7 @@ watch(resolvedAppearance, () => {
                                             v-model.number="stopForm.route_id"
                                             class="w-full rounded-xl border border-border/70 bg-background px-3 py-2 text-sm text-foreground outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                                         >
+                                            <option :value="null" disabled>Select a route category</option>
                                             <option v-for="route in availableRouteOptions" :key="route.id" :value="route.id">
                                                 {{ route.name }}
                                             </option>
