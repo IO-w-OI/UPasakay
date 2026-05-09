@@ -143,13 +143,12 @@ const routeKeyToName: Record<Exclude<RouteFilterKey, 'all'>, RouteName> = {
     cebu_city: 'Cebu City',
 };
 
-const routeSortOrder: RouteName[] = ['North', 'South', 'Cebu City'];
-
 const isAddStopMode = ref(false);
 const showAddStopModal = ref(false);
 const pendingLatlng = ref<L.LatLng | null>(null);
 const isGeocodingStopName = ref(false);
 const stopModalError = ref('');
+const selectedRouteKey = ref<'north' | 'south' | 'cebu_city' | null>(null);
 
 const stopForm = useForm({
     route_id: null as number | null,
@@ -158,24 +157,29 @@ const stopForm = useForm({
     longitude: 0,
 });
 
-const availableRouteOptions = computed(() =>
-    [...props.routes].sort((left, right) => {
-        const leftIndex = routeSortOrder.indexOf(left.name);
-        const rightIndex = routeSortOrder.indexOf(right.name);
-        return leftIndex - rightIndex;
-    }),
-);
+// Hardcoded route options for the "Add Custom Stop" modal dropdown
+const hardcodedRouteOptions = [
+    { key: 'north', label: 'North Route' },
+    { key: 'south', label: 'South Route' },
+    { key: 'cebu_city', label: 'Cebu City Route' },
+] as const;
 
-const selectedRouteId = computed(() => {
-    const routeName = selectedRoute.value === 'all'
-        ? null
-        : routeKeyToName[selectedRoute.value as Exclude<RouteFilterKey, 'all'>];
+// Map route key to route ID by matching with database routes by name
+const routeKeyToId = computed(() => {
+    const mapping: Record<'north' | 'south' | 'cebu_city', number | null> = {
+        north: null,
+        south: null,
+        cebu_city: null,
+    };
 
-    if (routeName) {
-        return props.routes.find(route => route.name === routeName)?.id ?? null;
+    for (const [key, name] of Object.entries(routeKeyToName)) {
+        const route = props.routes.find(r => r.name === name);
+        if (route) {
+            mapping[key as 'north' | 'south' | 'cebu_city'] = route.id;
+        }
     }
 
-    return availableRouteOptions.value[0]?.id ?? null;
+    return mapping;
 });
 
 const routeGroupDefs = [
@@ -190,21 +194,60 @@ const routeNameToColor: Record<RouteName, string> = {
     'Cebu City': '#f97316',
 };
 
-const groupedStops = computed(() => {
-    const grouped: Record<RouteName, StopItem[]> = {
+// Merge hardcoded landmarks from routeData.ts with database stops
+const allStopsByRoute = computed(() => {
+    const grouped: Record<RouteName, (StopItem & { isCustom: boolean })[]> = {
         North: [],
         South: [],
         'Cebu City': [],
     };
 
+    // Add hardcoded landmarks from liveMapRoutes (marked as non-deletable)
+    const routeKeyToRoute: Record<'north' | 'south' | 'cebu_city', RouteName> = {
+        north: 'North',
+        south: 'South',
+        cebu_city: 'Cebu City',
+    };
+
+    for (const [key, routeName] of Object.entries(routeKeyToRoute)) {
+        const routeConfig = liveMapRoutes[key as 'north' | 'south' | 'cebu_city'];
+        if (routeConfig && routeConfig.landmarks) {
+            routeConfig.landmarks.forEach((landmark, idx) => {
+                grouped[routeName].push({
+                    id: -1,  // Marker for hardcoded landmark (negative ID = not deletable)
+                    route_id: -1,
+                    name: landmark.name,
+                    sequence: idx + 1,
+                    latitude: landmark.coord[0],
+                    longitude: landmark.coord[1],
+                    is_active: true,
+                    route: null,
+                    route_name: routeName,
+                    isCustom: false,  // Cannot delete hardcoded landmarks
+                } as StopItem & { isCustom: boolean });
+            });
+        }
+    }
+
+    // Append database stops (marked as deletable)
     props.stops.forEach((stop) => {
         const routeName = stop.route?.name ?? stop.route_name;
         if (routeName && grouped[routeName]) {
-            grouped[routeName].push(stop);
+            grouped[routeName].push({
+                ...stop,
+                isCustom: true,  // Can delete database stops
+            });
         }
     });
 
     return grouped;
+});
+
+// Watch selectedRouteKey and update stopForm.route_id
+watch(selectedRouteKey, (key) => {
+    if (key && routeKeyToId.value[key]) {
+        stopForm.route_id = routeKeyToId.value[key];
+    }
 });
 
 function toggleAddStopMode() {
@@ -217,7 +260,8 @@ function toggleAddStopMode() {
 function resetStopForm() {
     stopForm.clearErrors();
     stopForm.reset();
-    stopForm.route_id = selectedRouteId.value;
+    selectedRouteKey.value = 'north';  // Default to North route
+    stopForm.route_id = routeKeyToId.value.north ?? null;
 }
 
 function extractStopName(response: NominatimReverseResponse, fallbackLatlng: L.LatLng): string {
@@ -727,12 +771,12 @@ watch(resolvedAppearance, () => {
                                         </label>
                                         <select
                                             id="stop-route"
-                                            v-model.number="stopForm.route_id"
+                                            v-model="selectedRouteKey"
                                             class="w-full rounded-xl border border-border/70 bg-background px-3 py-2 text-sm text-foreground outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                                         >
                                             <option :value="null" disabled>Select a route category</option>
-                                            <option v-for="route in availableRouteOptions" :key="route.id" :value="route.id">
-                                                {{ route.name }}
+                                            <option v-for="route in hardcodedRouteOptions" :key="route.key" :value="route.key">
+                                                {{ route.label }}
                                             </option>
                                         </select>
                                         <p v-if="stopForm.errors.route_id" class="mt-1 text-xs text-red-500">
@@ -928,8 +972,8 @@ watch(resolvedAppearance, () => {
                                 </div>
                                 <ul class="space-y-1 pl-4">
                                     <li
-                                        v-for="stop in groupedStops[group.routeName]"
-                                        :key="stop.id"
+                                        v-for="stop in allStopsByRoute[group.routeName]"
+                                        :key="`${stop.id}-${stop.name}`"
                                         class="flex items-start justify-between gap-2 rounded-lg px-2 py-1 text-xs text-muted-foreground transition hover:bg-accent/60"
                                     >
                                         <span class="flex items-start gap-1.5">
@@ -939,16 +983,18 @@ watch(resolvedAppearance, () => {
                                                 <span class="block text-[11px] text-muted-foreground/70">Stop #{{ stop.sequence }}</span>
                                             </span>
                                         </span>
+                                        <!-- Delete button only for custom (database) stops -->
                                         <button
+                                            v-if="stop.isCustom"
                                             type="button"
                                             class="rounded-md p-1 text-muted-foreground transition hover:bg-red-500/10 hover:text-red-500"
                                             title="Delete stop"
-                                            @click.stop="confirmDeleteStop(stop)"
+                                            @click.stop="confirmDeleteStop(stop as StopItem)"
                                         >
                                             <Trash2 class="h-3.5 w-3.5" />
                                         </button>
                                     </li>
-                                    <li v-if="!groupedStops[group.routeName].length" class="text-xs italic text-muted-foreground/50">
+                                    <li v-if="!allStopsByRoute[group.routeName].length" class="text-xs italic text-muted-foreground/50">
                                         No stops defined
                                     </li>
                                 </ul>
