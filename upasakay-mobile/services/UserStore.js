@@ -2,7 +2,7 @@
  * 1. API CONFIGURATION
  * Using your current Mac IP from the Expo terminal.
  */
-const API_URL = "http://172.20.10.4:8000/api";
+const API_URL = "http://172.20.10.2:8000/api";
 
 /**
  * 2. SESSION TRACKER
