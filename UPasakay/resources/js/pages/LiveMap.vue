@@ -603,10 +603,9 @@ onMounted(() => {
     });
 
     // Real-time shuttle location via Echo
-    const subscribeChannel = 'driver-tracking';
     if ((echo as any)) {
-        const channel = echo.channel(subscribeChannel);
-        channel.listen('LocationUpdated', (data: { id?: number; shuttle_id?: number; latitude: number; longitude: number; status?: string }) => {
+        const channel = echo.channel('shuttle-locations');
+        channel.listen('.location.updated', (data: { id?: number; shuttle_id?: number; latitude: number; longitude: number; status?: string }) => {
             const shuttleId = data.id ?? data.shuttle_id;
             const shuttle = shuttleId !== undefined
                 ? localShuttles.value.find(s => s.id === shuttleId)
@@ -648,7 +647,7 @@ onUnmounted(() => {
         acceptedToastTimer = null;
     }
     acceptedToast.value = null;
-    try { echo.leave('driver-tracking'); } catch {}
+    try { echo.leave('shuttle-locations'); } catch {}
     try { echo.leave('admin-rides'); } catch {}
     shuttleMarkers.forEach(m => m.remove());
     shuttleMarkers.clear();
