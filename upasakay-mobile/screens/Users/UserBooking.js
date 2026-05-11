@@ -4,6 +4,7 @@ import { WebView } from 'react-native-webview';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import Pusher from 'pusher-js/react-native';
+import { currentUser } from '../../services/UserStore';
 
 import * as Notifications from 'expo-notifications';
 
@@ -37,8 +38,7 @@ const UserMapScreen = () => {
 
   // ── Pusher real-time subscriptions ────────────────────────────────────────
   useEffect(() => {
-    // TODO: Replace with the logged-in passenger's ID (e.g. from auth context or AsyncStorage)
-    const passengerId = 1;
+    const passengerId = currentUser?.passenger_id ?? currentUser?.id ?? 1;
 
     const pusher = new Pusher(PUSHER_KEY, { cluster: PUSHER_CLUSTER });
     pusherRef.current = pusher;
