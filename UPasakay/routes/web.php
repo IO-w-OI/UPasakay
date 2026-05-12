@@ -28,6 +28,8 @@ Route::middleware('guest')->group(function () {
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('live-map', [LiveMapController::class, 'index'])->name('live-map');
+    Route::post('live-map/stops', [LiveMapController::class, 'store'])->name('live-map.stops.store');
+    Route::delete('live-map/stops/{stop}', [LiveMapController::class, 'destroy'])->name('live-map.stops.destroy');
 
     // Admins
     Route::resource('admins', AdminController::class)->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);

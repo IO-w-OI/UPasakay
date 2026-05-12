@@ -1,8 +1,10 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { StyleSheet, View, TextInput, TouchableOpacity, Text, Image, LayoutAnimation, Platform, UIManager, Dimensions } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import Pusher from 'pusher-js/react-native';
+import { currentUser } from '../../services/UserStore';
 
 import * as Notifications from 'expo-notifications';
 
@@ -20,14 +22,80 @@ const SnappyAnim = {
   delete: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
 };
 
+const PUSHER_KEY    = 'f21efd02988d084b7b35';
+const PUSHER_CLUSTER = 'ap1';
+
 const UserMapScreen = () => {
   const webViewRef = useRef(null);
   const reverseGeocodeTimer = useRef(null);
+  const pusherRef = useRef(null);
 
   const [status, setStatus] = useState('searching');
   const [pickupAddress, setPickupAddress] = useState('Locating...');
   const [currentCoords, setCurrentCoords] = useState({ lat: 10.3381, lng: 123.9116 });
   const [searchText, setSearchText] = useState('');
+  const [driverInfo, setDriverInfo] = useState(null);
+
+  // ── Pusher real-time subscriptions ────────────────────────────────────────
+  useEffect(() => {
+    const passengerId = currentUser?.passenger_id ?? currentUser?.id ?? 1;
+
+    const pusher = new Pusher(PUSHER_KEY, { cluster: PUSHER_CLUSTER });
+    pusherRef.current = pusher;
+
+    // Channel 1: Live shuttle location — pan the map as the bus moves
+    const locationCh = pusher.subscribe('shuttle-locations');
+    locationCh.bind('location.updated', (data) => {
+      webViewRef.current?.injectJavaScript(
+        `window.panTo(${data.latitude}, ${data.longitude}); true;`
+      );
+    });
+
+    // Channel 2: Passenger-specific — accept / complete events
+    const passengerCh = pusher.subscribe(`passenger-${passengerId}`);
+
+    passengerCh.bind('ride.accepted', (data) => {
+      setDriverInfo({
+        name: data.driver_name,
+        shuttleNumber: data.shuttle_number,
+        eta: data.eta_minutes,
+      });
+      LayoutAnimation.configureNext(SnappyAnim);
+      setStatus('booking');
+      Notifications.scheduleNotificationAsync({
+        content: {
+          title: 'Your Para! was accepted! 🚌',
+          body: `${data.driver_name} is on the way. ETA: ${data.eta_minutes ?? '?'} min.`,
+          sound: true,
+        },
+        trigger: null,
+      });
+    });
+
+    passengerCh.bind('ride.completed', () => {
+      Notifications.scheduleNotificationAsync({
+        content: {
+          title: 'Ride Completed ✅',
+          body: 'Thank you for riding with UPasakay!',
+          sound: true,
+        },
+        trigger: null,
+      });
+      clearMap();
+      LayoutAnimation.configureNext(SnappyAnim);
+      setStatus('searching');
+      setDriverInfo(null);
+    });
+
+    return () => {
+      locationCh.unbind_all();
+      passengerCh.unbind_all();
+      pusher.unsubscribe('shuttle-locations');
+      pusher.unsubscribe(`passenger-${passengerId}`);
+      pusher.disconnect();
+    };
+  }, []);
+  // ──────────────────────────────────────────────────────────────────────────
 
   const mapHtml = `
     <!DOCTYPE html>
@@ -295,8 +363,12 @@ const UserMapScreen = () => {
           <View style={styles.waitingContent}>
             <View style={styles.row}>
                <View>
-                 <Text style={styles.arriveTitle}>Arriving by 6:05AM</Text>
-                 <Text style={styles.arriveSub}>Traveling from UP Cebu...</Text>
+                 <Text style={styles.arriveTitle}>
+                   {driverInfo ? `ETA: ${driverInfo.eta ?? '?'} min` : 'Waiting for driver...'}
+                 </Text>
+                 <Text style={styles.arriveSub}>
+                   {driverInfo ? `Shuttle ${driverInfo.shuttleNumber ?? ''}` : 'Connecting to shuttle...'}
+                 </Text>
                </View>
                <View style={styles.timeline}>
                  <Ionicons name="bus" size={20} color="#1A2E1A"/><Text style={{color: '#ccc'}}>---</Text><Ionicons name="person" size={20} color="#1A2E1A"/>
@@ -305,7 +377,7 @@ const UserMapScreen = () => {
             <View style={styles.driverSection}>
               <Image source={{ uri: 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=100' }} style={styles.avatar} />
               <View>
-                <Text style={styles.dName}>Sanford Marin Vinuya</Text>
+                <Text style={styles.dName}>{driverInfo?.name ?? 'Awaiting acceptance...'}</Text>
                 <Text style={styles.dRoute}>UP Cebu Bus Route</Text>
               </View>
             </View>
