@@ -395,6 +395,117 @@ If you get "could not find driver" error when running tests:
 - [ ] Email notifications configured (for future features)
 - [ ] Performance testing completed
 
+## Driver Location API (Mobile to Web Live Map)
+
+Driver apps post GPS updates to the backend; Laravel broadcasts to Pusher on the **`driver-tracking`** channel so the Vue Live Map can update markers without a page refresh.
+
+### Endpoint
+
+- **Method / URL:** `POST /api/driver/location`
+- **Authentication:** Required — `Authorization: Bearer {token}` (Laravel Sanctum; same pattern as other protected API routes).
+
+### Request body
+
+Send **either** `driver_id` **or** `shuttle_id` (not required to send both). Coordinates are required.
+
+| Field | Type | Required | Notes |
+|-------|------|----------|--------|
+| `driver_id` | integer | One of `driver_id` / `shuttle_id` | Must exist in `drivers`. The server resolves the driver’s assigned shuttle (`shuttles.driver_id`). Returns **422** if the driver has no shuttle. |
+| `shuttle_id` | integer | One of `driver_id` / `shuttle_id` | Must exist in `shuttles`. If `driver_id` is also sent, it must match the shuttle’s `driver_id` or the API returns **422**. |
+| `latitude` | number | Yes | |
+| `longitude` | number | Yes | |
+| `speed_kmh` | number | No | Optional |
+
+**Example (by driver):**
+
+```json
+{
+  "driver_id": 1,
+  "latitude": 10.3157,
+  "longitude": 123.8854,
+  "speed_kmh": 25.5
+}
+```
+
+**Example (by shuttle):**
+
+```json
+{
+  "shuttle_id": 3,
+  "latitude": 10.3157,
+  "longitude": 123.8854
+}
+```
+
+### Success response (201)
+
+JSON includes the created `shuttle_locations` row fields plus:
+
+- `shuttle_id` — resolved shuttle
+- `driver_id` — from the shuttle when available (may be `null` if the shuttle has no driver)
+
+### Legacy / alternate endpoint
+
+- `POST /api/shuttle-locations` — still supported; body must include `shuttle_id`, `latitude`, `longitude`.
+
+### Pusher / Laravel Echo (for Dev 2 / web dashboard)
+
+| Item | Value |
+|------|--------|
+| **Channel** | `driver-tracking` (public channel) |
+| **Event name** | `LocationUpdated` (from `broadcastAs()` on `ShuttleLocationUpdated`) |
+| **Payload (JSON)** | `{ "id": <shuttle_id>, "latitude": <float>, "longitude": <float> }` — `id` is the shuttle id (same as `shuttle_id` in the API). |
+
+In Echo (Vue), subscribe with `echo.channel('driver-tracking').listen('LocationUpdated', (data) => { ... })`.
+
+### Related code
+
+- Route: [routes/api.php](routes/api.php) — `POST driver/location` inside `auth:sanctum`.
+- Controller: [app/Http/Controllers/Api/ShuttleLocationController.php](app/Http/Controllers/Api/ShuttleLocationController.php) — `storeFromDriver()`.
+- Event: [app/Events/ShuttleLocationUpdated.php](app/Events/ShuttleLocationUpdated.php).
+- Tests: [tests/Feature/DriverLocationApiTest.php](tests/Feature/DriverLocationApiTest.php).
+
+### Live Map: ride accepted toast (admin dashboard)
+
+When a pickup is assigned (status becomes `accepted`), the backend broadcasts `RideAccepted` on:
+
+| Item | Value |
+|------|--------|
+| **Channel** | `admin-rides` (public) |
+| **Event name** | `.ride.accepted` (custom `broadcastAs`; use leading dot in Echo) |
+| **Payload** | `pickup_request_id`, `driver_name`, `eta_minutes`, `shuttle_id`, etc. |
+
+The Live Map page listens and shows a short **"Shuttle on the way!"** toast (auto-dismiss ~5s).
+
+### Heroku keepalive (cron-job.org)
+
+- **URL:** `GET https://<your-app>.herokuapp.com/api/ping`
+- **Response:** `{ "status": "ok", "time": "<ISO8601>" }` — no database access.
+- Schedule every ~10 minutes in cron-job.org so a free dyno is less likely to sleep during a demo.
+
+### Demo accounts (Expo seed)
+
+Run once on staging or production DB (not part of default `DatabaseSeeder`):
+
+```bash
+php artisan db:seed --class=DemoSeeder
+```
+
+| Role | Email | Password | Notes |
+|------|-------|----------|--------|
+| Admin | `demo.admin@upasakay.com` | `password123` | Web admin |
+| Driver | `demo.driver@upasakay.com` | `password123` | Linked to shuttle `DEMO-1`; use Sanctum token for `POST /api/driver/location` |
+| Passenger | `demo.passenger@upasakay.com` | `password123` | `verification_status`: approved |
+
+Seeder: [database/seeders/DemoSeeder.php](database/seeders/DemoSeeder.php).
+
+### 60-second smoke test (before judges)
+
+1. Log in as demo driver (or create a Sanctum token for `demo.driver@upasakay.com`).
+2. Open **Live Map** in the browser.
+3. From Postman, `POST /api/driver/location` twice (~5s apart) with `driver_id` + lat/lng — marker should move smoothly.
+4. Assign a driver to a pending pickup from the admin UI — toast should appear on Live Map.
+
 ## Support & Documentation
 
 For more detailed information, see:

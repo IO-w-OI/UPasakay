@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AdminAuthController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DriverAssignmentController;
 use App\Http\Controllers\Api\DriverController;
@@ -13,9 +14,16 @@ use App\Http\Controllers\Api\ShuttleLocationController;
 use App\Http\Controllers\Api\StopController;
 use Illuminate\Support\Facades\Route;
 
+// Heroku keepalive / health (no DB) — use with cron-job.org every ~10 minutes
+Route::get('ping', fn () => response()->json([
+    'status' => 'ok',
+    'time' => now()->toIso8601String(),
+]));
+
 // Public auth routes
 Route::post('register', [AuthController::class, 'register']);
 Route::post('login', [AuthController::class, 'login']);
+Route::post('admin/register', [AdminAuthController::class, 'register']);
 
 // Backward-compatible mobile alias routes
 Route::prefix('mobile')->group(function () {
@@ -58,4 +66,5 @@ Route::middleware('auth:sanctum')->group(function () {
         ->middleware('ensure.passenger.approved');
     Route::apiResource('driver-assignments', DriverAssignmentController::class);
     Route::apiResource('shuttle-locations', ShuttleLocationController::class);
+    Route::post('driver/location', [ShuttleLocationController::class, 'storeFromDriver']);
 });

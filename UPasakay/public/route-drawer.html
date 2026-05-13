@@ -139,6 +139,7 @@
     <button id="modeMapBtn"   class="active" onclick="setInputMode('map')">Click Map</button>
     <button id="modeSingleBtn"             onclick="setInputMode('single')">Single Coord</button>
     <button id="modeBulkBtn"               onclick="setInputMode('bulk')">Paste / Bulk</button>
+    <button id="modeEditBtn"               onclick="setInputMode('edit')">Edit Path</button>
   </div>
 
   <!-- Coord input panel (hidden when mode = map) -->
@@ -173,11 +174,31 @@ or just:
       <div class="coord-error" id="bulkError"></div>
     </div>
 
+    <!-- Edit Path sub-panel -->
+    <div id="editPanel" class="coord-section" style="display:none;">
+      <label>Paste a path array to load and edit</label>
+      <label style="font-size:11px;color:#aaa;display:flex;align-items:center;gap:8px;">
+        <input id="editRawCheckbox" type="checkbox" onchange="editPasteAsPath = this.checked" /> Paste as raw path (use these coords as vertices, not stops)
+      </label>
+      <textarea class="bulk-textarea" id="editInput" placeholder="Paste a path array:
+[
+  [10.3701320, 123.9192870],
+  [10.3701500, 123.9192690],
+  [10.3702000, 123.9193000]
+]"></textarea>
+      <div class="bulk-actions">
+        <button class="btn-bulk-add"   onclick="loadEditPath()">▶ Load Path</button>
+        <button class="btn-bulk-clear" onclick="document.getElementById('editInput').value=''">Clear</button>
+      </div>
+      <div class="coord-error" id="editError"></div>
+    </div>
+
   </div>
 
   <!-- Controls -->
   <div class="controls">
     <button id="btnDraw" class="active" onclick="toggleDraw()">Drawing ON</button>
+    <button onclick="reverseRoute()">⟲ Reverse</button>
     <button onclick="undoLast()">↩ Undo</button>
     <button class="danger" onclick="clearRoute()">✕ Clear Route</button>
   </div>
@@ -202,12 +223,13 @@ or just:
 const routeColors = { south: '#22c55e', north: '#3b82f6', cebuCity: '#f97316' };
 let currentRoute = 'south';
 let drawingEnabled = true;
-let inputMode = 'map'; // 'map' | 'single' | 'bulk'
+let inputMode = 'map'; // 'map' | 'single' | 'bulk' | 'edit'
+let editPasteAsPath = false; // when true, pasted arrays are treated as raw path vertices
 
 const routeData = {
-  south:    { waypoints: [], markers: [], roadPath: [], polyline: null },
-  north:    { waypoints: [], markers: [], roadPath: [], polyline: null },
-  cebuCity: { waypoints: [], markers: [], roadPath: [], polyline: null },
+  south:    { waypoints: [], markers: [], roadPath: [], polyline: null, vertexMarkers: [] },
+  north:    { waypoints: [], markers: [], roadPath: [], polyline: null, vertexMarkers: [] },
+  cebuCity: { waypoints: [], markers: [], roadPath: [], polyline: null, vertexMarkers: [] },
 };
 
 const map = L.map('map').setView([10.3000, 123.8800], 13);
@@ -222,11 +244,13 @@ function setInputMode(mode) {
   document.getElementById('modeMapBtn').classList.toggle('active', mode === 'map');
   document.getElementById('modeSingleBtn').classList.toggle('active', mode === 'single');
   document.getElementById('modeBulkBtn').classList.toggle('active', mode === 'bulk');
+  document.getElementById('modeEditBtn').classList.toggle('active', mode === 'edit');
 
   const panel = document.getElementById('coordPanel');
   panel.style.display = mode === 'map' ? 'none' : 'block';
   document.getElementById('singlePanel').style.display = mode === 'single' ? 'flex' : 'none';
   document.getElementById('bulkPanel').style.display   = mode === 'bulk'   ? 'flex' : 'none';
+  document.getElementById('editPanel').style.display   = mode === 'edit'   ? 'flex' : 'none';
 
   // Keep drawing toggle in sync: only enable map click when in map mode
   drawingEnabled = mode === 'map';
@@ -268,7 +292,12 @@ async function addSingleCoord() {
     return;
   }
 
-  await addWaypoint(pair[0], pair[1]);
+  // If in edit mode and treating paste as raw path, insert as a vertex
+  if (inputMode === 'edit' && editPasteAsPath) {
+    await insertVertexAt({ lat: pair[0], lng: pair[1] });
+  } else {
+    await addWaypoint(pair[0], pair[1]);
+  }
 
   // Clear inputs
   document.getElementById('latInput').value = '';
@@ -335,6 +364,12 @@ async function addBulkCoords() {
 
 // ── Click to add waypoint ─────────────────────────────────────────────────
 map.on('click', async (e) => {
+  // If we're in edit mode and editing a raw path, insert a vertex
+  if (inputMode === 'edit') {
+    await insertVertexAt(e.latlng);
+    return;
+  }
+
   if (!drawingEnabled) return;
   const { lat, lng } = e.latlng;
   await addWaypoint(lat, lng);
@@ -399,12 +434,25 @@ async function rebuildRoad(routeKey) {
 // ── UI helpers ────────────────────────────────────────────────────────────
 function updateUI() {
   const rd = routeData[currentRoute];
-  document.getElementById('waypointsList').innerHTML = rd.waypoints.map((wp, i) =>
-    '<div class="waypoint-item">' +
-    '<span class="idx">#' + (i+1) + '</span>' +
-    '<span class="coords">[' + wp[0].toFixed(7) + ', ' + wp[1].toFixed(7) + ']</span>' +
-    '<span class="del" onclick="removeWaypoint(' + i + ')">✕</span></div>'
-  ).join('');
+  // Show waypoints OR raw path vertices when editing a raw path
+  const listEl = document.getElementById('waypointsList');
+  if (rd.waypoints && rd.waypoints.length) {
+    listEl.innerHTML = rd.waypoints.map((wp, i) =>
+      '<div class="waypoint-item">' +
+      '<span class="idx">#' + (i+1) + '</span>' +
+      '<span class="coords">[' + wp[0].toFixed(7) + ', ' + wp[1].toFixed(7) + ']</span>' +
+      '<span class="del" onclick="removeWaypoint(' + i + ')">✕</span></div>'
+    ).join('');
+  } else if (rd.roadPath && rd.roadPath.length) {
+    listEl.innerHTML = rd.roadPath.map((wp, i) =>
+      '<div class="waypoint-item">' +
+      '<span class="idx">v' + (i+1) + '</span>' +
+      '<span class="coords">[' + wp[0].toFixed(7) + ', ' + wp[1].toFixed(7) + ']</span>' +
+      '<span class="del" onclick="removeVertex(\'' + currentRoute + '\',' + i + ')">✕</span></div>'
+    ).join('');
+  } else {
+    listEl.innerHTML = '';
+  }
 
   const output = document.getElementById('output');
   if (rd.roadPath.length === 0) { output.value = '// Draw a route first…'; return; }
@@ -431,6 +479,18 @@ function toggleDraw() {
 
 async function undoLast() {
   const rd = routeData[currentRoute];
+  // If editing raw path and there are vertices, remove last vertex
+  if (inputMode === 'edit' && rd.roadPath && rd.roadPath.length) {
+    rd.roadPath.pop();
+    if (rd.vertexMarkers && rd.vertexMarkers.length) {
+      const m = rd.vertexMarkers.pop(); if (m) m.remove();
+      rd.vertexMarkers.forEach((mm, i) => mm._vertexIndex = i);
+    }
+    if (rd.polyline) rd.polyline.setLatLngs(rd.roadPath);
+    updateUI();
+    return;
+  }
+
   if (!rd.waypoints.length) return;
   rd.markers.pop().remove();
   rd.waypoints.pop();
@@ -448,15 +508,191 @@ async function removeWaypoint(idx) {
   updateUI();
 }
 
+// ── Load path from edit mode ──────────────────────────────────────────────
+async function loadEditPath() {
+  const raw   = document.getElementById('editInput').value;
+  const errEl = document.getElementById('editError');
+  errEl.textContent = '';
+
+  // Try to parse as JSON array first
+  let pairs = [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      pairs = parsed.map(p => {
+        if (Array.isArray(p) && p.length >= 2) {
+          const lat = parseFloat(p[0]);
+          const lng = parseFloat(p[1]);
+          if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+            return [lat, lng];
+          }
+        }
+        return null;
+      }).filter(p => p !== null);
+    }
+  } catch (e) {
+    // Not valid JSON, try line-by-line parsing
+    const lines = raw.split(/\n|(?<=\])\s*,\s*(?=\[)/).map(l => l.trim()).filter(Boolean);
+    const bad = [];
+    lines.forEach((line, i) => {
+      const p = parseLatLng(line);
+      if (p) pairs.push(p);
+      else if (line.length > 1) bad.push(i + 1);
+    });
+    if (bad.length && pairs.length === 0) {
+      errEl.textContent = '⚠ Could not parse coordinates. Check format.';
+      return;
+    }
+  }
+
+  if (pairs.length === 0) {
+    errEl.textContent = '⚠ No valid coordinates found.';
+    return;
+  }
+
+  const rd = routeData[currentRoute];
+  // If user wants to paste as a raw path (vertices) — create editable path
+  if (editPasteAsPath) {
+    await clearRoute();
+    rd.roadPath = pairs.slice();
+    drawRawPath(currentRoute);
+    updateUI();
+    if (rd.polyline) map.fitBounds(rd.polyline.getBounds(), { padding: [40, 40] });
+    document.getElementById('editInput').value = '';
+    return;
+  }
+
+  // Otherwise treat as waypoints (legacy behavior)
+  await clearRoute();
+  setStatus('Loading ' + pairs.length + ' waypoints from path…');
+
+  for (const [lat, lng] of pairs) {
+    const idx = rd.waypoints.length;
+    const marker = L.circleMarker([lat, lng], {
+      radius: 7, color: '#fff', fillColor: routeColors[currentRoute], fillOpacity: 1, weight: 2,
+    }).addTo(map).bindTooltip('#' + (idx + 1), { permanent: true, direction: 'top', offset: [0, -10] });
+    rd.waypoints.push([lat, lng]);
+    rd.markers.push(marker);
+  }
+
+  await rebuildRoad(currentRoute);
+  updateUI();
+
+  if (rd.polyline) map.fitBounds(rd.polyline.getBounds(), { padding: [40, 40] });
+  document.getElementById('editInput').value = '';
+}
+
+// ── Reverse route ────────────────────────────────────────────────────────
+async function reverseRoute() {
+  const rd = routeData[currentRoute];
+  if (rd.waypoints.length < 2) {
+    setStatus('Need at least 2 waypoints to reverse');
+    return;
+  }
+
+  // Reverse both waypoints and markers
+  rd.waypoints.reverse();
+  rd.markers.reverse();
+
+  // Update tooltip labels
+  rd.markers.forEach((m, i) => m.setTooltipContent('#' + (i + 1)));
+
+  setStatus('Reversed "' + currentRoute + '" route');
+  await rebuildRoad(currentRoute);
+  updateUI();
+}
+
 async function clearRoute() {
   const rd = routeData[currentRoute];
-  rd.markers.forEach(m => m.remove());
-  rd.markers.length = 0;
+  // remove waypoint markers
+  if (rd.markers && rd.markers.length) { rd.markers.forEach(m => m.remove()); rd.markers.length = 0; }
+  // remove vertex markers if any
+  if (rd.vertexMarkers && rd.vertexMarkers.length) { rd.vertexMarkers.forEach(m => m.remove()); rd.vertexMarkers.length = 0; }
   rd.waypoints.length = 0;
   rd.roadPath = [];
   if (rd.polyline) { rd.polyline.remove(); rd.polyline = null; }
   updateUI();
   setStatus('Cleared "' + currentRoute + '" route');
+}
+
+// ── Raw path editing helpers ───────────────────────────────────────────
+function drawRawPath(routeKey) {
+  const rd = routeData[routeKey];
+  if (rd.polyline) { rd.polyline.remove(); rd.polyline = null; }
+  if (rd.vertexMarkers && rd.vertexMarkers.length) { rd.vertexMarkers.forEach(m => m.remove()); rd.vertexMarkers = []; }
+  if (!rd.roadPath || rd.roadPath.length === 0) return;
+  rd.polyline = L.polyline(rd.roadPath, { color: routeColors[routeKey], weight: 5, opacity: 0.7, smoothFactor: 1 }).addTo(map);
+  rd.vertexMarkers = [];
+  for (let i = 0; i < rd.roadPath.length; i++) {
+    const latlng = rd.roadPath[i];
+    const m = createVertexMarker(routeKey, i, latlng);
+    rd.vertexMarkers.push(m);
+  }
+}
+
+function createVertexMarker(routeKey, idx, latlng) {
+  const rd = routeData[routeKey];
+  const color = routeColors[routeKey];
+  const icon = L.divIcon({ className: 'vertex-marker', html: '<div style="width:12px;height:12px;border-radius:50%;background:#fff;border:2px solid ' + color + ';box-shadow:0 0 2px rgba(0,0,0,0.6)"></div>', iconSize: [14,14], iconAnchor: [7,7] });
+  const marker = L.marker(latlng, { icon, draggable: true, title: '#' + (idx+1) }).addTo(map);
+  marker._vertexIndex = idx;
+  marker.on('drag', (e) => {
+    const p = e.target.getLatLng();
+    rd.roadPath[marker._vertexIndex] = [p.lat, p.lng];
+    if (rd.polyline) rd.polyline.setLatLngs(rd.roadPath);
+  });
+  marker.on('dragend', () => { updateUI(); setStatus('Moved vertex #' + (marker._vertexIndex+1)); });
+  marker.on('contextmenu', () => { removeVertex(routeKey, marker._vertexIndex); });
+  return marker;
+}
+
+function removeVertex(routeKey, idx) {
+  const rd = routeData[routeKey];
+  if (!rd.roadPath || idx < 0 || idx >= rd.roadPath.length) return;
+  if (rd.vertexMarkers && rd.vertexMarkers[idx]) rd.vertexMarkers[idx].remove();
+  rd.roadPath.splice(idx, 1);
+  if (rd.vertexMarkers) { rd.vertexMarkers.splice(idx, 1); rd.vertexMarkers.forEach((m, i) => m._vertexIndex = i); }
+  if (rd.polyline) rd.polyline.setLatLngs(rd.roadPath);
+  updateUI();
+  setStatus('Removed vertex #' + (idx+1));
+}
+
+async function insertVertexAt(latlng) {
+  const rd = routeData[currentRoute];
+  if (!rd.roadPath) rd.roadPath = [];
+  const p = [latlng.lat, latlng.lng];
+  if (rd.roadPath.length < 2) {
+    rd.roadPath.push(p);
+    drawRawPath(currentRoute);
+    updateUI();
+    return;
+  }
+  let bestIdx = rd.roadPath.length - 1;
+  let bestDist = Infinity;
+  for (let i = 0; i < rd.roadPath.length - 1; i++) {
+    const a = rd.roadPath[i], b = rd.roadPath[i+1];
+    const d = pointToSegmentDistanceSquared(p, a, b);
+    if (d < bestDist) { bestDist = d; bestIdx = i; }
+  }
+  rd.roadPath.splice(bestIdx+1, 0, p);
+  drawRawPath(currentRoute);
+  updateUI();
+  setStatus('Inserted vertex at #' + (bestIdx+2));
+}
+
+function pointToSegmentDistanceSquared(p, a, b) {
+  const x = p[0], y = p[1];
+  const x1 = a[0], y1 = a[1];
+  const x2 = b[0], y2 = b[1];
+  const A = x - x1, B = y - y1, C = x2 - x1, D = y2 - y1;
+  const dot = A * C + B * D;
+  const len_sq = C * C + D * D;
+  let param = len_sq !== 0 ? dot / len_sq : -1;
+  let xx, yy;
+  if (param < 0) { xx = x1; yy = y1; }
+  else if (param > 1) { xx = x2; yy = y2; }
+  else { xx = x1 + param * C; yy = y1 + param * D; }
+  const dx = x - xx, dy = y - yy; return dx * dx + dy * dy;
 }
 
 function copyOutput() {

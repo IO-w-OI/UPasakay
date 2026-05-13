@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\AdminController::index
- * @see app/Http/Controllers/AdminController.php:18
+ * @see app/Http/Controllers/AdminController.php:17
  * @route '/admins'
  */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\AdminController::index
- * @see app/Http/Controllers/AdminController.php:18
+ * @see app/Http/Controllers/AdminController.php:17
  * @route '/admins'
  */
 index.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\AdminController::index
- * @see app/Http/Controllers/AdminController.php:18
+ * @see app/Http/Controllers/AdminController.php:17
  * @route '/admins'
  */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -34,7 +34,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\AdminController::index
- * @see app/Http/Controllers/AdminController.php:18
+ * @see app/Http/Controllers/AdminController.php:17
  * @route '/admins'
  */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -44,7 +44,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\AdminController::index
- * @see app/Http/Controllers/AdminController.php:18
+ * @see app/Http/Controllers/AdminController.php:17
  * @route '/admins'
  */
     const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -54,7 +54,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\AdminController::index
- * @see app/Http/Controllers/AdminController.php:18
+ * @see app/Http/Controllers/AdminController.php:17
  * @route '/admins'
  */
         indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -63,7 +63,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\AdminController::index
- * @see app/Http/Controllers/AdminController.php:18
+ * @see app/Http/Controllers/AdminController.php:17
  * @route '/admins'
  */
         indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -79,7 +79,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     index.form = indexForm
 /**
 * @see \App\Http\Controllers\AdminController::create
- * @see app/Http/Controllers/AdminController.php:65
+ * @see app/Http/Controllers/AdminController.php:64
  * @route '/admins/create'
  */
 export const create = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -94,7 +94,7 @@ create.definition = {
 
 /**
 * @see \App\Http\Controllers\AdminController::create
- * @see app/Http/Controllers/AdminController.php:65
+ * @see app/Http/Controllers/AdminController.php:64
  * @route '/admins/create'
  */
 create.url = (options?: RouteQueryOptions) => {
@@ -103,7 +103,7 @@ create.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\AdminController::create
- * @see app/Http/Controllers/AdminController.php:65
+ * @see app/Http/Controllers/AdminController.php:64
  * @route '/admins/create'
  */
 create.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -112,7 +112,7 @@ create.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\AdminController::create
- * @see app/Http/Controllers/AdminController.php:65
+ * @see app/Http/Controllers/AdminController.php:64
  * @route '/admins/create'
  */
 create.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -122,7 +122,7 @@ create.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\AdminController::create
- * @see app/Http/Controllers/AdminController.php:65
+ * @see app/Http/Controllers/AdminController.php:64
  * @route '/admins/create'
  */
     const createForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -132,7 +132,7 @@ create.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\AdminController::create
- * @see app/Http/Controllers/AdminController.php:65
+ * @see app/Http/Controllers/AdminController.php:64
  * @route '/admins/create'
  */
         createForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -141,7 +141,7 @@ create.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\AdminController::create
- * @see app/Http/Controllers/AdminController.php:65
+ * @see app/Http/Controllers/AdminController.php:64
  * @route '/admins/create'
  */
         createForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -157,7 +157,7 @@ create.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     create.form = createForm
 /**
 * @see \App\Http\Controllers\AdminController::store
- * @see app/Http/Controllers/AdminController.php:75
+ * @see app/Http/Controllers/AdminController.php:74
  * @route '/admins'
  */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -172,7 +172,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\AdminController::store
- * @see app/Http/Controllers/AdminController.php:75
+ * @see app/Http/Controllers/AdminController.php:74
  * @route '/admins'
  */
 store.url = (options?: RouteQueryOptions) => {
@@ -181,7 +181,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\AdminController::store
- * @see app/Http/Controllers/AdminController.php:75
+ * @see app/Http/Controllers/AdminController.php:74
  * @route '/admins'
  */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -191,7 +191,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\AdminController::store
- * @see app/Http/Controllers/AdminController.php:75
+ * @see app/Http/Controllers/AdminController.php:74
  * @route '/admins'
  */
     const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -201,7 +201,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\AdminController::store
- * @see app/Http/Controllers/AdminController.php:75
+ * @see app/Http/Controllers/AdminController.php:74
  * @route '/admins'
  */
         storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -212,7 +212,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     store.form = storeForm
 /**
 * @see \App\Http\Controllers\AdminController::edit
- * @see app/Http/Controllers/AdminController.php:117
+ * @see app/Http/Controllers/AdminController.php:116
  * @route '/admins/{admin}/edit'
  */
 export const edit = (args: { admin: number | { user_id: number } } | [admin: number | { user_id: number } ] | number | { user_id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -227,7 +227,7 @@ edit.definition = {
 
 /**
 * @see \App\Http\Controllers\AdminController::edit
- * @see app/Http/Controllers/AdminController.php:117
+ * @see app/Http/Controllers/AdminController.php:116
  * @route '/admins/{admin}/edit'
  */
 edit.url = (args: { admin: number | { user_id: number } } | [admin: number | { user_id: number } ] | number | { user_id: number }, options?: RouteQueryOptions) => {
@@ -260,7 +260,7 @@ edit.url = (args: { admin: number | { user_id: number } } | [admin: number | { u
 
 /**
 * @see \App\Http\Controllers\AdminController::edit
- * @see app/Http/Controllers/AdminController.php:117
+ * @see app/Http/Controllers/AdminController.php:116
  * @route '/admins/{admin}/edit'
  */
 edit.get = (args: { admin: number | { user_id: number } } | [admin: number | { user_id: number } ] | number | { user_id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -269,7 +269,7 @@ edit.get = (args: { admin: number | { user_id: number } } | [admin: number | { u
 })
 /**
 * @see \App\Http\Controllers\AdminController::edit
- * @see app/Http/Controllers/AdminController.php:117
+ * @see app/Http/Controllers/AdminController.php:116
  * @route '/admins/{admin}/edit'
  */
 edit.head = (args: { admin: number | { user_id: number } } | [admin: number | { user_id: number } ] | number | { user_id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -279,7 +279,7 @@ edit.head = (args: { admin: number | { user_id: number } } | [admin: number | { 
 
     /**
 * @see \App\Http\Controllers\AdminController::edit
- * @see app/Http/Controllers/AdminController.php:117
+ * @see app/Http/Controllers/AdminController.php:116
  * @route '/admins/{admin}/edit'
  */
     const editForm = (args: { admin: number | { user_id: number } } | [admin: number | { user_id: number } ] | number | { user_id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -289,7 +289,7 @@ edit.head = (args: { admin: number | { user_id: number } } | [admin: number | { 
 
             /**
 * @see \App\Http\Controllers\AdminController::edit
- * @see app/Http/Controllers/AdminController.php:117
+ * @see app/Http/Controllers/AdminController.php:116
  * @route '/admins/{admin}/edit'
  */
         editForm.get = (args: { admin: number | { user_id: number } } | [admin: number | { user_id: number } ] | number | { user_id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -298,7 +298,7 @@ edit.head = (args: { admin: number | { user_id: number } } | [admin: number | { 
         })
             /**
 * @see \App\Http\Controllers\AdminController::edit
- * @see app/Http/Controllers/AdminController.php:117
+ * @see app/Http/Controllers/AdminController.php:116
  * @route '/admins/{admin}/edit'
  */
         editForm.head = (args: { admin: number | { user_id: number } } | [admin: number | { user_id: number } ] | number | { user_id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -314,7 +314,7 @@ edit.head = (args: { admin: number | { user_id: number } } | [admin: number | { 
     edit.form = editForm
 /**
 * @see \App\Http\Controllers\AdminController::update
- * @see app/Http/Controllers/AdminController.php:135
+ * @see app/Http/Controllers/AdminController.php:134
  * @route '/admins/{admin}'
  */
 export const update = (args: { admin: number | { user_id: number } } | [admin: number | { user_id: number } ] | number | { user_id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -329,7 +329,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\AdminController::update
- * @see app/Http/Controllers/AdminController.php:135
+ * @see app/Http/Controllers/AdminController.php:134
  * @route '/admins/{admin}'
  */
 update.url = (args: { admin: number | { user_id: number } } | [admin: number | { user_id: number } ] | number | { user_id: number }, options?: RouteQueryOptions) => {
@@ -362,7 +362,7 @@ update.url = (args: { admin: number | { user_id: number } } | [admin: number | {
 
 /**
 * @see \App\Http\Controllers\AdminController::update
- * @see app/Http/Controllers/AdminController.php:135
+ * @see app/Http/Controllers/AdminController.php:134
  * @route '/admins/{admin}'
  */
 update.put = (args: { admin: number | { user_id: number } } | [admin: number | { user_id: number } ] | number | { user_id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -371,7 +371,7 @@ update.put = (args: { admin: number | { user_id: number } } | [admin: number | {
 })
 /**
 * @see \App\Http\Controllers\AdminController::update
- * @see app/Http/Controllers/AdminController.php:135
+ * @see app/Http/Controllers/AdminController.php:134
  * @route '/admins/{admin}'
  */
 update.patch = (args: { admin: number | { user_id: number } } | [admin: number | { user_id: number } ] | number | { user_id: number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -381,7 +381,7 @@ update.patch = (args: { admin: number | { user_id: number } } | [admin: number |
 
     /**
 * @see \App\Http\Controllers\AdminController::update
- * @see app/Http/Controllers/AdminController.php:135
+ * @see app/Http/Controllers/AdminController.php:134
  * @route '/admins/{admin}'
  */
     const updateForm = (args: { admin: number | { user_id: number } } | [admin: number | { user_id: number } ] | number | { user_id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -396,7 +396,7 @@ update.patch = (args: { admin: number | { user_id: number } } | [admin: number |
 
             /**
 * @see \App\Http\Controllers\AdminController::update
- * @see app/Http/Controllers/AdminController.php:135
+ * @see app/Http/Controllers/AdminController.php:134
  * @route '/admins/{admin}'
  */
         updateForm.put = (args: { admin: number | { user_id: number } } | [admin: number | { user_id: number } ] | number | { user_id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -410,7 +410,7 @@ update.patch = (args: { admin: number | { user_id: number } } | [admin: number |
         })
             /**
 * @see \App\Http\Controllers\AdminController::update
- * @see app/Http/Controllers/AdminController.php:135
+ * @see app/Http/Controllers/AdminController.php:134
  * @route '/admins/{admin}'
  */
         updateForm.patch = (args: { admin: number | { user_id: number } } | [admin: number | { user_id: number } ] | number | { user_id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -426,7 +426,7 @@ update.patch = (args: { admin: number | { user_id: number } } | [admin: number |
     update.form = updateForm
 /**
 * @see \App\Http\Controllers\AdminController::destroy
- * @see app/Http/Controllers/AdminController.php:167
+ * @see app/Http/Controllers/AdminController.php:166
  * @route '/admins/{admin}'
  */
 export const destroy = (args: { admin: number | { user_id: number } } | [admin: number | { user_id: number } ] | number | { user_id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -441,7 +441,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\AdminController::destroy
- * @see app/Http/Controllers/AdminController.php:167
+ * @see app/Http/Controllers/AdminController.php:166
  * @route '/admins/{admin}'
  */
 destroy.url = (args: { admin: number | { user_id: number } } | [admin: number | { user_id: number } ] | number | { user_id: number }, options?: RouteQueryOptions) => {
@@ -474,7 +474,7 @@ destroy.url = (args: { admin: number | { user_id: number } } | [admin: number | 
 
 /**
 * @see \App\Http\Controllers\AdminController::destroy
- * @see app/Http/Controllers/AdminController.php:167
+ * @see app/Http/Controllers/AdminController.php:166
  * @route '/admins/{admin}'
  */
 destroy.delete = (args: { admin: number | { user_id: number } } | [admin: number | { user_id: number } ] | number | { user_id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -484,7 +484,7 @@ destroy.delete = (args: { admin: number | { user_id: number } } | [admin: number
 
     /**
 * @see \App\Http\Controllers\AdminController::destroy
- * @see app/Http/Controllers/AdminController.php:167
+ * @see app/Http/Controllers/AdminController.php:166
  * @route '/admins/{admin}'
  */
     const destroyForm = (args: { admin: number | { user_id: number } } | [admin: number | { user_id: number } ] | number | { user_id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -499,7 +499,7 @@ destroy.delete = (args: { admin: number | { user_id: number } } | [admin: number
 
             /**
 * @see \App\Http\Controllers\AdminController::destroy
- * @see app/Http/Controllers/AdminController.php:167
+ * @see app/Http/Controllers/AdminController.php:166
  * @route '/admins/{admin}'
  */
         destroyForm.delete = (args: { admin: number | { user_id: number } } | [admin: number | { user_id: number } ] | number | { user_id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

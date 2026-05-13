@@ -47,7 +47,7 @@ class PassengerSeeder extends Seeder
                 ['email' => $seedPassenger['email']],
                 [
                     'name' => $seedPassenger['name'],
-                    'password_hash' => Hash::make('password'),
+                    'password_hash' => 'password',
                 ]
             );
 

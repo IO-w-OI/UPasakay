@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\PassengerController::index
- * @see app/Http/Controllers/Api/PassengerController.php:18
+ * @see app/Http/Controllers/Api/PassengerController.php:17
  * @route '/api/passengers'
  */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\PassengerController::index
- * @see app/Http/Controllers/Api/PassengerController.php:18
+ * @see app/Http/Controllers/Api/PassengerController.php:17
  * @route '/api/passengers'
  */
 index.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\PassengerController::index
- * @see app/Http/Controllers/Api/PassengerController.php:18
+ * @see app/Http/Controllers/Api/PassengerController.php:17
  * @route '/api/passengers'
  */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -34,7 +34,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\Api\PassengerController::index
- * @see app/Http/Controllers/Api/PassengerController.php:18
+ * @see app/Http/Controllers/Api/PassengerController.php:17
  * @route '/api/passengers'
  */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -44,7 +44,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\PassengerController::index
- * @see app/Http/Controllers/Api/PassengerController.php:18
+ * @see app/Http/Controllers/Api/PassengerController.php:17
  * @route '/api/passengers'
  */
     const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -54,7 +54,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\PassengerController::index
- * @see app/Http/Controllers/Api/PassengerController.php:18
+ * @see app/Http/Controllers/Api/PassengerController.php:17
  * @route '/api/passengers'
  */
         indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -63,7 +63,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\Api\PassengerController::index
- * @see app/Http/Controllers/Api/PassengerController.php:18
+ * @see app/Http/Controllers/Api/PassengerController.php:17
  * @route '/api/passengers'
  */
         indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -79,7 +79,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     index.form = indexForm
 /**
 * @see \App\Http\Controllers\Api\PassengerController::store
- * @see app/Http/Controllers/Api/PassengerController.php:30
+ * @see app/Http/Controllers/Api/PassengerController.php:29
  * @route '/api/passengers'
  */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -94,7 +94,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\PassengerController::store
- * @see app/Http/Controllers/Api/PassengerController.php:30
+ * @see app/Http/Controllers/Api/PassengerController.php:29
  * @route '/api/passengers'
  */
 store.url = (options?: RouteQueryOptions) => {
@@ -103,7 +103,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\PassengerController::store
- * @see app/Http/Controllers/Api/PassengerController.php:30
+ * @see app/Http/Controllers/Api/PassengerController.php:29
  * @route '/api/passengers'
  */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -113,7 +113,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\PassengerController::store
- * @see app/Http/Controllers/Api/PassengerController.php:30
+ * @see app/Http/Controllers/Api/PassengerController.php:29
  * @route '/api/passengers'
  */
     const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -123,7 +123,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\PassengerController::store
- * @see app/Http/Controllers/Api/PassengerController.php:30
+ * @see app/Http/Controllers/Api/PassengerController.php:29
  * @route '/api/passengers'
  */
         storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -134,7 +134,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     store.form = storeForm
 /**
 * @see \App\Http\Controllers\Api\PassengerController::show
- * @see app/Http/Controllers/Api/PassengerController.php:69
+ * @see app/Http/Controllers/Api/PassengerController.php:68
  * @route '/api/passengers/{passenger}'
  */
 export const show = (args: { passenger: string | number } | [passenger: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -149,7 +149,7 @@ show.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\PassengerController::show
- * @see app/Http/Controllers/Api/PassengerController.php:69
+ * @see app/Http/Controllers/Api/PassengerController.php:68
  * @route '/api/passengers/{passenger}'
  */
 show.url = (args: { passenger: string | number } | [passenger: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -177,7 +177,7 @@ show.url = (args: { passenger: string | number } | [passenger: string | number ]
 
 /**
 * @see \App\Http\Controllers\Api\PassengerController::show
- * @see app/Http/Controllers/Api/PassengerController.php:69
+ * @see app/Http/Controllers/Api/PassengerController.php:68
  * @route '/api/passengers/{passenger}'
  */
 show.get = (args: { passenger: string | number } | [passenger: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -186,7 +186,7 @@ show.get = (args: { passenger: string | number } | [passenger: string | number ]
 })
 /**
 * @see \App\Http\Controllers\Api\PassengerController::show
- * @see app/Http/Controllers/Api/PassengerController.php:69
+ * @see app/Http/Controllers/Api/PassengerController.php:68
  * @route '/api/passengers/{passenger}'
  */
 show.head = (args: { passenger: string | number } | [passenger: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -196,7 +196,7 @@ show.head = (args: { passenger: string | number } | [passenger: string | number 
 
     /**
 * @see \App\Http\Controllers\Api\PassengerController::show
- * @see app/Http/Controllers/Api/PassengerController.php:69
+ * @see app/Http/Controllers/Api/PassengerController.php:68
  * @route '/api/passengers/{passenger}'
  */
     const showForm = (args: { passenger: string | number } | [passenger: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -206,7 +206,7 @@ show.head = (args: { passenger: string | number } | [passenger: string | number 
 
             /**
 * @see \App\Http\Controllers\Api\PassengerController::show
- * @see app/Http/Controllers/Api/PassengerController.php:69
+ * @see app/Http/Controllers/Api/PassengerController.php:68
  * @route '/api/passengers/{passenger}'
  */
         showForm.get = (args: { passenger: string | number } | [passenger: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -215,7 +215,7 @@ show.head = (args: { passenger: string | number } | [passenger: string | number 
         })
             /**
 * @see \App\Http\Controllers\Api\PassengerController::show
- * @see app/Http/Controllers/Api/PassengerController.php:69
+ * @see app/Http/Controllers/Api/PassengerController.php:68
  * @route '/api/passengers/{passenger}'
  */
         showForm.head = (args: { passenger: string | number } | [passenger: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -231,7 +231,7 @@ show.head = (args: { passenger: string | number } | [passenger: string | number 
     show.form = showForm
 /**
 * @see \App\Http\Controllers\Api\PassengerController::update
- * @see app/Http/Controllers/Api/PassengerController.php:83
+ * @see app/Http/Controllers/Api/PassengerController.php:82
  * @route '/api/passengers/{passenger}'
  */
 export const update = (args: { passenger: string | number } | [passenger: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -246,7 +246,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\PassengerController::update
- * @see app/Http/Controllers/Api/PassengerController.php:83
+ * @see app/Http/Controllers/Api/PassengerController.php:82
  * @route '/api/passengers/{passenger}'
  */
 update.url = (args: { passenger: string | number } | [passenger: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -274,7 +274,7 @@ update.url = (args: { passenger: string | number } | [passenger: string | number
 
 /**
 * @see \App\Http\Controllers\Api\PassengerController::update
- * @see app/Http/Controllers/Api/PassengerController.php:83
+ * @see app/Http/Controllers/Api/PassengerController.php:82
  * @route '/api/passengers/{passenger}'
  */
 update.put = (args: { passenger: string | number } | [passenger: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -283,7 +283,7 @@ update.put = (args: { passenger: string | number } | [passenger: string | number
 })
 /**
 * @see \App\Http\Controllers\Api\PassengerController::update
- * @see app/Http/Controllers/Api/PassengerController.php:83
+ * @see app/Http/Controllers/Api/PassengerController.php:82
  * @route '/api/passengers/{passenger}'
  */
 update.patch = (args: { passenger: string | number } | [passenger: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -293,7 +293,7 @@ update.patch = (args: { passenger: string | number } | [passenger: string | numb
 
     /**
 * @see \App\Http\Controllers\Api\PassengerController::update
- * @see app/Http/Controllers/Api/PassengerController.php:83
+ * @see app/Http/Controllers/Api/PassengerController.php:82
  * @route '/api/passengers/{passenger}'
  */
     const updateForm = (args: { passenger: string | number } | [passenger: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -308,7 +308,7 @@ update.patch = (args: { passenger: string | number } | [passenger: string | numb
 
             /**
 * @see \App\Http\Controllers\Api\PassengerController::update
- * @see app/Http/Controllers/Api/PassengerController.php:83
+ * @see app/Http/Controllers/Api/PassengerController.php:82
  * @route '/api/passengers/{passenger}'
  */
         updateForm.put = (args: { passenger: string | number } | [passenger: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -322,7 +322,7 @@ update.patch = (args: { passenger: string | number } | [passenger: string | numb
         })
             /**
 * @see \App\Http\Controllers\Api\PassengerController::update
- * @see app/Http/Controllers/Api/PassengerController.php:83
+ * @see app/Http/Controllers/Api/PassengerController.php:82
  * @route '/api/passengers/{passenger}'
  */
         updateForm.patch = (args: { passenger: string | number } | [passenger: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -338,7 +338,7 @@ update.patch = (args: { passenger: string | number } | [passenger: string | numb
     update.form = updateForm
 /**
 * @see \App\Http\Controllers\Api\PassengerController::destroy
- * @see app/Http/Controllers/Api/PassengerController.php:134
+ * @see app/Http/Controllers/Api/PassengerController.php:132
  * @route '/api/passengers/{passenger}'
  */
 export const destroy = (args: { passenger: string | number } | [passenger: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -353,7 +353,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\PassengerController::destroy
- * @see app/Http/Controllers/Api/PassengerController.php:134
+ * @see app/Http/Controllers/Api/PassengerController.php:132
  * @route '/api/passengers/{passenger}'
  */
 destroy.url = (args: { passenger: string | number } | [passenger: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -381,7 +381,7 @@ destroy.url = (args: { passenger: string | number } | [passenger: string | numbe
 
 /**
 * @see \App\Http\Controllers\Api\PassengerController::destroy
- * @see app/Http/Controllers/Api/PassengerController.php:134
+ * @see app/Http/Controllers/Api/PassengerController.php:132
  * @route '/api/passengers/{passenger}'
  */
 destroy.delete = (args: { passenger: string | number } | [passenger: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -391,7 +391,7 @@ destroy.delete = (args: { passenger: string | number } | [passenger: string | nu
 
     /**
 * @see \App\Http\Controllers\Api\PassengerController::destroy
- * @see app/Http/Controllers/Api/PassengerController.php:134
+ * @see app/Http/Controllers/Api/PassengerController.php:132
  * @route '/api/passengers/{passenger}'
  */
     const destroyForm = (args: { passenger: string | number } | [passenger: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -406,7 +406,7 @@ destroy.delete = (args: { passenger: string | number } | [passenger: string | nu
 
             /**
 * @see \App\Http\Controllers\Api\PassengerController::destroy
- * @see app/Http/Controllers/Api/PassengerController.php:134
+ * @see app/Http/Controllers/Api/PassengerController.php:132
  * @route '/api/passengers/{passenger}'
  */
         destroyForm.delete = (args: { passenger: string | number } | [passenger: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

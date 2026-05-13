@@ -12,6 +12,7 @@ defineProps<{
     status?: string;
     canResetPassword: boolean;
     canRegister: boolean;
+    canAdminRegister: boolean;
 }>();
 
 const showPassword = ref(false);
@@ -115,6 +116,13 @@ const showPassword = ref(false);
                         LOG IN
                     </span>
                 </button>
+            </div>
+
+            <div v-if="canAdminRegister" class="text-center text-sm">
+                <span class="text-gray-600">Need an admin account?</span>
+                <Link href="/admin/register" class="ml-1 font-medium text-[#6B7C3A] hover:text-[#E8962E]">
+                    Sign Up
+                </Link>
             </div>
         </Form>
     </AuthBase>

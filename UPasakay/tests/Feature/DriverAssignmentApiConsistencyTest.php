@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Events\RideAccepted;
 use App\Models\Driver;
 use App\Models\DriverAssignment;
 use App\Models\PickupRequest;
@@ -9,6 +10,8 @@ use App\Models\Route as ShuttleRoute;
 use App\Models\Stop;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class DriverAssignmentApiConsistencyTest extends TestCase
@@ -95,7 +98,7 @@ class DriverAssignmentApiConsistencyTest extends TestCase
             ->assertJsonPath('driver_id', $driverA->id);
 
         $pickupRequest->refresh();
-        $this->assertSame('assigned', $pickupRequest->status);
+        $this->assertSame('accepted', $pickupRequest->status);
         $this->assertNotNull($pickupRequest->assigned_at);
 
         $secondResponse = $this->withHeaders($this->authHeaders())
@@ -128,7 +131,7 @@ class DriverAssignmentApiConsistencyTest extends TestCase
         ]);
 
         $pickupRequest->update([
-            'status' => 'assigned',
+            'status' => 'accepted',
             'assigned_at' => now(),
         ]);
 
@@ -144,7 +147,7 @@ class DriverAssignmentApiConsistencyTest extends TestCase
         $this->assertNotNull($pickupRequest->completed_at);
     }
 
-    public function test_destroy_resets_pending_status_when_pickup_was_assigned(): void
+    public function test_destroy_resets_pending_status_when_pickup_was_accepted(): void
     {
         $driver = $this->createDriver(4);
         $pickupRequest = $this->createPickupRequest(3);
@@ -157,7 +160,7 @@ class DriverAssignmentApiConsistencyTest extends TestCase
         ]);
 
         $pickupRequest->update([
-            'status' => 'assigned',
+            'status' => 'accepted',
             'assigned_at' => now(),
         ]);
 
@@ -191,5 +194,28 @@ class DriverAssignmentApiConsistencyTest extends TestCase
         $this->assertDatabaseMissing('driver_assignments', [
             'pickup_request_id' => $pickupRequest->id,
         ]);
+    }
+
+    public function test_store_dispatches_ride_accepted_on_passenger_and_admin_channels(): void
+    {
+        Event::fake([RideAccepted::class]);
+        Mail::fake();
+
+        $driver = $this->createDriver(10);
+        $pickupRequest = $this->createPickupRequest(10);
+
+        $this->withHeaders($this->authHeaders())
+            ->postJson('/api/driver-assignments', [
+                'driver_id' => $driver->id,
+                'pickup_request_id' => $pickupRequest->id,
+            ])
+            ->assertStatus(201);
+
+        Event::assertDispatched(RideAccepted::class, function (RideAccepted $e) {
+            $names = collect($e->broadcastOn())->map(fn ($ch) => $ch->name)->all();
+
+            return in_array('admin-rides', $names, true)
+                && collect($names)->contains(fn (string $n) => str_starts_with($n, 'passenger-'));
+        });
     }
 }

@@ -1,8 +1,9 @@
 /**
  * 1. API CONFIGURATION
- * Using your current Mac IP from the Expo terminal.
+ * Points to the Heroku-deployed backend.
+ * Override locally via EXPO_PUBLIC_API_URL in upasakay-mobile/.env
  */
-const API_URL = "http://172.20.10.2:8000/api";
+const API_URL = process.env.EXPO_PUBLIC_API_URL ?? "https://upasakay-abc142adb2d4.herokuapp.com/api";
 
 /**
  * 2. SESSION TRACKER
@@ -41,7 +42,7 @@ export const addUser = async (full_name, email, password, phone, passenger_type,
             return { success: false, message: data.message || "Registration failed" };
         }
     } catch (error) {
-        return { success: false, message: "Network error. Check your Mac's IP." };
+        return { success: false, message: "Network error. Check your internet connection." };
     }
 };
 
@@ -65,11 +66,13 @@ export const validateUser = async (email, password) => {
         if (response.ok && result.success) {
             const payload = result.data;
 
-            // We map the API data to the keys the Mobile App expects (like 'full_name')
             setCurrentUser({
+                id: payload.user?.id,
+                passenger_id: payload.passenger?.id,       // used for Pusher channel & pickup requests
                 full_name: payload.user?.full_name || payload.passenger?.full_name || "User",
                 email: payload.user?.email,
-                passenger_type: payload.passenger?.passenger_type || "student"
+                passenger_type: payload.passenger?.passenger_type || "student",
+                token: result.token,                        // Sanctum token for API calls
             });
 
             console.log("Login Success! Session stored for:", currentUser.full_name);

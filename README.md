@@ -29,7 +29,7 @@ UPasakay is a shuttle management system (mobile + web) that provides:
 
 ## Queue / Notifications
 
-- RabbitMQ
+- Pusher (for the future update: RabbitMQ)
 
 ---
 

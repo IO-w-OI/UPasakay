@@ -134,7 +134,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     store.form = storeForm
 /**
 * @see \App\Http\Controllers\Api\RouteController::show
- * @see app/Http/Controllers/Api/RouteController.php:31
+ * @see app/Http/Controllers/Api/RouteController.php:32
  * @route '/api/routes/{route}'
  */
 export const show = (args: { route: number | { id: number } } | [route: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -149,7 +149,7 @@ show.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\RouteController::show
- * @see app/Http/Controllers/Api/RouteController.php:31
+ * @see app/Http/Controllers/Api/RouteController.php:32
  * @route '/api/routes/{route}'
  */
 show.url = (args: { route: number | { id: number } } | [route: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -182,7 +182,7 @@ show.url = (args: { route: number | { id: number } } | [route: number | { id: nu
 
 /**
 * @see \App\Http\Controllers\Api\RouteController::show
- * @see app/Http/Controllers/Api/RouteController.php:31
+ * @see app/Http/Controllers/Api/RouteController.php:32
  * @route '/api/routes/{route}'
  */
 show.get = (args: { route: number | { id: number } } | [route: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -191,7 +191,7 @@ show.get = (args: { route: number | { id: number } } | [route: number | { id: nu
 })
 /**
 * @see \App\Http\Controllers\Api\RouteController::show
- * @see app/Http/Controllers/Api/RouteController.php:31
+ * @see app/Http/Controllers/Api/RouteController.php:32
  * @route '/api/routes/{route}'
  */
 show.head = (args: { route: number | { id: number } } | [route: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -201,7 +201,7 @@ show.head = (args: { route: number | { id: number } } | [route: number | { id: n
 
     /**
 * @see \App\Http\Controllers\Api\RouteController::show
- * @see app/Http/Controllers/Api/RouteController.php:31
+ * @see app/Http/Controllers/Api/RouteController.php:32
  * @route '/api/routes/{route}'
  */
     const showForm = (args: { route: number | { id: number } } | [route: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -211,7 +211,7 @@ show.head = (args: { route: number | { id: number } } | [route: number | { id: n
 
             /**
 * @see \App\Http\Controllers\Api\RouteController::show
- * @see app/Http/Controllers/Api/RouteController.php:31
+ * @see app/Http/Controllers/Api/RouteController.php:32
  * @route '/api/routes/{route}'
  */
         showForm.get = (args: { route: number | { id: number } } | [route: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -220,7 +220,7 @@ show.head = (args: { route: number | { id: number } } | [route: number | { id: n
         })
             /**
 * @see \App\Http\Controllers\Api\RouteController::show
- * @see app/Http/Controllers/Api/RouteController.php:31
+ * @see app/Http/Controllers/Api/RouteController.php:32
  * @route '/api/routes/{route}'
  */
         showForm.head = (args: { route: number | { id: number } } | [route: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -236,7 +236,7 @@ show.head = (args: { route: number | { id: number } } | [route: number | { id: n
     show.form = showForm
 /**
 * @see \App\Http\Controllers\Api\RouteController::update
- * @see app/Http/Controllers/Api/RouteController.php:36
+ * @see app/Http/Controllers/Api/RouteController.php:37
  * @route '/api/routes/{route}'
  */
 export const update = (args: { route: number | { id: number } } | [route: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -251,7 +251,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\RouteController::update
- * @see app/Http/Controllers/Api/RouteController.php:36
+ * @see app/Http/Controllers/Api/RouteController.php:37
  * @route '/api/routes/{route}'
  */
 update.url = (args: { route: number | { id: number } } | [route: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -284,7 +284,7 @@ update.url = (args: { route: number | { id: number } } | [route: number | { id: 
 
 /**
 * @see \App\Http\Controllers\Api\RouteController::update
- * @see app/Http/Controllers/Api/RouteController.php:36
+ * @see app/Http/Controllers/Api/RouteController.php:37
  * @route '/api/routes/{route}'
  */
 update.put = (args: { route: number | { id: number } } | [route: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -293,7 +293,7 @@ update.put = (args: { route: number | { id: number } } | [route: number | { id: 
 })
 /**
 * @see \App\Http\Controllers\Api\RouteController::update
- * @see app/Http/Controllers/Api/RouteController.php:36
+ * @see app/Http/Controllers/Api/RouteController.php:37
  * @route '/api/routes/{route}'
  */
 update.patch = (args: { route: number | { id: number } } | [route: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -303,7 +303,7 @@ update.patch = (args: { route: number | { id: number } } | [route: number | { id
 
     /**
 * @see \App\Http\Controllers\Api\RouteController::update
- * @see app/Http/Controllers/Api/RouteController.php:36
+ * @see app/Http/Controllers/Api/RouteController.php:37
  * @route '/api/routes/{route}'
  */
     const updateForm = (args: { route: number | { id: number } } | [route: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -318,7 +318,7 @@ update.patch = (args: { route: number | { id: number } } | [route: number | { id
 
             /**
 * @see \App\Http\Controllers\Api\RouteController::update
- * @see app/Http/Controllers/Api/RouteController.php:36
+ * @see app/Http/Controllers/Api/RouteController.php:37
  * @route '/api/routes/{route}'
  */
         updateForm.put = (args: { route: number | { id: number } } | [route: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -332,7 +332,7 @@ update.patch = (args: { route: number | { id: number } } | [route: number | { id
         })
             /**
 * @see \App\Http\Controllers\Api\RouteController::update
- * @see app/Http/Controllers/Api/RouteController.php:36
+ * @see app/Http/Controllers/Api/RouteController.php:37
  * @route '/api/routes/{route}'
  */
         updateForm.patch = (args: { route: number | { id: number } } | [route: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -348,7 +348,7 @@ update.patch = (args: { route: number | { id: number } } | [route: number | { id
     update.form = updateForm
 /**
 * @see \App\Http\Controllers\Api\RouteController::destroy
- * @see app/Http/Controllers/Api/RouteController.php:51
+ * @see app/Http/Controllers/Api/RouteController.php:53
  * @route '/api/routes/{route}'
  */
 export const destroy = (args: { route: number | { id: number } } | [route: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -363,7 +363,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\RouteController::destroy
- * @see app/Http/Controllers/Api/RouteController.php:51
+ * @see app/Http/Controllers/Api/RouteController.php:53
  * @route '/api/routes/{route}'
  */
 destroy.url = (args: { route: number | { id: number } } | [route: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -396,7 +396,7 @@ destroy.url = (args: { route: number | { id: number } } | [route: number | { id:
 
 /**
 * @see \App\Http\Controllers\Api\RouteController::destroy
- * @see app/Http/Controllers/Api/RouteController.php:51
+ * @see app/Http/Controllers/Api/RouteController.php:53
  * @route '/api/routes/{route}'
  */
 destroy.delete = (args: { route: number | { id: number } } | [route: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -406,7 +406,7 @@ destroy.delete = (args: { route: number | { id: number } } | [route: number | { 
 
     /**
 * @see \App\Http\Controllers\Api\RouteController::destroy
- * @see app/Http/Controllers/Api/RouteController.php:51
+ * @see app/Http/Controllers/Api/RouteController.php:53
  * @route '/api/routes/{route}'
  */
     const destroyForm = (args: { route: number | { id: number } } | [route: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -421,7 +421,7 @@ destroy.delete = (args: { route: number | { id: number } } | [route: number | { 
 
             /**
 * @see \App\Http\Controllers\Api\RouteController::destroy
- * @see app/Http/Controllers/Api/RouteController.php:51
+ * @see app/Http/Controllers/Api/RouteController.php:53
  * @route '/api/routes/{route}'
  */
         destroyForm.delete = (args: { route: number | { id: number } } | [route: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

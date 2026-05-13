@@ -6,7 +6,6 @@ use App\Concerns\PasswordValidationRules;
 use App\Concerns\ProfileValidationRules;
 use App\Models\Passenger;
 use App\Models\User;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
 
@@ -28,7 +27,7 @@ class CreateNewUser implements CreatesNewUsers
         $user = User::create([
             'name' => $input['name'],
             'email' => $input['email'],
-            'password_hash' => Hash::make($input['password']),
+            'password_hash' => $input['password'],
         ]);
 
         // Automatically create the passenger profile as "pending"
@@ -36,7 +35,7 @@ class CreateNewUser implements CreatesNewUsers
             'user_id' => $user->id,
             'full_name' => $input['name'],
             'email' => $input['email'],
-            'password_hash' => Hash::make($input['password']),
+            'password_hash' => $input['password'],
             'passenger_number' => $input['passenger_number'],
             'department' => $input['department'] ?? null,
             'passenger_type' => $input['passenger_type'] ?? 'student',

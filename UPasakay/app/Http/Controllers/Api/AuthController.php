@@ -17,9 +17,6 @@ class AuthController extends Controller
 {
     public function register(Request $request): JsonResponse
     {
-        // Keep this error_log! It is your only way to see if the phone is actually sending the keys.
-        error_log("Incoming Request Data: " . json_encode($request->all()));
-
         $passwordRules = ['required', 'confirmed'];
 
         if (! $request->filled('passenger_number')) {
@@ -56,7 +53,7 @@ class AuthController extends Controller
             'user_id' => $user->id,
             'full_name' => $request->full_name ?? $request->name ?? 'New User',
             'email' => $validated['email'],
-            'password_hash' => Hash::make($validated['password']),
+            'password_hash' => $validated['password'],
             'passenger_number' => $validated['passenger_number'] ?? $this->generatePassengerNumber(),
             'passenger_type' => $validated['passenger_type'] ?? 'student',
             'department_office' => $request->department_office ?? $request->department,

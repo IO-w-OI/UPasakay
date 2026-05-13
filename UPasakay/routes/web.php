@@ -15,9 +15,21 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
+Route::middleware('guest')->group(function () {
+    Route::get('admin/register', function () {
+        abort_unless(config('admin.registration.enabled'), 404);
+
+        return Inertia::render('auth/AdminRegister', [
+            'requiresInviteCode' => filled(config('admin.registration.invite_code')),
+        ]);
+    })->name('admin.register');
+});
+
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('live-map', [LiveMapController::class, 'index'])->name('live-map');
+    Route::post('live-map/stops', [LiveMapController::class, 'store'])->name('live-map.stops.store');
+    Route::delete('live-map/stops/{stop}', [LiveMapController::class, 'destroy'])->name('live-map.stops.destroy');
 
     // Admins
     Route::resource('admins', AdminController::class)->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
