@@ -43,15 +43,29 @@ class ShuttleLocationController extends Controller
     public function storeFromDriver(Request $request)
     {
         $validated = $request->validate([
-            'driver_id' => 'nullable|integer|exists:drivers,id|required_without:shuttle_id',
-            'shuttle_id' => 'nullable|integer|exists:shuttles,id|required_without:driver_id',
-            'latitude' => 'required|numeric',
+            'driver_id' => 'nullable|integer|exists:drivers,id',
+            'shuttle_id' => 'nullable|integer|exists:shuttles,id',
+            'user_id'   => 'nullable|integer|exists:users,id',
+            'latitude'  => 'required|numeric',
             'longitude' => 'required|numeric',
             'speed_kmh' => 'nullable|numeric',
         ]);
 
         $shuttleId = isset($validated['shuttle_id']) ? (int) $validated['shuttle_id'] : null;
         $driverIdInput = isset($validated['driver_id']) ? (int) $validated['driver_id'] : null;
+
+        // Resolve driver from user_id when driver_id is not provided
+        if ($driverIdInput === null && $shuttleId === null && isset($validated['user_id'])) {
+            $driver = Driver::query()->with('shuttle')->where('user_id', (int) $validated['user_id'])->first();
+            if ($driver === null) {
+                return response()->json(['message' => 'No driver record found for this user.'], 422);
+            }
+            $driverIdInput = $driver->id;
+        }
+
+        if ($shuttleId === null && $driverIdInput === null) {
+            return response()->json(['message' => 'Provide driver_id, shuttle_id, or user_id.'], 422);
+        }
 
         if ($shuttleId === null && $driverIdInput !== null) {
             $driver = Driver::query()->with('shuttle')->findOrFail($driverIdInput);

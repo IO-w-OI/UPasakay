@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
 
-import { currentUser } from '../../../services/UserStore';
+import { currentUser, API_URL } from '../../../services/UserStore';
 
 const LOCATION_TASK = 'driver-location-task';
 
@@ -14,6 +14,25 @@ export const driverLocations = {};
 
 function getDriverId() {
   return currentUser?.email ?? 'driver-unknown';
+}
+
+// ---------- Shared GPS send helper ----------
+function sendLocationToBackend(latitude, longitude, speedMs) {
+  if (!currentUser?.token || !currentUser?.id) return;
+  fetch(`${API_URL}/driver/location`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': `Bearer ${currentUser.token}`,
+    },
+    body: JSON.stringify({
+      user_id: currentUser.id,
+      latitude,
+      longitude,
+      speed_kmh: parseFloat(((speedMs ?? 0) * 3.6).toFixed(2)),
+    }),
+  }).catch(err => console.warn('[GPS] send failed:', err));
 }
 
 // ---------- Background GPS task ----------
@@ -36,6 +55,7 @@ TaskManager.defineTask(LOCATION_TASK, ({ data, error }) => {
     updatedAt: Date.now(),
   };
   console.log('[DRIVER GPS]', id, latitude, longitude);
+  sendLocationToBackend(latitude, longitude, speed);
 });
 
 // ---------- Leaflet HTML ----------
@@ -127,16 +147,17 @@ export default function DriverMap() {
     watcherRef.current = await Location.watchPositionAsync(
       { accuracy: Location.Accuracy.High, timeInterval: 3000, distanceInterval: 5 },
       (loc) => {
-        const { latitude, longitude } = loc.coords;
+        const { latitude, longitude, speed, heading } = loc.coords;
         setCoords({ latitude, longitude });
         sendToMap(latitude, longitude);
+        sendLocationToBackend(latitude, longitude, speed);
 
         const id = getDriverId();
         driverLocations[id] = {
           latitude,
           longitude,
-          speed: loc.coords.speed ?? 0,
-          heading: loc.coords.heading ?? 0,
+          speed: speed ?? 0,
+          heading: heading ?? 0,
           updatedAt: Date.now(),
         };
       }

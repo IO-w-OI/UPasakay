@@ -20,12 +20,12 @@ class ShuttleLocationUpdated implements ShouldBroadcastNow
 
     public function broadcastOn(): Channel
     {
-        return new Channel('driver-tracking');
+        return new Channel('shuttle-locations');
     }
 
     public function broadcastAs(): string
     {
-        return 'LocationUpdated';
+        return 'location.updated';
     }
 
     public function broadcastWith(): array
