@@ -3,7 +3,7 @@
  * Points to the Heroku-deployed backend.
  * Override locally via EXPO_PUBLIC_API_URL in upasakay-mobile/.env
  */
-const API_URL = process.env.EXPO_PUBLIC_API_URL ?? "https://upasakay-abc142adb2d4.herokuapp.com/api";
+export const API_URL = process.env.EXPO_PUBLIC_API_URL ?? "https://upasakay-abc142adb2d4.herokuapp.com/api";
 
 /**
  * 2. SESSION TRACKER

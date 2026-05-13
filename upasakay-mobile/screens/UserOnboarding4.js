@@ -1,54 +1,63 @@
 import React from 'react';
 import { View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { 
-    StyledContainer, 
-    InnerContainer, 
-    PageLogo, 
-    ExtraText, 
-    StyledButton, 
+import {
+    StyledContainer,
+    InnerContainer,
+    PageLogo,
+    ExtraText,
+    StyledButton,
     ButtonText,
-    StyledFormArea 
+    StyledFormArea
 } from '../components/styles';
 
 const UserOnboarding4 = () => {
     const router = useRouter();
 
-    const handleStart = () => {
-        router.replace('/(tabs)/Users/UserHome');
+    const handleReturnToLogin = () => {
+        router.replace('/Login');
     };
 
     return (
         <StyledContainer>
             <InnerContainer style={{ justifyContent: 'center' }}>
-                <PageLogo 
-                    resizeMode="contain" 
-                    source={require('../assets/images/UPasakayBig.png')} 
-                    style={{ width: 723 * 0.35, height: 406 * 0.35, marginBottom: 60 }} 
+                <PageLogo
+                    resizeMode="contain"
+                    source={require('../assets/images/UPasakayBig.png')}
+                    style={{ width: 723 * 0.35, height: 406 * 0.35, marginBottom: 40 }}
                 />
 
-                <ExtraText style={{ 
-                    fontFamily: 'Nunito-Bold', // Use the specific bold variant
-                    fontSize: 24, 
-                    textAlign: 'center', 
-                    marginBottom: 40 
+                <ExtraText style={{
+                    fontFamily: 'Nunito-Bold',
+                    fontSize: 24,
+                    textAlign: 'center',
+                    marginBottom: 15,
+                    color: '#FFB61C',
                 }}>
-                    Sign Up Successful!
+                    Account Under Review
                 </ExtraText>
 
+                <View style={{ marginBottom: 40, paddingHorizontal: 20 }}>
+                    <ExtraText style={{ fontSize: 16, textAlign: 'center', lineHeight: 26 }}>
+                        Thank you for registering! Your account has been submitted to the administration for verification.
+                        {"\n\n"}
+                        You will receive a notification once your account has been approved.
+                    </ExtraText>
+                </View>
+
                 <StyledFormArea>
-                    <StyledButton onPress={handleStart}>
-                        <ButtonText style={{ 
-                            fontFamily: 'Nunito-Bold', // Match the Signup button exactly
-                            fontSize: 18 // Adjusting slightly to make the Nunito pop
-                        }}>
-                            Start Booking Now!
+                    <StyledButton
+                        onPress={handleReturnToLogin}
+                        style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}
+                    >
+                        <ButtonText style={{ fontFamily: 'Nunito-Bold', fontSize: 18 }}>
+                            Return to Login
                         </ButtonText>
                     </StyledButton>
                 </StyledFormArea>
 
                 <View style={{ position: 'absolute', bottom: 50 }}>
-                   <ExtraText style={{ fontSize: 30, letterSpacing: 5 }}>•••</ExtraText>
+                    <ExtraText style={{ fontSize: 30, letterSpacing: 5 }}>•••</ExtraText>
                 </View>
             </InnerContainer>
         </StyledContainer>
