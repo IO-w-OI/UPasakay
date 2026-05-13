@@ -5,6 +5,9 @@ import { useEffect } from 'react';
 
 import * as Notifications from 'expo-notifications';
 
+import { TripProvider } from '../context/TripContext';
+import ActiveTripBanner from '../components/ActiveTripBanner';
+
 // This determines how notifications appear when the app is foregrounded
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -37,16 +40,19 @@ export default function RootLayout() {
   }
 
   return (
-    <Stack 
-      initialRouteName="index" 
-      screenOptions={{ 
-        headerShown: false,
-        contentStyle: { backgroundColor: '#701929' } 
-      }}
-    >
-      <Stack.Screen name="index" /> 
-      <Stack.Screen name="Signup" />
-      <Stack.Screen name="(tabs)" /> 
-    </Stack>
+    <TripProvider>
+      <Stack
+        initialRouteName="index"
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: '#701929' },
+        }}
+      >
+        <Stack.Screen name="index" />
+        <Stack.Screen name="Signup" />
+        <Stack.Screen name="(tabs)" />
+      </Stack>
+      <ActiveTripBanner />
+    </TripProvider>
   );
 }

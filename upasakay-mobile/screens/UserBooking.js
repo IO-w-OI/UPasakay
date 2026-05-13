@@ -5,9 +5,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import * as Notifications from 'expo-notifications';
 
+// IMPORT DUMMY COORDINATES
+import { ROUTE_STOPS } from './services/UserRouteStops';
+
 const { width } = Dimensions.get('window');
 
-// Enable LayoutAnimation for Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
@@ -23,7 +25,7 @@ const UserMapScreen = () => {
   const webViewRef = useRef(null);
   const reverseGeocodeTimer = useRef(null);
 
-  const [status, setStatus] = useState('searching');
+  const [status, setStatus] = useState('searching'); // searching, booking, arrived, in_transit
   const [pickupAddress, setPickupAddress] = useState('Locating...');
   const [currentCoords, setCurrentCoords] = useState({ lat: 10.3381, lng: 123.9116 });
   const [searchText, setSearchText] = useState('');
@@ -51,7 +53,6 @@ const UserMapScreen = () => {
         <div id="map"></div>
         <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
         <script>
-          // INITIALIZED TO MATCH DRIVERMAP LOOK
           var map = L.map('map', { zoomControl: false }).setView([10.3381, 123.9116], 16);
           L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19
@@ -74,10 +75,8 @@ const UserMapScreen = () => {
             map.setView([lat, lng], 16, { animate: true });
           };
 
-          window.startBusFromUPC = async function(destLat, destLng) {
+          window.startBusTrip = async function(startLat, startLng, destLat, destLng, type) {
             clearRoute();
-            var startLat = 10.3381;
-            var startLng = 123.9116;
             try {
               const url = "https://router.project-osrm.org/route/v1/driving/" +
                           startLng + "," + startLat + ";" + destLng + "," + destLat +
@@ -94,7 +93,8 @@ const UserMapScreen = () => {
               }).addTo(map);
 
               estimatorLine = L.polyline(latLngs, {
-                color: '#7B2D26', weight: 5, opacity: 0.9, lineJoin: 'round'
+                color: type === 'RETURN' ? '#004d00' : '#7B2D26', 
+                weight: 5, opacity: 0.9, lineJoin: 'round'
               }).addTo(map);
 
               var busIcon = L.divIcon({ className: 'bus-marker-icon', html: '🚌', iconSize:[40,40] });
@@ -110,7 +110,7 @@ const UserMapScreen = () => {
                   i++;
                   setTimeout(drive, 400);
                 } else {
-                  window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'ARRIVED' }));
+                  window.ReactNativeWebView.postMessage(JSON.stringify({ type: type === 'RETURN' ? 'FINISHED_TRIP' : 'ARRIVED' }));
                 }
               }
               drive();
@@ -121,8 +121,6 @@ const UserMapScreen = () => {
             var center = map.getCenter();
             window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'MOVE', lat: center.lat, lng: center.lng }));
           });
-
-          document.addEventListener('message', (e) => window.dispatchEvent(new MessageEvent('message', { data: e.data })));
         </script>
       </body>
     </html>
@@ -147,9 +145,17 @@ const UserMapScreen = () => {
   };
 
   const handleSearchSubmit = async () => {
-    const q = searchText.trim();
-    if (!q) return;
-    webViewRef.current?.injectJavaScript(`window.panTo(${currentCoords.lat}, ${currentCoords.lng}); true;`);
+    const q = searchText.trim().toLowerCase();
+    // Check if search matches dummy coordinates
+    const dummyHit = ROUTE_STOPS.find(stop => stop.name.toLowerCase().includes(q));
+    
+    if (dummyHit) {
+      setCurrentCoords({ lat: dummyHit.lat, lng: dummyHit.lng });
+      setPickupAddress(dummyHit.name);
+      webViewRef.current?.injectJavaScript(`window.panTo(${dummyHit.lat}, ${dummyHit.lng}); true;`);
+    } else {
+      webViewRef.current?.injectJavaScript(`window.panTo(${currentCoords.lat}, ${currentCoords.lng}); true;`);
+    }
   };
 
   const handleMessage = async (event) => {
@@ -179,12 +185,20 @@ const UserMapScreen = () => {
       LayoutAnimation.configureNext(SnappyAnim);
       setStatus('arrived');
     }
+
+    if (data.type === 'FINISHED_TRIP') {
+      LayoutAnimation.configureNext(SnappyAnim);
+      setStatus('searching');
+      clearMap();
+      alert("Trip completed. You have arrived at UP Cebu.");
+    }
   };
 
   const handleParaPress = () => {
     LayoutAnimation.configureNext(SnappyAnim);
     setStatus('booking');
-    webViewRef.current?.injectJavaScript(`window.startBusFromUPC(${currentCoords.lat}, ${currentCoords.lng});`);
+    // Start bus from UPC (10.3381, 123.9116) to User
+    webViewRef.current?.injectJavaScript(`window.startBusTrip(10.3381, 123.9116, ${currentCoords.lat}, ${currentCoords.lng}, 'PICKUP');`);
   };
 
   const handleCancel = () => {
@@ -194,9 +208,10 @@ const UserMapScreen = () => {
   };
 
   const handleBoarded = () => {
-    clearMap();
     LayoutAnimation.configureNext(SnappyAnim);
-    setStatus('searching');
+    setStatus('in_transit');
+    // Now start trip from User back to UPC (10.3381, 123.9116)
+    webViewRef.current?.injectJavaScript(`window.startBusTrip(${currentCoords.lat}, ${currentCoords.lng}, 10.3381, 123.9116, 'RETURN');`);
   };
 
   return (
@@ -238,7 +253,7 @@ const UserMapScreen = () => {
       )}
 
       <View style={styles.bookingCard}>
-        {status === 'searching' ? (
+        {status === 'searching' && (
           <>
             <Text style={styles.cardHeader}>Pick-up Point</Text>
             <View style={styles.inputBox}>
@@ -249,7 +264,9 @@ const UserMapScreen = () => {
               <Text style={styles.paraText}>Para!</Text>
             </TouchableOpacity>
           </>
-        ) : (
+        )}
+
+        {(status === 'booking') && (
           <View style={styles.waitingContent}>
             <View style={styles.row}>
                <View>
@@ -268,6 +285,28 @@ const UserMapScreen = () => {
             <TouchableOpacity style={styles.cancelBtn} onPress={handleCancel}>
               <Text style={styles.cancelText}>Cancel Para</Text>
             </TouchableOpacity>
+          </View>
+        )}
+
+        {status === 'in_transit' && (
+          <View style={styles.waitingContent}>
+            <View style={styles.row}>
+               <View>
+                 <Text style={styles.arriveTitle}>Heading to UPC</Text>
+                 <Text style={styles.arriveSub}>Stay seated, trip in progress...</Text>
+               </View>
+               <Ionicons name="map" size={24} color="#004d00"/>
+            </View>
+            <View style={styles.driverSection}>
+              <Image source={{ uri: 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=100' }} style={styles.avatar} />
+              <View>
+                <Text style={styles.dName}>Sanford Marin Vinuya</Text>
+                <Text style={styles.dRoute}>Returning to Campus Gate</Text>
+              </View>
+            </View>
+            <View style={[styles.paraBtn, { backgroundColor: '#3e5141' }]}>
+              <Text style={[styles.paraText, { color: '#fff' }]}>In Transit</Text>
+            </View>
           </View>
         )}
       </View>

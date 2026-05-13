@@ -7,10 +7,11 @@ import Pusher from 'pusher-js/react-native';
 import { currentUser } from '../../services/UserStore';
 
 import * as Notifications from 'expo-notifications';
+import { useTrip } from '../../context/TripContext'; 
+import { ROUTE_STOPS } from '../../services/UserRouteStops';
 
 const { width } = Dimensions.get('window');
 
-// Enable LayoutAnimation for Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
@@ -26,11 +27,13 @@ const PUSHER_KEY    = 'f21efd02988d084b7b35';
 const PUSHER_CLUSTER = 'ap1';
 
 const UserMapScreen = () => {
+  const { active } = useLocalSearchParams();
+  const { setActiveTrip } = useTrip(); 
   const webViewRef = useRef(null);
   const reverseGeocodeTimer = useRef(null);
   const pusherRef = useRef(null);
 
-  const [status, setStatus] = useState('searching');
+  const [status, setStatus] = useState(active === 'true' ? 'booking' : 'searching');
   const [pickupAddress, setPickupAddress] = useState('Locating...');
   const [currentCoords, setCurrentCoords] = useState({ lat: 10.3381, lng: 123.9116 });
   const [searchText, setSearchText] = useState('');
@@ -97,6 +100,18 @@ const UserMapScreen = () => {
   }, []);
   // ──────────────────────────────────────────────────────────────────────────
 
+  // Prepare Waypoints for OSRM URL
+  const waypointsString = ROUTE_STOPS.map(s => `${s.lng},${s.lat}`).join(';');
+
+  useEffect(() => {
+    if (active === 'true' && status === 'booking') {
+      const timer = setTimeout(() => {
+        webViewRef.current?.injectJavaScript(`window.startBusFromUPC(${currentCoords.lat}, ${currentCoords.lng}); true;`);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [active]);
+
   const mapHtml = `
     <!DOCTYPE html>
     <html>
@@ -125,8 +140,9 @@ const UserMapScreen = () => {
 
           var busMarker = null;
           var destMarker = null;
-          var estimatorLine = null;   // full upcoming route — shrinks as the bus advances
-          var fullRouteLine = null;   // faint dashed reference line
+          var estimatorLine = null;
+          var fullRouteLine = null;
+          window.stopDrive = false;
 
           function clearRoute() {
             if (busMarker)      { map.removeLayer(busMarker);      busMarker = null; }
@@ -134,55 +150,43 @@ const UserMapScreen = () => {
             if (estimatorLine)  { map.removeLayer(estimatorLine);  estimatorLine = null; }
             if (fullRouteLine)  { map.removeLayer(fullRouteLine);  fullRouteLine = null; }
           }
-
           window.clearRoute = clearRoute;
 
-          // Pan map to a coord (used by the search bar)
           window.panTo = function(lat, lng) {
             map.setView([lat, lng], 16, { animate: true });
           };
 
           window.startBusFromUPC = async function(destLat, destLng) {
+            window.stopDrive = false;
             clearRoute();
-
             var startLat = 10.3381;
             var startLng = 123.9116;
             try {
               const url = "https://router.project-osrm.org/route/v1/driving/" +
-                          startLng + "," + startLat + ";" + destLng + "," + destLat +
+                          startLng + "," + startLat + ";" + "${waypointsString}" + ";" + destLng + "," + destLat +
                           "?overview=full&geometries=geojson";
               const response = await fetch(url);
               const data = await response.json();
               const routeCoords = data.routes[0].geometry.coordinates;
               const latLngs = routeCoords.map(c => [c[1], c[0]]);
-
+              
               destMarker = L.marker([destLat, destLng]).addTo(map);
-
-              // Faint reference of the WHOLE trip
-              fullRouteLine = L.polyline(latLngs, {
-                color: '#3e5141', weight: 3, opacity: 0.25, dashArray: '6,8'
-              }).addTo(map);
-
-              // ESTIMATOR — drawn BEFORE the bus moves; gets eaten from the back as bus advances
-              estimatorLine = L.polyline(latLngs, {
-                color: '#7B2D26', weight: 5, opacity: 0.9, lineJoin: 'round'
-              }).addTo(map);
-
+              fullRouteLine = L.polyline(latLngs, { color: '#3e5141', weight: 3, opacity: 0.25, dashArray: '6,8' }).addTo(map);
+              estimatorLine = L.polyline(latLngs, { color: '#7B2D26', weight: 5, opacity: 0.9, lineJoin: 'round' }).addTo(map);
+              
               var busIcon = L.divIcon({ className: 'bus-marker-icon', html: '🚌', iconSize:[40,40] });
               busMarker = L.marker(latLngs[0], { icon: busIcon }).addTo(map);
-
               map.fitBounds(L.latLngBounds(latLngs), { padding: [80, 80] });
-
+              
               let i = 0;
               function drive() {
+                if (window.stopDrive) return; 
                 if (i < latLngs.length) {
                   busMarker.setLatLng(latLngs[i]);
-                  // Shrink the estimator: only show what's still ahead of the bus
                   estimatorLine.setLatLngs(latLngs.slice(i));
                   i++;
                   setTimeout(drive, 400);
                 } else {
-                  // Bus arrived — DO NOT clear. Wait for "I have boarded".
                   window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'ARRIVED' }));
                 }
               }
@@ -200,98 +204,84 @@ const UserMapScreen = () => {
   `;
 
   const clearMap = () => {
-    webViewRef.current?.injectJavaScript('window.clearRoute && window.clearRoute(); true;');
+    webViewRef.current?.injectJavaScript('window.stopDrive = true; window.clearRoute && window.clearRoute(); true;');
   };
 
   const reverseGeocode = async (lat, lng) => {
     try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=16&addressdetails=1`,
-        { headers: { 'Accept-Language': 'en' } }
-      );
+      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=16&addressdetails=1`, { headers: { 'Accept-Language': 'en' } });
       const data = await res.json();
       const a = data.address || {};
-      const name =
-        a.suburb || a.neighbourhood || a.village || a.town ||
-        a.city_district || a.city || a.county || data.display_name;
-      return name || 'Unknown area';
-    } catch (e) {
-      console.log('Reverse geocode failed:', e);
-      return 'Unknown area';
-    }
+      return a.suburb || a.neighbourhood || a.village || a.town || a.city_district || a.city || a.county || data.display_name || 'Unknown area';
+    } catch (e) { return 'Unknown area'; }
   };
 
-  // 🔎 Forward geocoding for the search bar
   const forwardGeocode = async (query) => {
     try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ', Cebu, Philippines')}&limit=1&addressdetails=1`,
-        { headers: { 'Accept-Language': 'en' } }
-      );
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ', Cebu, Philippines')}&limit=1&addressdetails=1`, { headers: { 'Accept-Language': 'en' } });
       const data = await res.json();
       if (!data || data.length === 0) return null;
       const hit = data[0];
       const a = hit.address || {};
-      const label =
-        a.suburb || a.neighbourhood || a.village || a.town ||
-        a.city_district || a.city || hit.display_name;
+      const label = a.suburb || a.neighbourhood || a.village || a.town || a.city_district || a.city || hit.display_name;
       return { lat: parseFloat(hit.lat), lng: parseFloat(hit.lon), label };
-    } catch (e) {
-      console.log('Forward geocode failed:', e);
-      return null;
-    }
+    } catch (e) { return null; }
   };
 
   const handleSearchSubmit = async () => {
     const q = searchText.trim();
     if (!q) return;
     setPickupAddress('Searching...');
-    const hit = await forwardGeocode(q);
-    if (!hit) {
-      setPickupAddress('No results for "' + q + '"');
-      return;
+    
+    const dummyHit = ROUTE_STOPS.find(stop => stop.name.toLowerCase().includes(q.toLowerCase()));
+    
+    if (dummyHit) {
+      setCurrentCoords({ lat: dummyHit.lat, lng: dummyHit.lng });
+      setPickupAddress(dummyHit.name);
+      webViewRef.current?.injectJavaScript(`window.panTo(${dummyHit.lat}, ${dummyHit.lng}); true;`);
+    } else {
+      const hit = await forwardGeocode(q);
+      if (!hit) { setPickupAddress('No results for "' + q + '"'); return; }
+      setCurrentCoords({ lat: hit.lat, lng: hit.lng });
+      setPickupAddress(hit.label);
+      webViewRef.current?.injectJavaScript(`window.panTo(${hit.lat}, ${hit.lng}); true;`);
     }
-    console.log(`🔎 Search result: ${hit.lat}, ${hit.lng} (${hit.label})`);
-    setCurrentCoords({ lat: hit.lat, lng: hit.lng });
-    setPickupAddress(hit.label);
-    webViewRef.current?.injectJavaScript(`window.panTo(${hit.lat}, ${hit.lng}); true;`);
   };
 
   const handleMessage = async (event) => {
     const data = JSON.parse(event.nativeEvent.data);
-
     if (data.type === 'MOVE') {
       setCurrentCoords({ lat: data.lat, lng: data.lng });
-      console.log(`📍 Coords: ${data.lat.toFixed(6)}, ${data.lng.toFixed(6)}`);
-
       if (status === 'searching') {
         if (reverseGeocodeTimer.current) clearTimeout(reverseGeocodeTimer.current);
-        setPickupAddress('Locating...');
         reverseGeocodeTimer.current = setTimeout(async () => {
           const name = await reverseGeocode(data.lat, data.lng);
           setPickupAddress(name);
         }, 500);
       }
     }
-
     if (data.type === 'ARRIVED') {
       await Notifications.scheduleNotificationAsync({
-        content: {
-          title: "Bus Arrived! 🚌",
-          body: "Sir Sanford is at your location. Please board the bus within the minute!",
-          sound: true,
-        },
+        content: { title: "Bus Arrived! 🚌", body: "Sir Sanford is at your location.", sound: true },
         trigger: null,
       });
       LayoutAnimation.configureNext(SnappyAnim);
       setStatus('arrived');
-      // 👇 No clearRoute here — bus + remaining trail stay on the map until "I have boarded"
     }
   };
 
   const handleParaPress = () => {
     LayoutAnimation.configureNext(SnappyAnim);
     setStatus('booking');
+
+    setActiveTrip({
+      driverName: "Sanford Marin Vinuya",
+      etaText: "6:05 AM",
+      distanceText: "Arriving Soon",
+      avatarUri: 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=100',
+      route: "UP Cebu Bus Route"
+    });
+
     webViewRef.current?.injectJavaScript(`window.startBusFromUPC(${currentCoords.lat}, ${currentCoords.lng});`);
   };
 
@@ -299,12 +289,14 @@ const UserMapScreen = () => {
     clearMap();
     LayoutAnimation.configureNext(SnappyAnim);
     setStatus('searching');
+    setActiveTrip(null); 
   };
 
   const handleBoarded = () => {
-    clearMap(); // ✅ only place the bus + trail get removed after a successful trip
+    clearMap();
     LayoutAnimation.configureNext(SnappyAnim);
     setStatus('searching');
+    setActiveTrip(null); 
   };
 
   return (
@@ -319,9 +311,9 @@ const UserMapScreen = () => {
         />
       </View>
 
-      {status === 'searching' && (
-        <>
-          <View style={styles.topContainer}>
+      {(status === 'searching' || status === 'booking') && (
+        <View style={styles.topContainer}>
+          {status === 'searching' ? (
             <View style={styles.searchPill}>
               <TouchableOpacity onPress={() => router.back()}>
                 <Ionicons name="arrow-back" size={24} color="#1A2E1A" />
@@ -334,17 +326,28 @@ const UserMapScreen = () => {
                 onSubmitEditing={handleSearchSubmit}
                 returnKeyType="search"
               />
-              {searchText.length > 0 && (
-                <TouchableOpacity onPress={handleSearchSubmit}>
-                  <Ionicons name="search" size={22} color="#1A2E1A" />
-                </TouchableOpacity>
-              )}
+              <TouchableOpacity onPress={handleSearchSubmit}>
+                <Ionicons name="search" size={22} color="#1A2E1A" />
+              </TouchableOpacity>
             </View>
-          </View>
-          <View style={styles.centerPinContainer} pointerEvents="none">
-            <Ionicons name="location" size={50} color="#7B2D26" />
-          </View>
-        </>
+          ) : (
+            <TouchableOpacity 
+              style={styles.backCircle} 
+              onPress={() => {
+                clearMap();
+                router.replace('/Users/UserHome');
+              }}
+            >
+              <Ionicons name="arrow-back" size={28} color="#1A2E1A" />
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
+
+      {status === 'searching' && (
+        <View style={styles.centerPinContainer} pointerEvents="none">
+          <Ionicons name="location" size={50} color="#7B2D26" />
+        </View>
       )}
 
       <View style={styles.bookingCard}>
@@ -416,6 +419,7 @@ const styles = StyleSheet.create({
   topContainer: { position: 'absolute', top: 60, width: '100%', paddingHorizontal: 20, zIndex: 10 },
   searchPill: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', height: 55, borderRadius: 30, paddingHorizontal: 15, elevation: 5 },
   searchInput: { flex: 1, marginLeft: 10, fontSize: 16 },
+  backCircle: { width: 50, height: 50, borderRadius: 25, backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center', elevation: 5 },
   centerPinContainer: { ...StyleSheet.absoluteFillObject, justifyContent: 'center', alignItems: 'center', zIndex: 5 },
   bookingCard: {
     position: 'absolute', bottom: -1, left: 0, right: 0,

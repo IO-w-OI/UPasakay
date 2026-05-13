@@ -16,27 +16,66 @@ const STOPS = [
 const DriverMap = () => {
     const mapRef = useRef(null);
     const [location, setLocation] = useState(null);
-    const [currentStopIndex, setCurrentStopIndex] = useState(1); // 0-indexed next stop
+    const [currentStopIndex, setCurrentStopIndex] = useState(1); 
     const paxOnBoard = 12;
-    const stopsLeft   = STOPS.length - currentStopIndex - 1;
+    const stopsLeft = STOPS.length - currentStopIndex - 1;
+
+    // ─── AGGRESSIVE TRACKING & LOGGING ───
+    useEffect(() => {
+        let subscription;
+
+        const startTracking = async () => {
+            console.log("🛠️ DRIVER_TRACKING: Initializing...");
+
+            // Use Foreground Only to prevent Info.plist errors in Expo Go
+            let { status } = await Location.requestForegroundPermissionsAsync();
+            console.log("📜 Foreground Permission Status:", status);
+
+            if (status !== 'granted') {
+                console.log("❌ Permission Denied by user");
+                Alert.alert('Permission Denied', 'Please allow location access to share bus coordinates.');
+                return;
+            }
+
+            console.log("📡 Starting Aggressive watchPositionAsync...");
+            
+            // This is what will spam your terminal with logs
+            subscription = await Location.watchPositionAsync(
+                {
+                    accuracy: Location.Accuracy.BestForNavigation,
+                    distanceInterval: 0, // LOG EVERY MICROMETER
+                    timeInterval: 1000,   // EVERY SECOND
+                },
+                (newLocation) => {
+                    const { latitude, longitude, speed } = newLocation.coords;
+                    
+                    // THE CONSOLE LOG PAYLOAD
+                    console.log(`📍 DRIVER_POS: [${latitude.toFixed(6)}, ${longitude.toFixed(6)}] | Speed: ${(speed * 3.6).toFixed(1)} km/h`);
+                    
+                    setLocation(newLocation);
+                }
+            );
+        };
+
+        startTracking();
+
+        return () => {
+            if (subscription) {
+                console.log("🛑 TRACKING_STOPPED: Cleaning up subscription.");
+                subscription.remove();
+            }
+        };
+    }, []);
 
     const recenter = async () => {
-        let { status } = await Location.requestForegroundPermissionsAsync();
-        if (status !== 'granted') {
-            Alert.alert('Permission Denied', 'Allow location access to use the map.');
-            return;
-        }
-        let curr = await Location.getCurrentPositionAsync({});
-        setLocation(curr);
+        if (!location) return;
         mapRef.current?.animateToRegion({
-            latitude:      curr.coords.latitude,
-            longitude:     curr.coords.longitude,
-            latitudeDelta:  0.01,
-            longitudeDelta: 0.01,
+            latitude:      location.coords.latitude,
+            longitude:     location.coords.longitude,
+            latitudeDelta:  0.008,
+            longitudeDelta: 0.008,
         }, 1000);
     };
-
-    useEffect(() => { recenter(); }, []);
 
     const handleArrived = () => {
         if (currentStopIndex < STOPS.length - 1) {
@@ -52,8 +91,8 @@ const DriverMap = () => {
                 ref={mapRef}
                 style={styles.map}
                 initialRegion={{
-                    latitude:      10.3157,
-                    longitude:     123.8854,
+                    latitude:      10.3381,
+                    longitude:     123.9116,
                     latitudeDelta:  0.05,
                     longitudeDelta: 0.05,
                 }}
@@ -79,21 +118,12 @@ const DriverMap = () => {
                 activeOpacity={0.8}
             >
                 <BlurView intensity={90} tint="light" style={styles.glassButton}>
-                    <Ionicons
-                        name="navigate"
-                        size={28}
-                        color="#1A2E1A"
-                        style={Platform.select({
-                            ios:     { transform: [{ translateX: -2 }, { translateY: -1.5 }] },
-                            android: { transform: [{ translateX: -2 }, { translateY: -1.5 }] },
-                        })}
-                    />
+                    <Ionicons name="navigate" size={28} color="#1A2E1A" />
                 </BlurView>
             </TouchableOpacity>
 
             {/* ── Next Stop Card ── */}
-            <BlurView intensity={90} tint="light" style={styles.stopCard}>
-                {/* Stop Info */}
+            <BlurView intensity={95} tint="light" style={styles.stopCard}>
                 <View style={styles.stopRow}>
                     <View style={styles.stopIconBox}>
                         <Ionicons name="location" size={20} color="#fff" />
@@ -107,7 +137,6 @@ const DriverMap = () => {
                     </View>
                 </View>
 
-                {/* Arrived Button */}
                 <TouchableOpacity
                     style={[styles.arrivedButton, currentStopIndex >= STOPS.length - 1 && styles.arrivedButtonDone]}
                     activeOpacity={0.8}
@@ -127,14 +156,13 @@ const styles = StyleSheet.create({
     container: { flex: 1 },
     map:       { flex: 1 },
 
-    // Route Pill
     routePillWrapper: {
         position: 'absolute', top: 60, alignSelf: 'center',
         alignItems: 'center', zIndex: 10,
     },
     routePill: {
         flexDirection: 'row', alignItems: 'center',
-        backgroundColor: '#2E7D32', borderRadius: 30,
+        backgroundColor: '#014421', borderRadius: 30, // Official UP Green
         paddingHorizontal: 18, paddingVertical: 8,
         marginBottom: 6,
         shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 8, elevation: 5,
@@ -143,42 +171,38 @@ const styles = StyleSheet.create({
     routePillText: { fontFamily: 'Nunito-Bold', fontSize: 15, color: '#fff' },
     routeSubText: {
         fontFamily: 'Nunito-Bold', fontSize: 12, color: '#fff',
-        backgroundColor: 'rgba(0,0,0,0.45)', borderRadius: 20,
+        backgroundColor: 'rgba(0,0,0,0.55)', borderRadius: 20,
         paddingHorizontal: 14, paddingVertical: 4,
     },
 
-    // Recenter
     recenterButtonWrapper: {
-        position: 'absolute', bottom: 200, right: 20,
-        shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.2, shadowRadius: 5, elevation: 5,
+        position: 'absolute', bottom: 210, right: 20,
+        shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 5, elevation: 5,
     },
     glassButton: {
         width: 60, height: 60, borderRadius: 30,
-        backgroundColor: 'rgba(212,230,213,0.65)',
+        backgroundColor: 'rgba(255,255,255,0.7)',
         justifyContent: 'center', alignItems: 'center',
-        overflow: 'hidden', borderWidth: 1.5,
+        overflow: 'hidden', borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.4)',
     },
 
-    // Stop Card
     stopCard: {
         position: 'absolute', bottom: 0, left: 0, right: 0,
-        padding: 24, paddingBottom: 40,
-        borderTopLeftRadius: 32, borderTopRightRadius: 32,
-        backgroundColor: '#F2F9F3',
+        padding: 24, paddingBottom: Platform.OS === 'ios' ? 50 : 35,
+        borderTopLeftRadius: 35, borderTopRightRadius: 35,
+        backgroundColor: 'rgba(242, 249, 243, 0.95)',
         overflow: 'hidden',
-        borderWidth: 1, borderColor: '#3e5141',
-        shadowColor: '#000', shadowOffset: { width: 0, height: -4 },
-        shadowOpacity: 0.1, shadowRadius: 12, elevation: 10,
+        borderWidth: 1.5, borderColor: '#014421',
+        shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 12, elevation: 10,
     },
     stopRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
     stopIconBox: {
         width: 36, height: 36, borderRadius: 18,
-        backgroundColor: '#2E7D32', justifyContent: 'center',
+        backgroundColor: '#014421', justifyContent: 'center',
         alignItems: 'center', marginRight: 12,
     },
-    stopLabel: { fontFamily: 'Nunito-Bold', fontSize: 12, color: '#888' },
+    stopLabel: { fontFamily: 'Nunito-Bold', fontSize: 12, color: '#666' },
     stopName:  { fontFamily: 'Nunito-Bold', fontSize: 18, color: '#1A2E1A' },
     etaBadge: {
         backgroundColor: '#FFB82E', borderRadius: 20,
@@ -186,12 +210,11 @@ const styles = StyleSheet.create({
     },
     etaText: { fontFamily: 'Nunito-Bold', fontSize: 14, color: '#1A2E1A' },
 
-    // Arrived Button
     arrivedButton: {
         backgroundColor: '#1A2E1A', height: 56, borderRadius: 30,
         justifyContent: 'center', alignItems: 'center',
     },
-    arrivedButtonDone: { backgroundColor: '#2E7D32' },
+    arrivedButtonDone: { backgroundColor: '#014421' },
     arrivedText: { fontFamily: 'Nunito-Bold', fontSize: 18, color: '#fff' },
 });
 
