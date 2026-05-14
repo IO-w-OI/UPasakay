@@ -7,6 +7,20 @@ use Illuminate\Http\Request;
 
 class ShuttleWebController extends Controller
 {
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'shuttle_code' => 'required|string|max:50|unique:shuttles,shuttle_code',
+            'shuttle_type' => 'required|string|in:van,minibus,bus',
+            'plate_number' => 'required|string|max:20|unique:shuttles,plate_number',
+            'capacity'     => 'required|integer|min:1|max:100',
+        ]);
+
+        Shuttle::create(array_merge($validated, ['status' => 'idle', 'is_active' => false]));
+
+        return back()->with('success', 'Shuttle created successfully.');
+    }
+
     public function update(Request $request, Shuttle $shuttle)
     {
         $request->validate([
@@ -82,5 +96,13 @@ class ShuttleWebController extends Controller
         ]);
 
         return back()->with('success', 'Shuttle status updated.');
+    }
+
+    public function destroy(Shuttle $shuttle)
+    {
+        $shuttle->update(['driver_id' => null]);
+        $shuttle->delete();
+
+        return back()->with('success', 'Shuttle removed successfully.');
     }
 }

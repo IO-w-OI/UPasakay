@@ -279,6 +279,40 @@ const quickAssignToShuttle = (s: ShuttleItem) => {
     );
 };
 
+// ── Create Shuttle ─────────────────────────────────────────────────────────
+const showCreateShuttleDrawer = ref(false);
+const createShuttleForm = useForm({
+    shuttle_code: '',
+    shuttle_type: 'van',
+    plate_number: '',
+    capacity: 15,
+});
+const submitCreateShuttle = () => {
+    createShuttleForm.post('/shuttles', {
+        onSuccess: () => { showCreateShuttleDrawer.value = false; createShuttleForm.reset(); },
+    });
+};
+
+// ── Delete Shuttle ─────────────────────────────────────────────────────────
+const showDeleteShuttleModal = ref(false);
+const deletingShuttle = ref<ShuttleItem | null>(null);
+const startDeleteShuttle = (s: ShuttleItem) => {
+    deletingShuttle.value = s;
+    showDeleteShuttleModal.value = true;
+    shuttleMenu.value = null;
+};
+const confirmDeleteShuttle = () => {
+    if (!deletingShuttle.value) return;
+    router.delete(`/shuttles/${deletingShuttle.value.id}`, {
+        preserveScroll: true,
+        onSuccess: () => { showDeleteShuttleModal.value = false; deletingShuttle.value = null; },
+    });
+};
+const cancelDeleteShuttle = () => {
+    showDeleteShuttleModal.value = false;
+    deletingShuttle.value = null;
+};
+
 // ── Helpers ───────────────────────────────────────────────────────────────
 const statusDot = (s: string) => ({
     active: 'bg-green-500', idle: 'bg-yellow-400', offline: 'bg-gray-400', suspended: 'bg-red-500',
@@ -519,7 +553,13 @@ const lastActiveClass = (d: DriverItem) => d.is_online ? 'text-green-600 dark:te
                  SHUTTLE MANAGEMENT
                  ═══════════════════════════════════════════ -->
               <section v-show="activeManagementTab === 'shuttles'" class="space-y-5">
-                <h2 class="text-2xl font-bold text-foreground">Shuttle Management</h2>
+                <div class="flex items-center justify-between">
+                    <h2 class="text-2xl font-bold text-foreground">Shuttle Management</h2>
+                    <button @click="showCreateShuttleDrawer = true"
+                        class="flex items-center gap-2 rounded-xl bg-[#8B0000] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#700000]">
+                        <Bus class="h-4 w-4" /> Add Shuttle
+                    </button>
+                </div>
 
                 <!-- Shuttle Filter bar -->
                 <div class="flex flex-wrap items-center gap-3 rounded-2xl border border-border/70 bg-card p-4 shadow-sm shadow-black/5 dark:shadow-black/20">
@@ -637,6 +677,11 @@ const lastActiveClass = (d: DriverItem) => d.is_online ? 'text-green-600 dark:te
                                                 <button v-if="s.status !== 'active'" @click="setShuttleStatus(s, 'active')"
                                                     class="flex w-full items-center gap-2.5 px-4 py-2 text-sm text-green-600 dark:text-green-400 hover:bg-green-500/10">
                                                     <UserCheck class="h-4 w-4" /> Set Active
+                                                </button>
+                                                <hr class="my-1 border-border/50" />
+                                                <button @click="startDeleteShuttle(s)"
+                                                    class="flex w-full items-center gap-2.5 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-500/10">
+                                                    <Trash2 class="h-4 w-4" /> Remove Shuttle
                                                 </button>
                                             </div>
                                         </div>
@@ -970,6 +1015,88 @@ const lastActiveClass = (d: DriverItem) => d.is_online ? 'text-green-600 dark:te
                         </button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </Teleport>
+
+    <!-- ═══ CREATE SHUTTLE DRAWER ═══ -->
+    <Teleport to="body">
+        <div v-if="showCreateShuttleDrawer" class="fixed inset-0 z-50 flex">
+            <div class="flex-1 bg-black/30" @click="showCreateShuttleDrawer = false"></div>
+            <div class="w-full max-w-md overflow-y-auto bg-card shadow-xl">
+                <div class="flex items-center justify-between border-b border-border/70 px-6 py-4">
+                    <h2 class="text-base font-semibold text-foreground">Add New Shuttle</h2>
+                    <button @click="showCreateShuttleDrawer = false" class="text-muted-foreground hover:text-foreground text-xl leading-none">&times;</button>
+                </div>
+                <form @submit.prevent="submitCreateShuttle" class="p-6 space-y-5">
+                    <div>
+                        <label class="mb-1 block text-sm font-medium text-foreground">Shuttle Code / Name *</label>
+                        <input v-model="createShuttleForm.shuttle_code" type="text" required placeholder="e.g. DEMO-1"
+                            class="w-full rounded-lg border border-border/70 bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-[#8B0000]" />
+                        <p v-if="createShuttleForm.errors.shuttle_code" class="mt-1 text-xs text-red-500">{{ createShuttleForm.errors.shuttle_code }}</p>
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-sm font-medium text-foreground">Shuttle Type *</label>
+                        <select v-model="createShuttleForm.shuttle_type"
+                            class="w-full rounded-lg border border-border/70 bg-card px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-[#8B0000]">
+                            <option value="van">Van</option>
+                            <option value="minibus">Minibus</option>
+                            <option value="bus">Bus</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-sm font-medium text-foreground">Plate Number *</label>
+                        <input v-model="createShuttleForm.plate_number" type="text" required
+                            class="w-full rounded-lg border border-border/70 bg-transparent px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-[#8B0000]" />
+                        <p v-if="createShuttleForm.errors.plate_number" class="mt-1 text-xs text-red-500">{{ createShuttleForm.errors.plate_number }}</p>
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-sm font-medium text-foreground">Capacity (seats) *</label>
+                        <input v-model.number="createShuttleForm.capacity" type="number" min="1" max="100" required
+                            class="w-full rounded-lg border border-border/70 bg-transparent px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-[#8B0000]" />
+                        <p v-if="createShuttleForm.errors.capacity" class="mt-1 text-xs text-red-500">{{ createShuttleForm.errors.capacity }}</p>
+                    </div>
+                    <hr class="border-border/50" />
+                    <div class="flex justify-end gap-3">
+                        <button type="button" @click="showCreateShuttleDrawer = false"
+                            class="rounded-lg border border-border/70 px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-accent">
+                            Cancel
+                        </button>
+                        <button type="submit" :disabled="createShuttleForm.processing"
+                            class="rounded-lg bg-[#8B0000] px-4 py-2 text-sm font-semibold text-white hover:bg-[#700000] disabled:opacity-50">
+                            Add Shuttle
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </Teleport>
+
+    <!-- ═══ DELETE SHUTTLE MODAL ═══ -->
+    <Teleport to="body">
+        <div v-if="showDeleteShuttleModal" class="fixed inset-0 z-50 flex items-center justify-center">
+            <div class="absolute inset-0 bg-black/40" @click="cancelDeleteShuttle"></div>
+            <div class="relative w-full max-w-sm rounded-2xl bg-card p-6 shadow-xl">
+                <div class="mb-4 flex items-center gap-3">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-full bg-red-500/15">
+                        <Trash2 class="h-5 w-5 text-red-600 dark:text-red-400" />
+                    </div>
+                    <h3 class="text-lg font-semibold text-foreground">Remove Shuttle?</h3>
+                </div>
+                <p class="mb-6 text-sm text-muted-foreground">
+                    Are you sure you want to remove <strong class="text-foreground">{{ deletingShuttle?.shuttle_code }} ({{ deletingShuttle?.plate_number }})</strong>?
+                    This will unassign its driver and cannot be undone.
+                </p>
+                <div class="flex justify-end gap-3">
+                    <button @click="cancelDeleteShuttle"
+                        class="rounded-lg border border-border/70 px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-accent">
+                        Cancel
+                    </button>
+                    <button @click="confirmDeleteShuttle"
+                        class="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700">
+                        Yes, Remove
+                    </button>
+                </div>
             </div>
         </div>
     </Teleport>
