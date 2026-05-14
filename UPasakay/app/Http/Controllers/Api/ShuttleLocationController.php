@@ -26,6 +26,8 @@ class ShuttleLocationController extends Controller
         ]);
 
         $location = ShuttleLocation::create($validated);
+        \Log::info("📍 GPS Update - Shuttle: {$validated['shuttle_id']} | Lat: {$validated['latitude']} | Lng: {$validated['longitude']}");
+                // --------------------------
 
         broadcast(new ShuttleLocationUpdated(
             $validated['shuttle_id'],
