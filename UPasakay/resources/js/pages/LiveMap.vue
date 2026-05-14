@@ -18,7 +18,6 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Live Map', href: '/live-map' },
 ];
 
-type RouteFilterKey = 'all' | 'north' | 'south' | 'cebu_city';
 type RouteName = 'North' | 'South' | 'Cebu City';
 
 interface RouteItem {

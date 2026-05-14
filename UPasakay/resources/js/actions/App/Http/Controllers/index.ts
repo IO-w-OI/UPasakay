@@ -1,14 +1,14 @@
+import AdminController from './AdminController'
 import Api from './Api'
 import DashboardController from './DashboardController'
-import LiveMapController from './LiveMapController'
-import AdminController from './AdminController'
 import DriverController from './DriverController'
-import ShuttleWebController from './ShuttleWebController'
-import PickupRequestController from './PickupRequestController'
-import PassengerApprovalController from './PassengerApprovalController'
-import NotificationController from './NotificationController'
 import FeedbackController from './FeedbackController'
+import LiveMapController from './LiveMapController'
+import NotificationController from './NotificationController'
+import PassengerApprovalController from './PassengerApprovalController'
+import PickupRequestController from './PickupRequestController'
 import Settings from './Settings'
+import ShuttleWebController from './ShuttleWebController'
 const Controllers = {
     Api: Object.assign(Api, Api),
 DashboardController: Object.assign(DashboardController, DashboardController),
