@@ -2,7 +2,7 @@
 import { Head, router, useForm } from '@inertiajs/vue3';
 import axios from 'axios';
 import * as L from 'leaflet';
-import { Map as MapIcon, Bus, MapPin, RefreshCw, ArrowRight, Plus, Trash2, X, ChevronDown, ChevronUp } from 'lucide-vue-next';
+import { Map as MapIcon, Bus, MapPin, RefreshCw, ArrowRight, Plus, Trash2, X, Search, Lock, Pencil, Check } from 'lucide-vue-next';
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { useAppearance } from '@/composables/useAppearance';
 import { liveMapRoutes, type RouteConfig } from '@/data/routeData';
@@ -137,50 +137,217 @@ const filteredRequests = computed(() => {
 });
 
 // ── Edit mode ─────────────────────────────────────────────────────────────
-const routeKeyToName: Record<Exclude<RouteFilterKey, 'all'>, RouteName> = {
+type RouteKey = 'north' | 'south' | 'cebu_city';
+
+const routeKeyToName: Record<RouteKey, RouteName> = {
     north: 'North',
     south: 'South',
     cebu_city: 'Cebu City',
 };
 
-const isAddStopMode = ref(false);
-const showAddStopModal = ref(false);
-const pendingLatlng = ref<L.LatLng | null>(null);
+const activeRouteTab = ref<RouteKey>('north');
+const showAddStopForm = ref(false);
 const isGeocodingStopName = ref(false);
-const stopModalError = ref('');
-const selectedRouteKey = ref<'north' | 'south' | 'cebu_city' | null>(null);
+const stopFormError = ref('');
 
 const stopForm = useForm({
     route_id: null as number | null,
     name: '',
-    latitude: 0,
-    longitude: 0,
+    latitude: 0 as number,
+    longitude: 0 as number,
 });
-
-// Hardcoded route options for the "Add Custom Stop" modal dropdown
-const hardcodedRouteOptions = [
-    { key: 'north', label: 'North Route' },
-    { key: 'south', label: 'South Route' },
-    { key: 'cebu_city', label: 'Cebu City Route' },
-] as const;
 
 // Map route key to route ID by matching with database routes by name
 const routeKeyToId = computed(() => {
-    const mapping: Record<'north' | 'south' | 'cebu_city', number | null> = {
-        north: null,
-        south: null,
-        cebu_city: null,
-    };
-
+    const mapping: Record<RouteKey, number | null> = { north: null, south: null, cebu_city: null };
     for (const [key, name] of Object.entries(routeKeyToName)) {
         const route = props.routes.find(r => r.name === name);
-        if (route) {
-            mapping[key as 'north' | 'south' | 'cebu_city'] = route.id;
-        }
+        if (route) mapping[key as RouteKey] = route.id;
     }
-
     return mapping;
 });
+
+// ── Place search (Nominatim forward geocoding) ───────────────────────────
+interface PlaceResult { display_name: string; lat: string; lon: string; place_id: number }
+const placeSearch = ref('');
+const placeResults = ref<PlaceResult[]>([]);
+const isSearchingPlace = ref(false);
+const showPlaceDropdown = ref(false);
+let placeSearchTimer: ReturnType<typeof setTimeout> | null = null;
+let previewMarker: L.Marker | null = null;
+
+function clearPreviewMarker() {
+    if (previewMarker && map) {
+        previewMarker.remove();
+        previewMarker = null;
+    }
+}
+
+function setPreviewMarker(lat: number, lng: number) {
+    if (!map) return;
+    clearPreviewMarker();
+    previewMarker = L.marker([lat, lng], {
+        icon: L.divIcon({
+            className: '',
+            html: '<div style="background:#3b82f6;width:20px;height:20px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.4);"></div>',
+            iconSize: [20, 20],
+            iconAnchor: [10, 10],
+        }),
+    }).addTo(map);
+    map.panTo([lat, lng]);
+}
+
+function onPlaceSearchInput() {
+    if (placeSearchTimer) clearTimeout(placeSearchTimer);
+    const q = placeSearch.value.trim();
+    if (!q) {
+        placeResults.value = [];
+        showPlaceDropdown.value = false;
+        return;
+    }
+    placeSearchTimer = setTimeout(async () => {
+        isSearchingPlace.value = true;
+        try {
+            const { data } = await axios.get<PlaceResult[]>('https://nominatim.openstreetmap.org/search', {
+                params: {
+                    q,
+                    format: 'json',
+                    limit: 5,
+                    viewbox: '123.7,10.5,124.1,10.1',
+                    bounded: 1,
+                },
+            });
+            placeResults.value = data ?? [];
+            showPlaceDropdown.value = true;
+        } catch {
+            placeResults.value = [];
+        } finally {
+            isSearchingPlace.value = false;
+        }
+    }, 350);
+}
+
+function selectPlaceResult(r: PlaceResult) {
+    const lat = parseFloat(r.lat);
+    const lng = parseFloat(r.lon);
+    stopForm.latitude = lat;
+    stopForm.longitude = lng;
+    stopForm.name = r.display_name.split(',')[0].trim();
+    placeSearch.value = '';
+    placeResults.value = [];
+    showPlaceDropdown.value = false;
+    setPreviewMarker(lat, lng);
+}
+
+function extractStopName(response: NominatimReverseResponse, fallbackLatlng: L.LatLng): string {
+    const candidates = [
+        response.name,
+        response.address?.amenity,
+        response.address?.building,
+        response.address?.road,
+        response.address?.neighbourhood,
+        response.address?.suburb,
+        response.address?.quarter,
+        response.address?.city,
+        response.address?.town,
+        response.address?.municipality,
+        response.address?.village,
+        response.display_name,
+    ];
+    const firstMatch = candidates.find(v => v?.trim());
+    return firstMatch?.trim() ?? `Custom Stop ${fallbackLatlng.lat.toFixed(5)}, ${fallbackLatlng.lng.toFixed(5)}`;
+}
+
+async function fetchReverseGeocode(latlng: L.LatLng) {
+    isGeocodingStopName.value = true;
+    try {
+        const { data } = await axios.get<NominatimReverseResponse>('https://nominatim.openstreetmap.org/reverse', {
+            params: { format: 'jsonv2', lat: latlng.lat, lon: latlng.lng, addressdetails: 1 },
+        });
+        stopForm.name = extractStopName(data, latlng);
+    } catch {
+        stopForm.name = `Custom Stop ${latlng.lat.toFixed(5)}, ${latlng.lng.toFixed(5)}`;
+    } finally {
+        isGeocodingStopName.value = false;
+    }
+}
+
+function openAddStopForm() {
+    stopFormError.value = '';
+    stopForm.clearErrors();
+    stopForm.reset();
+    const routeId = routeKeyToId.value[activeRouteTab.value];
+    if (!routeId) {
+        stopFormError.value = `Route "${routeKeyToName[activeRouteTab.value]}" not found in database. Run route seeder first.`;
+    }
+    stopForm.route_id = routeId;
+    stopForm.latitude = 0;
+    stopForm.longitude = 0;
+    stopForm.name = '';
+    placeSearch.value = '';
+    placeResults.value = [];
+    showAddStopForm.value = true;
+}
+
+function closeAddStopForm() {
+    showAddStopForm.value = false;
+    stopFormError.value = '';
+    stopForm.clearErrors();
+    placeSearch.value = '';
+    placeResults.value = [];
+    clearPreviewMarker();
+    if (map) map.getContainer().style.cursor = '';
+}
+
+function submitStop() {
+    if (!stopForm.route_id) {
+        stopFormError.value = 'No route selected.';
+        return;
+    }
+    if (!stopForm.latitude || !stopForm.longitude) {
+        stopFormError.value = 'Pick a location — search a place or click on the map.';
+        return;
+    }
+    if (!stopForm.name.trim()) {
+        stopFormError.value = 'Enter a stop name.';
+        return;
+    }
+    stopForm.post('/live-map/stops', {
+        preserveScroll: true,
+        onSuccess: () => closeAddStopForm(),
+    });
+}
+
+function confirmDeleteStop(stop: StopItem) {
+    if (!window.confirm(`Delete stop "${stop.name}"? This cannot be undone.`)) return;
+    router.delete(`/live-map/stops/${stop.id}`, { preserveScroll: true });
+}
+
+// ── Inline rename ────────────────────────────────────────────────────────
+const editingStopId = ref<number | null>(null);
+const editingStopName = ref('');
+const renameForm = useForm({ name: '' });
+
+function startEditStop(stop: StopItem) {
+    editingStopId.value = stop.id;
+    editingStopName.value = stop.name;
+}
+function cancelEditStop() {
+    editingStopId.value = null;
+    editingStopName.value = '';
+}
+function saveEditStop(stop: StopItem) {
+    const newName = editingStopName.value.trim();
+    if (!newName || newName === stop.name) {
+        cancelEditStop();
+        return;
+    }
+    renameForm.name = newName;
+    renameForm.patch(`/live-map/stops/${stop.id}`, {
+        preserveScroll: true,
+        onSuccess: () => cancelEditStop(),
+    });
+}
 
 const routeGroupDefs = [
     { key: 'north', routeName: 'North', label: 'North Route', dot: 'bg-blue-500', badge: 'bg-blue-500/15 text-blue-700 dark:text-blue-300' },
@@ -243,116 +410,6 @@ const allStopsByRoute = computed(() => {
 
     return grouped;
 });
-
-// Watch selectedRouteKey and update stopForm.route_id
-watch(selectedRouteKey, (key) => {
-    if (key && routeKeyToId.value[key]) {
-        stopForm.route_id = routeKeyToId.value[key];
-    }
-});
-
-function toggleAddStopMode() {
-    isAddStopMode.value = !isAddStopMode.value;
-    if (map) {
-        map.getContainer().style.cursor = isAddStopMode.value ? 'crosshair' : '';
-    }
-}
-
-function resetStopForm() {
-    stopForm.clearErrors();
-    stopForm.reset();
-    selectedRouteKey.value = 'north';  // Default to North route
-    stopForm.route_id = routeKeyToId.value.north ?? null;
-}
-
-function extractStopName(response: NominatimReverseResponse, fallbackLatlng: L.LatLng): string {
-    const addressCandidates = [
-        response.name,
-        response.address?.amenity,
-        response.address?.building,
-        response.address?.road,
-        response.address?.neighbourhood,
-        response.address?.suburb,
-        response.address?.quarter,
-        response.address?.city,
-        response.address?.town,
-        response.address?.municipality,
-        response.address?.village,
-        response.display_name,
-    ];
-
-    const firstMatch = addressCandidates.find((value) => value?.trim());
-    if (firstMatch?.trim()) {
-        return firstMatch.trim();
-    }
-
-    return `Custom Stop ${fallbackLatlng.lat.toFixed(5)}, ${fallbackLatlng.lng.toFixed(5)}`;
-}
-
-async function fetchReverseGeocode(latlng: L.LatLng) {
-    try {
-        const { data } = await axios.get<NominatimReverseResponse>('https://nominatim.openstreetmap.org/reverse', {
-            params: {
-                format: 'jsonv2',
-                lat: latlng.lat,
-                lon: latlng.lng,
-                addressdetails: 1,
-            },
-        });
-
-        stopForm.name = extractStopName(data, latlng);
-    } catch {
-        stopForm.name = `Custom Stop ${latlng.lat.toFixed(5)}, ${latlng.lng.toFixed(5)}`;
-    } finally {
-        isGeocodingStopName.value = false;
-    }
-}
-
-function openAddStopModal(latlng: L.LatLng) {
-    pendingLatlng.value = latlng;
-    stopModalError.value = '';
-    resetStopForm();
-    stopForm.latitude = latlng.lat;
-    stopForm.longitude = latlng.lng;
-    stopForm.name = '';
-    showAddStopModal.value = true;
-    isGeocodingStopName.value = true;
-    void fetchReverseGeocode(latlng);
-}
-
-function closeStopModal() {
-    showAddStopModal.value = false;
-    pendingLatlng.value = null;
-    stopModalError.value = '';
-    isGeocodingStopName.value = false;
-    stopForm.clearErrors();
-}
-
-function submitStop() {
-    if (!pendingLatlng.value || !stopForm.route_id) {
-        return;
-    }
-
-    stopForm.post('/live-map/stops', {
-        preserveScroll: true,
-        onSuccess: () => {
-            closeStopModal();
-        },
-    });
-}
-
-function confirmDeleteStop(stop: StopItem) {
-    if (!window.confirm(`Delete stop "${stop.name}"? This cannot be undone.`)) {
-        return;
-    }
-
-    router.delete(`/live-map/stops/${stop.id}`, {
-        preserveScroll: true,
-    });
-}
-
-// ── Route stops accordion ────────────────────────────────────────────────
-const routesPanelOpen = ref(true);
 
 //  Leaflet map
 const mapRef = ref<HTMLDivElement | null>(null);
@@ -481,7 +538,7 @@ watch(
     () => syncCustomStopMarkers(),
     { deep: true },
 );
-watch(isAddStopMode, (active) => {
+watch(showAddStopForm, (active) => {
     if (map) {
         map.getContainer().style.cursor = active ? 'crosshair' : '';
     }
@@ -595,10 +652,13 @@ onMounted(() => {
         drawRoutes(map!);
         syncCustomStopMarkers();
 
-        // ── Map click: only fires when Add Stop mode is active ─────────────────
+        // ── Map click: only fires when Add Stop form is open ─────────────────
         map!.on('click', (e: L.LeafletMouseEvent) => {
-            if (!isAddStopMode.value) return;
-            openAddStopModal(e.latlng);
+            if (!showAddStopForm.value) return;
+            stopForm.latitude = e.latlng.lat;
+            stopForm.longitude = e.latlng.lng;
+            setPreviewMarker(e.latlng.lat, e.latlng.lng);
+            void fetchReverseGeocode(e.latlng);
         });
     });
 
@@ -728,88 +788,6 @@ watch(resolvedAppearance, () => {
                         </p>
                     </div>
 
-                    <!-- Add Stop Modal overlay -->
-                    <Transition name="modal-fade">
-                        <div
-                            v-if="showAddStopModal"
-                            class="absolute inset-0 z-[900] flex items-center justify-center bg-black/40 backdrop-blur-sm"
-                            @click.self="closeStopModal"
-                        >
-                            <div class="w-full max-w-md rounded-2xl border border-border/70 bg-card p-5 shadow-2xl">
-                                <div class="mb-4 flex items-start justify-between gap-4">
-                                    <div>
-                                        <h3 class="text-sm font-bold text-foreground">Add Custom Stop</h3>
-                                        <p class="mt-1 text-xs text-muted-foreground">
-                                            {{ pendingLatlng ? `Lat ${pendingLatlng.lat.toFixed(5)}, Lng ${pendingLatlng.lng.toFixed(5)}` : 'Select a point on the map' }}
-                                        </p>
-                                    </div>
-                                    <button @click="closeStopModal" class="rounded-lg p-1 hover:bg-accent">
-                                        <X class="h-4 w-4 text-muted-foreground" />
-                                    </button>
-                                </div>
-
-                                <div class="space-y-4">
-                                    <div>
-                                        <label for="stop-name" class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                                            Stop Name
-                                        </label>
-                                        <input
-                                            id="stop-name"
-                                            v-model="stopForm.name"
-                                            type="text"
-                                            class="w-full rounded-xl border border-border/70 bg-background px-3 py-2 text-sm text-foreground outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                                            :placeholder="isGeocodingStopName ? 'Resolving nearby place...' : 'Enter stop name'"
-                                        />
-                                        <p v-if="stopForm.errors.name" class="mt-1 text-xs text-red-500">
-                                            {{ stopForm.errors.name }}
-                                        </p>
-                                    </div>
-
-                                    <div>
-                                        <label for="stop-route" class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                                            Route Category
-                                        </label>
-                                        <select
-                                            id="stop-route"
-                                            v-model="selectedRouteKey"
-                                            class="w-full rounded-xl border border-border/70 bg-background px-3 py-2 text-sm text-foreground outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                                        >
-                                            <option :value="null" disabled>Select a route category</option>
-                                            <option v-for="route in hardcodedRouteOptions" :key="route.key" :value="route.key">
-                                                {{ route.label }}
-                                            </option>
-                                        </select>
-                                        <p v-if="stopForm.errors.route_id" class="mt-1 text-xs text-red-500">
-                                            {{ stopForm.errors.route_id }}
-                                        </p>
-                                    </div>
-
-                                    <p v-if="stopModalError" class="rounded-lg bg-red-500/10 px-3 py-2 text-xs font-medium text-red-600 dark:text-red-400">
-                                        {{ stopModalError }}
-                                    </p>
-
-                                    <div class="flex gap-2">
-                                        <button
-                                            type="button"
-                                            class="flex-1 rounded-xl border border-border/70 py-2 text-xs font-semibold text-muted-foreground transition hover:bg-accent"
-                                            @click="closeStopModal"
-                                        >
-                                            Cancel
-                                        </button>
-                                        <button
-                                            type="button"
-                                            class="flex-1 rounded-xl bg-blue-600 py-2 text-xs font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
-                                            :disabled="stopForm.processing || isGeocodingStopName || !stopForm.name.trim() || !stopForm.route_id"
-                                            @click="submitStop"
-                                        >
-                                            {{ stopForm.processing ? 'Saving...' : 'Save' }}
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </Transition>
-
                     <!-- Leaflet map -->
                     <div ref="mapRef" class="relative flex-1 z-0">
                         <!-- No data overlay -->
@@ -847,49 +825,190 @@ watch(resolvedAppearance, () => {
                     <!-- Click hint -->
                     <div class="flex items-center gap-2 border-t border-blue-500/20 bg-blue-500/10 px-4 py-2 text-xs text-blue-600 dark:text-blue-400">
                         <MapIcon class="h-3.5 w-3.5" />
-                        Click a shuttle/pin for details &middot; Use <b>Add Stop</b> mode to place geofenced stops &middot; Shift-scroll to zoom
+                        Click a shuttle/pin for details &middot; Use <b>Add Stop</b> in the sidebar to pinpoint or search a place &middot; Shift-scroll to zoom
                     </div>
                 </div>
 
                 <!-- Right sidebar -->
                 <div class="flex w-72 shrink-0 flex-col gap-4 overflow-y-auto">
 
-                    <!-- Stop management controls -->
-                    <div class="rounded-2xl border border-border/70 bg-card p-4 shadow-sm shadow-black/5 dark:shadow-black/20">
-                        <div class="flex items-center justify-between gap-2">
-                            <div>
-                                <p class="text-xs font-bold uppercase tracking-wide text-muted-foreground">Stop Tools</p>
-                                <p class="mt-1 text-xs text-muted-foreground">
-                                    Add geocoded stops or remove custom ones.
-                                </p>
-                            </div>
-                            <span
-                                class="rounded-full px-2.5 py-1 text-[10px] font-semibold"
-                                :class="isAddStopMode ? 'bg-blue-500/15 text-blue-700 dark:text-blue-300' : 'bg-muted text-muted-foreground'"
+                    <!-- Route Stops panel with tabs -->
+                    <div class="rounded-2xl border border-border/70 bg-card shadow-sm shadow-black/5 dark:shadow-black/20">
+                        <div class="flex items-center justify-between px-4 py-3">
+                            <p class="text-xs font-bold uppercase tracking-wide text-muted-foreground">Route Stops</p>
+                            <button
+                                v-if="!showAddStopForm"
+                                type="button"
+                                class="flex items-center gap-1 rounded-lg bg-blue-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-blue-700"
+                                @click="openAddStopForm"
                             >
-                                {{ isAddStopMode ? 'Add mode on' : 'Add mode off' }}
-                            </span>
+                                <Plus class="h-3 w-3" /> Add Stop
+                            </button>
                         </div>
-                        <div class="mt-3 grid grid-cols-2 gap-2">
+
+                        <!-- Tabs -->
+                        <div class="flex gap-1 border-b border-border/40 px-2">
                             <button
+                                v-for="group in routeGroupDefs"
+                                :key="group.key"
                                 type="button"
-                                class="flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold shadow-sm transition-all duration-200"
-                                :class="isAddStopMode
-                                    ? 'bg-blue-600 text-white ring-2 ring-blue-400 ring-offset-1'
-                                    : 'border border-border/70 bg-card text-foreground hover:bg-accent'"
-                                @click="toggleAddStopMode"
+                                class="flex-1 rounded-t-lg px-2 py-2 text-[11px] font-semibold transition"
+                                :class="activeRouteTab === group.key
+                                    ? group.badge + ' border-b-2 border-current -mb-px'
+                                    : 'text-muted-foreground hover:bg-accent/40'"
+                                @click="activeRouteTab = group.key"
                             >
-                                <Plus class="h-3.5 w-3.5" />
-                                {{ isAddStopMode ? 'Exit Add Stop' : 'Add Stop' }}
+                                <span class="flex items-center justify-center gap-1.5">
+                                    <span :class="['h-2 w-2 rounded-full', group.dot]" />
+                                    {{ group.routeName }}
+                                </span>
                             </button>
-                            <button
-                                id="btn-delete-route"
-                                type="button"
-                                class="flex items-center justify-center gap-1.5 rounded-xl border border-dashed border-border/70 bg-card px-3 py-2 text-xs font-semibold text-red-500 opacity-75 shadow-sm transition-all duration-200 hover:bg-red-500/10"
+                        </div>
+
+                        <!-- Stops list (active tab) -->
+                        <ul class="max-h-72 space-y-0.5 overflow-y-auto px-3 py-3">
+                            <template
+                                v-for="group in routeGroupDefs"
+                                :key="group.key"
                             >
-                                <Trash2 class="h-3.5 w-3.5" />
-                                Delete Route
-                            </button>
+                                <li
+                                    v-for="stop in allStopsByRoute[group.routeName]"
+                                    v-show="activeRouteTab === group.key"
+                                    :key="`${stop.id}-${stop.name}`"
+                                    class="group flex items-start justify-between gap-2 rounded-lg px-2 py-1.5 text-xs transition hover:bg-accent/60"
+                                >
+                                    <span class="flex min-w-0 flex-1 items-start gap-1.5">
+                                        <Lock v-if="!stop.isCustom" class="mt-0.5 h-3 w-3 shrink-0 text-muted-foreground/60" />
+                                        <MapPin v-else class="mt-0.5 h-3 w-3 shrink-0 text-blue-500" />
+                                        <span class="min-w-0 flex-1">
+                                            <!-- Inline rename -->
+                                            <span v-if="editingStopId === stop.id" class="flex items-center gap-1">
+                                                <input
+                                                    v-model="editingStopName"
+                                                    type="text"
+                                                    class="w-full rounded border border-border/70 bg-background px-1.5 py-0.5 text-xs text-foreground outline-none focus:border-blue-500"
+                                                    @keyup.enter="saveEditStop(stop as StopItem)"
+                                                    @keyup.escape="cancelEditStop"
+                                                />
+                                                <button @click.stop="saveEditStop(stop as StopItem)" class="rounded p-0.5 text-green-600 hover:bg-green-500/10" title="Save">
+                                                    <Check class="h-3 w-3" />
+                                                </button>
+                                                <button @click.stop="cancelEditStop" class="rounded p-0.5 text-muted-foreground hover:bg-accent" title="Cancel">
+                                                    <X class="h-3 w-3" />
+                                                </button>
+                                            </span>
+                                            <span v-else>
+                                                <span class="block truncate font-medium text-foreground">{{ stop.name }}</span>
+                                                <span class="block text-[10px] text-muted-foreground/70">Stop #{{ stop.sequence }}</span>
+                                            </span>
+                                        </span>
+                                    </span>
+                                    <span v-if="stop.isCustom && editingStopId !== stop.id" class="flex shrink-0 gap-0.5 opacity-0 transition group-hover:opacity-100">
+                                        <button
+                                            type="button"
+                                            class="rounded-md p-1 text-muted-foreground hover:bg-blue-500/10 hover:text-blue-500"
+                                            title="Rename"
+                                            @click.stop="startEditStop(stop as StopItem)"
+                                        >
+                                            <Pencil class="h-3 w-3" />
+                                        </button>
+                                        <button
+                                            type="button"
+                                            class="rounded-md p-1 text-muted-foreground hover:bg-red-500/10 hover:text-red-500"
+                                            title="Delete"
+                                            @click.stop="confirmDeleteStop(stop as StopItem)"
+                                        >
+                                            <Trash2 class="h-3 w-3" />
+                                        </button>
+                                    </span>
+                                </li>
+                                <li v-if="activeRouteTab === group.key && !allStopsByRoute[group.routeName].length" class="py-2 text-center text-[11px] italic text-muted-foreground/50">
+                                    No stops defined
+                                </li>
+                            </template>
+                        </ul>
+
+                        <!-- Inline add stop form -->
+                        <div v-if="showAddStopForm" class="border-t border-border/40 px-4 py-3 space-y-3 bg-accent/20">
+                            <div class="flex items-center justify-between">
+                                <p class="text-[11px] font-semibold uppercase tracking-wide text-foreground">
+                                    Add to {{ routeKeyToName[activeRouteTab] }} Route
+                                </p>
+                                <button @click="closeAddStopForm" class="rounded p-0.5 hover:bg-accent">
+                                    <X class="h-3.5 w-3.5 text-muted-foreground" />
+                                </button>
+                            </div>
+
+                            <!-- Place search -->
+                            <div class="relative">
+                                <div class="flex items-center gap-1.5 rounded-lg border border-border/70 bg-background px-2.5 py-1.5">
+                                    <Search class="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                                    <input
+                                        v-model="placeSearch"
+                                        type="text"
+                                        placeholder="Search a place (e.g. SM Cebu)"
+                                        class="w-full bg-transparent text-xs text-foreground outline-none placeholder:text-muted-foreground"
+                                        @input="onPlaceSearchInput"
+                                        @focus="showPlaceDropdown = placeResults.length > 0"
+                                    />
+                                    <span v-if="isSearchingPlace" class="text-[10px] text-muted-foreground">…</span>
+                                </div>
+                                <div
+                                    v-if="showPlaceDropdown && placeResults.length"
+                                    class="absolute left-0 right-0 top-full z-30 mt-1 max-h-48 overflow-y-auto rounded-lg border border-border/70 bg-card shadow-lg"
+                                >
+                                    <button
+                                        v-for="r in placeResults"
+                                        :key="r.place_id"
+                                        type="button"
+                                        class="block w-full px-3 py-1.5 text-left text-xs text-foreground hover:bg-accent"
+                                        @click="selectPlaceResult(r)"
+                                    >
+                                        {{ r.display_name }}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <p class="text-center text-[10px] text-muted-foreground">— or click anywhere on the map —</p>
+
+                            <!-- Stop name -->
+                            <div>
+                                <label class="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Stop Name</label>
+                                <input
+                                    v-model="stopForm.name"
+                                    type="text"
+                                    class="w-full rounded-lg border border-border/70 bg-background px-2.5 py-1.5 text-xs text-foreground outline-none focus:border-blue-500"
+                                    :placeholder="isGeocodingStopName ? 'Resolving place…' : 'Enter stop name'"
+                                />
+                                <p v-if="stopForm.errors.name" class="mt-0.5 text-[10px] text-red-500">{{ stopForm.errors.name }}</p>
+                            </div>
+
+                            <!-- Coordinate preview -->
+                            <p v-if="stopForm.latitude && stopForm.longitude" class="rounded-lg bg-blue-500/10 px-2.5 py-1.5 text-[10px] font-mono text-blue-700 dark:text-blue-300">
+                                📍 {{ stopForm.latitude.toFixed(5) }}, {{ stopForm.longitude.toFixed(5) }}
+                            </p>
+
+                            <p v-if="stopFormError" class="rounded-lg bg-red-500/10 px-2.5 py-1.5 text-[10px] font-medium text-red-600 dark:text-red-400">
+                                {{ stopFormError }}
+                            </p>
+
+                            <div class="flex gap-2">
+                                <button
+                                    type="button"
+                                    class="flex-1 rounded-lg border border-border/70 py-1.5 text-[11px] font-semibold text-muted-foreground hover:bg-accent"
+                                    @click="closeAddStopForm"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    class="flex-1 rounded-lg bg-blue-600 py-1.5 text-[11px] font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                    :disabled="stopForm.processing || isGeocodingStopName"
+                                    @click="submitStop"
+                                >
+                                    {{ stopForm.processing ? 'Saving…' : 'Add Stop' }}
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -952,54 +1071,6 @@ watch(resolvedAppearance, () => {
                         <a href="#" class="mt-3 flex items-center gap-1 text-xs font-semibold text-green-600 hover:underline">
                             View All Requests <ArrowRight class="h-3 w-3" />
                         </a>
-                    </div>
-
-                    <!-- Route Stops accordion -->
-                    <div class="rounded-2xl border border-border/70 bg-card shadow-sm shadow-black/5 dark:shadow-black/20">
-                        <button
-                            class="flex w-full items-center justify-between px-4 py-3 text-xs font-bold uppercase tracking-wide text-muted-foreground hover:bg-accent/50 rounded-2xl transition"
-                            @click="routesPanelOpen = !routesPanelOpen"
-                        >
-                            Route Stops
-                            <ChevronUp v-if="routesPanelOpen" class="h-3.5 w-3.5" />
-                            <ChevronDown v-else class="h-3.5 w-3.5" />
-                        </button>
-                        <div v-if="routesPanelOpen" class="divide-y divide-border/40 px-4 pb-3">
-                            <div v-for="group in routeGroupDefs" :key="group.key" class="py-2.5">
-                                <div class="mb-2 flex items-center gap-2">
-                                    <span :class="['h-2.5 w-2.5 rounded-full', group.dot]" />
-                                    <span :class="['rounded-full px-2 py-0.5 text-[10px] font-semibold', group.badge]">{{ group.label }}</span>
-                                </div>
-                                <ul class="space-y-1 pl-4">
-                                    <li
-                                        v-for="stop in allStopsByRoute[group.routeName]"
-                                        :key="`${stop.id}-${stop.name}`"
-                                        class="flex items-start justify-between gap-2 rounded-lg px-2 py-1 text-xs text-muted-foreground transition hover:bg-accent/60"
-                                    >
-                                        <span class="flex items-start gap-1.5">
-                                            <MapPin class="mt-0.5 h-3 w-3 shrink-0 opacity-60" />
-                                            <span>
-                                                <span class="block font-medium text-foreground">{{ stop.name }}</span>
-                                                <span class="block text-[11px] text-muted-foreground/70">Stop #{{ stop.sequence }}</span>
-                                            </span>
-                                        </span>
-                                        <!-- Delete button only for custom (database) stops -->
-                                        <button
-                                            v-if="stop.isCustom"
-                                            type="button"
-                                            class="rounded-md p-1 text-muted-foreground transition hover:bg-red-500/10 hover:text-red-500"
-                                            title="Delete stop"
-                                            @click.stop="confirmDeleteStop(stop as StopItem)"
-                                        >
-                                            <Trash2 class="h-3.5 w-3.5" />
-                                        </button>
-                                    </li>
-                                    <li v-if="!allStopsByRoute[group.routeName].length" class="text-xs italic text-muted-foreground/50">
-                                        No stops defined
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
                     </div>
 
                 </div>

@@ -129,6 +129,17 @@ class LiveMapController extends Controller
         return back()->with('success', 'Stop added successfully.');
     }
 
+    public function update(Request $request, Stop $stop): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+        ]);
+
+        $stop->update($validated);
+
+        return back()->with('success', 'Stop renamed.');
+    }
+
     public function destroy(Stop $stop): RedirectResponse
     {
         $stop->delete();
