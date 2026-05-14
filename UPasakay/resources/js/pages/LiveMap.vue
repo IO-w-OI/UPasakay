@@ -272,13 +272,11 @@ async function fetchReverseGeocode(latlng: L.LatLng) {
 }
 
 function openAddStopForm() {
+    const routeId = routeKeyToId.value[activeRouteTab.value];
+    if (!routeId) return;
     stopFormError.value = '';
     stopForm.clearErrors();
     stopForm.reset();
-    const routeId = routeKeyToId.value[activeRouteTab.value];
-    if (!routeId) {
-        stopFormError.value = `Route "${routeKeyToName[activeRouteTab.value]}" not found in database. Run route seeder first.`;
-    }
     stopForm.route_id = routeId;
     stopForm.latitude = 0;
     stopForm.longitude = 0;
@@ -286,6 +284,12 @@ function openAddStopForm() {
     placeSearch.value = '';
     placeResults.value = [];
     showAddStopForm.value = true;
+}
+
+function focusStopOnMap(stop: { latitude?: number | null; longitude?: number | null; id?: number }) {
+    if (!map || !stop.latitude || !stop.longitude) return;
+    map.setView([stop.latitude, stop.longitude], 17, { animate: true });
+    if (stop.id) customStopMarkers.get(stop.id)?.openPopup();
 }
 
 function closeAddStopForm() {
@@ -838,7 +842,9 @@ watch(resolvedAppearance, () => {
                             <button
                                 v-if="!showAddStopForm"
                                 type="button"
-                                class="flex items-center gap-1 rounded-lg bg-blue-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-blue-700"
+                                class="flex items-center gap-1 rounded-lg bg-blue-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                :disabled="!routeKeyToId[activeRouteTab]"
+                                :title="!routeKeyToId[activeRouteTab] ? 'Route not found in database' : undefined"
                                 @click="openAddStopForm"
                             >
                                 <Plus class="h-3 w-3" /> Add Stop
@@ -874,7 +880,8 @@ watch(resolvedAppearance, () => {
                                     v-for="stop in allStopsByRoute[group.routeName]"
                                     v-show="activeRouteTab === group.key"
                                     :key="`${stop.id}-${stop.name}`"
-                                    class="group flex items-start justify-between gap-2 rounded-lg px-2 py-1.5 text-xs transition hover:bg-accent/60"
+                                    class="group flex cursor-pointer items-start justify-between gap-2 rounded-lg px-2 py-1.5 text-xs transition hover:bg-accent/60"
+                                    @click="focusStopOnMap(stop)"
                                 >
                                     <span class="flex min-w-0 flex-1 items-start gap-1.5">
                                         <Lock v-if="!stop.isCustom" class="mt-0.5 h-3 w-3 shrink-0 text-muted-foreground/60" />

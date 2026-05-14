@@ -70,7 +70,6 @@ class LiveMapController extends Controller
             ]);
 
         $routes = Route::query()
-            ->where('is_active', true)
             ->orderByRaw("CASE name WHEN 'North' THEN 1 WHEN 'South' THEN 2 WHEN 'Cebu City' THEN 3 ELSE 4 END")
             ->get()
             ->map(fn (Route $route) => [
