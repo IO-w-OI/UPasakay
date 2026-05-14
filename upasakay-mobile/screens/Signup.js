@@ -145,7 +145,7 @@ const Signup = () => {
                             
                             <ExtraView>
                                 <ExtraText>Already have an account? </ExtraText>
-                                <TextLink onPress={() => router.back()}> 
+                                <TextLink onPress={() => router.replace('/Login')}>
                                     <TextLinkContent>Log In</TextLinkContent>
                                 </TextLink>
                             </ExtraView>
