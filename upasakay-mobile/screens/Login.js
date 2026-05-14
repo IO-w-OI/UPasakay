@@ -80,7 +80,12 @@ const Login = () => {
                             const userEmail = values.email.toLowerCase();
                             const userName = result.data?.user?.full_name;
 
-                            console.log("Login Success! Welcome:", userName);
+                                console.log("---------------- TOKEN RECOVERY ----------------");
+                                console.log("YOUR TOKEN IS:", result.data?.token); 
+                                console.log("------------------------------------------------");
+
+                                console.log("Login Success! Welcome:", userName);
+
 
                             // 3. Domain-Based Routing (The Juan Logic)
                             // Strict check: @upasakay.com = Driver | @up.edu.ph = Passenger

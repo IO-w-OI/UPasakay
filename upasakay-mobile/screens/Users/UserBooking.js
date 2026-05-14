@@ -3,7 +3,7 @@ import { StyleSheet, View, TextInput, TouchableOpacity, Text, Image, LayoutAnima
 import { WebView } from 'react-native-webview';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import Pusher from 'pusher-js/react-native';
+import { Pusher } from 'pusher-js/react-native'; 
 import { currentUser } from '../../services/UserStore';
 
 import * as Notifications from 'expo-notifications';

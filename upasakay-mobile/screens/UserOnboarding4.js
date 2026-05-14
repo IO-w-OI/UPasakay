@@ -15,7 +15,7 @@ const UserOnboarding4 = () => {
     const router = useRouter();
 
     const handleReturnToLogin = () => {
-        router.replace('/Login');
+        router.replace('/');
     };
 
     return (
