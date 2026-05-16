@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\DeviceToken;
 use App\Models\Notification;
 use App\Models\NotificationSchedule;
 use App\Models\Route;
+use App\Services\ExpoPushService;
 use Inertia\Inertia;
 
 class NotificationController extends Controller
@@ -59,6 +61,7 @@ class NotificationController extends Controller
             ->take(50)
             ->get()
             ->map(fn ($notification) => [
+                'id' => $notification->id,
                 'time' => $notification->getFormattedTime(),
                 'type' => $notification->type,
                 'label' => $notification->getTypeLabel(),
@@ -123,7 +126,7 @@ class NotificationController extends Controller
             ]);
         } else {
             // Send immediately
-            Notification::create([
+            $notification = Notification::create([
                 'title' => $validated['title'],
                 'message' => $validated['message'],
                 'type' => $validated['type'],
@@ -132,6 +135,16 @@ class NotificationController extends Controller
                 'status' => 'sent',
                 'sent_at' => now(),
             ]);
+
+            $tokens = DeviceToken::pluck('expo_token')->filter()->values()->all();
+            if (!empty($tokens)) {
+                (new ExpoPushService())->send(
+                    $tokens,
+                    $validated['title'],
+                    $validated['message'],
+                    ['type' => 'announcement', 'notification_id' => $notification->id]
+                );
+            }
         }
 
         return back()->with('success', 'Notification '.($validated['delivery_type'] === 'scheduled' ? 'scheduled' : 'sent').' successfully.');

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
 import {
     AlertTriangle, Bell, Calendar, Check, Clock, Search,
     Send, Zap, RefreshCw, Trash2, Eye, Users, UserCheck,
@@ -17,22 +17,22 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 const props = defineProps<{
     routes: string[];
-    notificationLog: Array<{ time: string; type: string; label: string; target: string; status: string; date: string }>;
+    notificationLog: Array<{ id: number; time: string; type: string; label: string; target: string; status: string; date: string; message?: string; title?: string }>;
     scheduledNotifications: Array<{ id: number; title: string; schedule: string; target: string; auto: boolean; active: boolean }>;
 }>();
 
 // ── Smart Templates ────────────────────────────────────────────────────────
 const templates = [
-    { name: 'Delay Notice', type: 'Route Delay', title: 'Route Delay Notice', message: 'Shuttle service on this route is currently delayed by approximately 15 minutes. We apologize for the inconvenience.' },
-    { name: 'Shuttle Available', type: 'Shuttle Availability', title: 'Shuttle Now Available', message: 'A shuttle is now available on this route. Check the app for real-time location updates.' },
-    { name: 'Service Suspended', type: 'Service Announcement', title: 'Service Temporarily Suspended', message: 'Shuttle service has been temporarily suspended. We will notify you when service resumes.' },
-    { name: 'Route Change', type: 'Route Change', title: 'Route Change Notice', message: 'The route has been updated. Please check the app for the latest stops and schedule.' },
+    { name: 'Delay Notice', type: 'delay', title: 'Route Delay Notice', message: 'Shuttle service on this route is currently delayed by approximately 15 minutes. We apologize for the inconvenience.' },
+    { name: 'Shuttle Available', type: 'availability', title: 'Shuttle Now Available', message: 'A shuttle is now available on this route. Check the app for real-time location updates.' },
+    { name: 'Service Suspended', type: 'announcement', title: 'Service Temporarily Suspended', message: 'Shuttle service has been temporarily suspended. We will notify you when service resumes.' },
+    { name: 'Route Change', type: 'change', title: 'Route Change Notice', message: 'The route has been updated. Please check the app for the latest stops and schedule.' },
 ];
 
 // ── Form ───────────────────────────────────────────────────────────────────
 const form = ref({
     title: '',
-    type: 'Shuttle Availability',
+    type: 'availability',
     targetRoute: 'all',
     audience: 'all' as 'all' | 'passengers' | 'drivers',
     message: '',
@@ -168,24 +168,42 @@ const showConfirmSend = ref(false);
 
 const openSendConfirm = () => { if (canSend.value) showConfirmSend.value = true; };
 
+const resetForm = () => {
+    form.value = {
+        title: '',
+        type: 'availability',
+        targetRoute: 'all',
+        audience: 'all',
+        message: '',
+        delivery_type: 'now',
+        schedule_date: '',
+        schedule_time: '',
+    };
+};
+
 const send = () => {
     showConfirmSend.value = false;
     isSending.value = true;
-    setTimeout(() => {
-        isSending.value = false;
-        showSuccess.value = true;
-        form.value = { 
-            title: '', 
-            type: 'Shuttle Availability', 
-            targetRoute: 'all', 
-            audience: 'all', 
-            message: '',
-            delivery_type: 'now',
-            schedule_date: '',
-            schedule_time: '',
-        };
-        setTimeout(() => { showSuccess.value = false; }, 3000);
-    }, 1200);
+    router.post('/notifications', {
+        title: form.value.title,
+        type: form.value.type,
+        target_route: form.value.targetRoute,
+        audience: form.value.audience,
+        message: form.value.message,
+        delivery_type: form.value.delivery_type,
+        schedule_date: form.value.schedule_date || undefined,
+        schedule_time: form.value.schedule_time || undefined,
+    }, {
+        onSuccess: () => {
+            isSending.value = false;
+            showSuccess.value = true;
+            resetForm();
+            setTimeout(() => { showSuccess.value = false; }, 3000);
+        },
+        onError: () => {
+            isSending.value = false;
+        },
+    });
 };
 
 const resendNotification = (log: any) => {
@@ -205,9 +223,8 @@ const confirmDelete = (index: number) => {
 const deleteNotification = () => {
     if (deletingItemIndex.value !== null) {
         const notificationToDelete = filteredLog.value[deletingItemIndex.value];
-        if (notificationToDelete) {
-            // In production, send API request: router.delete(`/notifications/${notificationToDelete.id}`)
-            console.log('Deleting notification:', notificationToDelete);
+        if (notificationToDelete?.id) {
+            router.delete(`/notifications/${notificationToDelete.id}`);
         }
     }
     showDeleteConfirm.value = false;
@@ -328,10 +345,10 @@ const audienceOptions = [
                         <label class="mb-1 block text-sm font-medium text-foreground">Type *</label>
                         <select v-model="form.type"
                             class="w-full rounded-lg border border-border/70 bg-card px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-[#8B0000]">
-                            <option>Shuttle Availability</option>
-                            <option>Route Delay</option>
-                            <option>Route Change</option>
-                            <option>Service Announcement</option>
+                            <option value="availability">Shuttle Availability</option>
+                            <option value="delay">Route Delay</option>
+                            <option value="change">Route Change</option>
+                            <option value="announcement">Service Announcement</option>
                         </select>
                     </div>
 
@@ -448,7 +465,7 @@ const audienceOptions = [
 
                     <!-- Actions -->
                     <div class="flex justify-end gap-3 pt-2">
-                        <button @click="form = { title: '', type: 'Shuttle Availability', targetRoute: 'all', audience: 'all', message: '', delivery_type: 'now', schedule_date: '', schedule_time: '' }"
+                        <button @click="resetForm"
                             class="rounded-xl border border-border/70 px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-accent">
                             Clear
                         </button>
