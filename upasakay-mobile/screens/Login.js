@@ -7,6 +7,7 @@ import { Alert, View } from 'react-native';
 
 // Import the Service
 import { validateUser } from '../services/UserStore';
+import { registerForPushNotifications } from '../services/pushNotifications';
 
 import {
     ButtonText,
@@ -80,6 +81,10 @@ const Login = () => {
                             const userEmail = values.email.toLowerCase();
                             const userName = result.data?.user?.full_name;
 
+                            // Register this device for push (fire-and-forget;
+                            // token is now in the session so apiClient can auth).
+                            registerForPushNotifications();
+
                                 console.log("---------------- TOKEN RECOVERY ----------------");
                                 console.log("YOUR TOKEN IS:", result.data?.token); 
                                 console.log("------------------------------------------------");
@@ -142,7 +147,7 @@ const Login = () => {
                             </StyledButton>
 
                             <ExtraView>
-                                <ExtraText>Don't have an account already? </ExtraText>
+                                <ExtraText>Don&apos;t have an account already? </ExtraText>
                                 <TextLink onPress={() => router.push('/Signup')}> 
                                     <TextLinkContent> Sign up now! </TextLinkContent>
                                 </TextLink>
