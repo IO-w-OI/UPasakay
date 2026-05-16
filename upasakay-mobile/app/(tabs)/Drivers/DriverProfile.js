@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
-import UserProfile from '../../../screens/Users/UserProfile';
+import DriverProfile from '../../../screens/Drivers/DriverProfile';
 
 export default function TabProfile() {
   return (
@@ -11,7 +11,7 @@ export default function TabProfile() {
           tabBarIcon: ({ color }) => <Ionicons name="person" size={24} color={color} />,
         }} 
       />
-      <UserProfile />
+      <DriverProfile />
     </>
   );
 }

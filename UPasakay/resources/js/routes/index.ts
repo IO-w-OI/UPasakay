@@ -212,7 +212,7 @@ dashboard.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     dashboard.form = dashboardForm
 /**
 * @see \App\Http\Controllers\LiveMapController::liveMap
- * @see app/Http/Controllers/LiveMapController.php:12
+ * @see app/Http/Controllers/LiveMapController.php:16
  * @route '/live-map'
  */
 export const liveMap = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -227,7 +227,7 @@ liveMap.definition = {
 
 /**
 * @see \App\Http\Controllers\LiveMapController::liveMap
- * @see app/Http/Controllers/LiveMapController.php:12
+ * @see app/Http/Controllers/LiveMapController.php:16
  * @route '/live-map'
  */
 liveMap.url = (options?: RouteQueryOptions) => {
@@ -236,7 +236,7 @@ liveMap.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\LiveMapController::liveMap
- * @see app/Http/Controllers/LiveMapController.php:12
+ * @see app/Http/Controllers/LiveMapController.php:16
  * @route '/live-map'
  */
 liveMap.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -245,7 +245,7 @@ liveMap.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\LiveMapController::liveMap
- * @see app/Http/Controllers/LiveMapController.php:12
+ * @see app/Http/Controllers/LiveMapController.php:16
  * @route '/live-map'
  */
 liveMap.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -255,7 +255,7 @@ liveMap.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\LiveMapController::liveMap
- * @see app/Http/Controllers/LiveMapController.php:12
+ * @see app/Http/Controllers/LiveMapController.php:16
  * @route '/live-map'
  */
     const liveMapForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -265,7 +265,7 @@ liveMap.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\LiveMapController::liveMap
- * @see app/Http/Controllers/LiveMapController.php:12
+ * @see app/Http/Controllers/LiveMapController.php:16
  * @route '/live-map'
  */
         liveMapForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -274,7 +274,7 @@ liveMap.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\LiveMapController::liveMap
- * @see app/Http/Controllers/LiveMapController.php:12
+ * @see app/Http/Controllers/LiveMapController.php:16
  * @route '/live-map'
  */
         liveMapForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
