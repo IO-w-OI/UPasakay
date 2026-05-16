@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Events\RideAccepted;
 use App\Mail\BookingConfirmed;
+use App\Models\DeviceToken;
 use App\Models\DriverAssignment;
 use App\Models\PickupRequest;
 use Illuminate\Support\Facades\DB;
@@ -12,6 +13,10 @@ use InvalidArgumentException;
 
 class DriverAssignmentService
 {
+    public function __construct(
+        private ExpoPushService $expoPush,
+    ) {}
+
     /**
      * Assign a driver to a pickup request while keeping assignment and pickup states in sync.
      */
@@ -63,6 +68,21 @@ class DriverAssignmentService
 
         broadcast(new RideAccepted($pickupRequestForNotify));
 
+        $tokens = DeviceToken::expoTokensForUser($pickupRequestForNotify->user);
+        if (! empty($tokens)) {
+            $eta = $pickupRequestForNotify->eta_minutes;
+            $body = $eta
+                ? "Your driver is on the way — about {$eta} min away."
+                : 'Your driver is on the way.';
+
+            $this->expoPush->send(
+                $tokens,
+                'Driver assigned',
+                $body,
+                ['type' => 'ride_accepted', 'pickup_request_id' => $pickupRequestForNotify->id],
+            );
+        }
+
         if ($pickupRequestForNotify->user?->email) {
             Mail::to($pickupRequestForNotify->user->email)->send(new BookingConfirmed($pickupRequestForNotify));
         }
@@ -75,15 +95,29 @@ class DriverAssignmentService
      */
     public function updateStatus(DriverAssignment $assignment, string $status): DriverAssignment
     {
-        return DB::transaction(function () use ($assignment, $status) {
+        $fresh = DB::transaction(function () use ($assignment, $status) {
             $assignment->update(['status' => $status]);
 
             if ($assignment->pickupRequest) {
                 $assignment->pickupRequest->update($this->pickupUpdatesForStatus($status));
             }
 
-            return $assignment->fresh(['driver', 'pickupRequest']);
+            return $assignment->fresh(['driver', 'pickupRequest.user.passenger']);
         });
+
+        if ($status === 'completed' && $fresh->pickupRequest) {
+            $tokens = DeviceToken::expoTokensForUser($fresh->pickupRequest->user);
+            if (! empty($tokens)) {
+                $this->expoPush->send(
+                    $tokens,
+                    'Ride completed',
+                    'Thanks for riding with UPasakay! Tap to leave feedback.',
+                    ['type' => 'ride_completed', 'pickup_request_id' => $fresh->pickupRequest->id],
+                );
+            }
+        }
+
+        return $fresh;
     }
 
     /**

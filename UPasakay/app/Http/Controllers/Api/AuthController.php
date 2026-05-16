@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\DeviceToken;
 use App\Models\Passenger;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
@@ -133,6 +134,20 @@ class AuthController extends Controller
     public function logout(Request $request): JsonResponse
     {
         $authUser = $request->user();
+
+        // Stop pushing to this device. If the app sent its expo_token, remove
+        // just that device; otherwise remove every device for this principal.
+        $expoToken = $request->input('expo_token');
+        if ($expoToken) {
+            DeviceToken::where('expo_token', $expoToken)->delete();
+        } elseif ($authUser instanceof Passenger) {
+            DeviceToken::where('passenger_id', $authUser->id)
+                ->orWhere('user_id', $authUser->user_id)
+                ->delete();
+        } elseif ($authUser instanceof User) {
+            DeviceToken::where('user_id', $authUser->id)->delete();
+        }
+
         $authUser?->currentAccessToken()?->delete();
 
         return response()->json([
