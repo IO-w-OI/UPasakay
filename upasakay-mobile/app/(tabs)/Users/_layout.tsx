@@ -21,11 +21,6 @@ function NativeTabsLayout() {
         <Label>Recents</Label>
       </NativeTabs.Trigger>
 
-      {/* <NativeTabs.Trigger name="UserMap">
-        <Icon sf="map.fill" drawable="ic_menu_mapmode" />
-        <Label>Map</Label>
-      </NativeTabs.Trigger> */}
-
       <NativeTabs.Trigger name="UserProfile">
         <Icon sf="person.crop.circle.fill" drawable="ic_menu_edit" />
         <Label>Profile</Label>
@@ -59,13 +54,6 @@ function CustomJSLayout() {
           tabBarIcon: ({ color }) => <Ionicons name="time" size={24} color={color} />,
         }}
       />
-      {/*<Tabs.Screen
-        name="UserMap"
-        options={{
-          title: 'Map',
-          tabBarIcon: ({ color }) => <Ionicons name="map" size={24} color={color} />,
-        }}
-      />*/}
       <Tabs.Screen
         name="UserProfile"
         options={{

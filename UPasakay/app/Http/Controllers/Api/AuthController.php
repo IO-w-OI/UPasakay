@@ -3,13 +3,18 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Mail\PasswordResetCode;
 use App\Models\DeviceToken;
+use App\Models\Driver;
 use App\Models\Passenger;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
@@ -166,6 +171,92 @@ class AuthController extends Controller
         ], 200);
     }
 
+    /**
+     * Step 1 of password reset: email a short code.
+     *
+     * Always returns 200 regardless of whether the email exists, so the
+     * endpoint can't be used to enumerate accounts.
+     */
+    public function forgotPassword(Request $request): JsonResponse
+    {
+        $request->validate(['email' => ['required', 'email']]);
+
+        $email = $request->email;
+        $exists = User::where('email', $email)->exists()
+            || Passenger::where('email', $email)->exists();
+
+        if ($exists) {
+            $code = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+
+            DB::table('password_reset_tokens')->updateOrInsert(
+                ['email' => $email],
+                ['token' => Hash::make($code), 'created_at' => now()],
+            );
+
+            Mail::to($email)->send(new PasswordResetCode($code));
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'If that email is registered, a reset code has been sent.',
+        ], 200);
+    }
+
+    /**
+     * Step 2 of password reset: verify the code and set a new password.
+     *
+     * Codes expire after 60 minutes; an expired or invalid code is rejected
+     * (and an expired row is deleted so it can never be replayed). The new
+     * password is written to both the User and the matching Passenger row,
+     * and all existing tokens for the account are revoked.
+     */
+    public function resetPassword(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'email' => ['required', 'email'],
+            'code' => ['required', 'string'],
+            'password' => ['required', 'confirmed', Password::min(8)],
+        ]);
+
+        $record = DB::table('password_reset_tokens')->where('email', $validated['email'])->first();
+
+        if (! $record) {
+            throw ValidationException::withMessages([
+                'code' => ['Invalid or expired reset code.'],
+            ]);
+        }
+
+        if (now()->diffInMinutes($record->created_at) > 60) {
+            DB::table('password_reset_tokens')->where('email', $validated['email'])->delete();
+            throw ValidationException::withMessages([
+                'code' => ['This reset code has expired. Please request a new one.'],
+            ]);
+        }
+
+        if (! Hash::check($validated['code'], $record->token)) {
+            throw ValidationException::withMessages([
+                'code' => ['Invalid or expired reset code.'],
+            ]);
+        }
+
+        // password_hash is a 'hashed' cast on both models, so assigning the
+        // plaintext value hashes it on save.
+        $user = User::where('email', $validated['email'])->first();
+        $user?->update(['password_hash' => $validated['password']]);
+        $user?->tokens()->delete();
+
+        $passenger = Passenger::where('email', $validated['email'])->first();
+        $passenger?->update(['password_hash' => $validated['password']]);
+        $passenger?->tokens()->delete();
+
+        DB::table('password_reset_tokens')->where('email', $validated['email'])->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Password has been reset. Please log in with your new password.',
+        ], 200);
+    }
+
     private function generatePassengerNumber(): string
     {
         do {
@@ -180,24 +271,55 @@ class AuthController extends Controller
         // We call this first to get the cleaned data
         $formattedPassenger = $this->formatPassenger($passenger);
 
+        // Drivers/admins log in through the User branch (no Passenger row).
+        $driverModel = ($authUser instanceof User) ? $authUser->driver : null;
+        $isAdmin = ($authUser instanceof User) ? (bool) $authUser->admin : false;
+        $role = $passenger ? 'passenger' : ($driverModel ? 'driver' : ($isAdmin ? 'admin' : 'passenger'));
+
         return [
+            'role' => $role,
             'user' => [
                 'id' => $authUser->getKey(),
                 'email' => $authUser->email,
-                'full_name' => $formattedPassenger['full_name'] ?? $authUser->name,
-                'name' => $formattedPassenger['full_name'] ?? $authUser->name,
-                
+                'full_name' => $formattedPassenger['full_name'] ?? $driverModel?->full_name ?? $authUser->name,
+                'name' => $formattedPassenger['full_name'] ?? $driverModel?->full_name ?? $authUser->name,
+
                 // THIS LINE IS MISSING: This is why the Profile screen is blank
                 'department_office' => $formattedPassenger['department_office'] ?? null,
                 'department' => $formattedPassenger['department_office'] ?? null,
             ],
             'passenger' => $formattedPassenger,
+            'driver' => $this->formatDriver($driverModel),
             'onboarding' => [
                 'required' => !($passenger?->profile_completed ?? false),
                 'profile_completed' => (bool) ($passenger?->profile_completed ?? false),
                 'next_route' => $this->routeForPassengerType($passenger?->passenger_type),
             ],
             'token' => $token,
+        ];
+    }
+
+    private function formatDriver(?Driver $driver): ?array
+    {
+        if (! $driver) {
+            return null;
+        }
+
+        $shuttle = $driver->shuttle;
+
+        return [
+            'id' => $driver->id,
+            'user_id' => $driver->user_id,
+            'full_name' => $driver->full_name,
+            'license_number' => $driver->license_number,
+            'driver_status' => $driver->driver_status,
+            'is_available' => (bool) $driver->is_available,
+            'shuttle' => $shuttle ? [
+                'id' => $shuttle->id,
+                'shuttle_code' => $shuttle->shuttle_code,
+                'plate_number' => $shuttle->plate_number,
+                'status' => $shuttle->status,
+            ] : null,
         ];
     }
 

@@ -25,11 +25,15 @@ Route::get('ping', fn () => response()->json([
 Route::post('register', [AuthController::class, 'register']);
 Route::post('login', [AuthController::class, 'login']);
 Route::post('admin/register', [AdminAuthController::class, 'register']);
+Route::post('password/forgot', [AuthController::class, 'forgotPassword']);
+Route::post('password/reset', [AuthController::class, 'resetPassword']);
 
 // Backward-compatible mobile alias routes
 Route::prefix('mobile')->group(function () {
     Route::post('register', [AuthController::class, 'register']);
     Route::post('login', [AuthController::class, 'login']);
+    Route::post('password/forgot', [AuthController::class, 'forgotPassword']);
+    Route::post('password/reset', [AuthController::class, 'resetPassword']);
 });
 
 // Notification routes are kept outside auth middleware to preserve existing API behavior

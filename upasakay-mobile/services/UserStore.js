@@ -111,7 +111,9 @@ export const validateUser = async (email, password) => {
             await setCurrentUser({
                 id: payload.user?.id,
                 passenger_id: payload.passenger?.id,       // used for Pusher channel & pickup requests
-                full_name: payload.user?.full_name || payload.passenger?.full_name || "User",
+                driver_id: payload.driver?.id,             // used for the driver-{id} Pusher channel
+                role: payload.role || (payload.driver ? "driver" : "passenger"),
+                full_name: payload.user?.full_name || payload.passenger?.full_name || payload.driver?.full_name || "User",
                 email: payload.user?.email,
                 passenger_type: payload.passenger?.passenger_type || "student",
                 token: result.token,                        // Sanctum token for API calls
@@ -143,4 +145,47 @@ export const logoutUser = async () => {
     currentUser = null;
     await persistSession();
     return { success: true };
+};
+
+/**
+ * 6. PASSWORD RESET (public endpoints, no auth token needed)
+ */
+export const requestPasswordReset = async (email) => {
+    try {
+        const response = await fetch(`${API_URL}/password/forgot`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ email }),
+        });
+        const data = await response.json();
+        if (response.ok) {
+            return { success: true, message: data.message };
+        }
+        return { success: false, message: data.message || "Could not send reset code." };
+    } catch (error) {
+        return { success: false, message: "Network error. Check your connection." };
+    }
+};
+
+export const submitPasswordReset = async (email, code, password) => {
+    try {
+        const response = await fetch(`${API_URL}/password/reset`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({
+                email,
+                code,
+                password,
+                password_confirmation: password,
+            }),
+        });
+        const data = await response.json();
+        if (response.ok) {
+            return { success: true, message: data.message };
+        }
+        const firstError = data.errors ? Object.values(data.errors)[0]?.[0] : null;
+        return { success: false, message: firstError || data.message || "Reset failed." };
+    } catch (error) {
+        return { success: false, message: "Network error. Check your connection." };
+    }
 };

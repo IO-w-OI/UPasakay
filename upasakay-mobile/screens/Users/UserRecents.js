@@ -1,5 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
 import { Image, ScrollView, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import {
   BasePage,
@@ -17,6 +18,7 @@ import {
   TripInfo,
   TripTitle
 } from '../../components/styles';
+import { moderateScale, NAV_CLEARANCE } from '../../utils/responsive';
 
 const TripItem = ({ status, route, destination, date }) => {
   const isCompleted = status === 'Completed';
@@ -32,8 +34,8 @@ const TripItem = ({ status, route, destination, date }) => {
         </BusIconContainer>
         
         <TripInfo>
-          <TripTitle style={{ fontFamily: 'Nunito-Bold', fontSize: 13 }}>{route}</TripTitle>
-          <TripTitle style={{ fontFamily: 'Nunito-Bold', fontSize: 13 }}>{destination}</TripTitle>
+          <TripTitle style={{ fontFamily: 'Nunito-Bold', fontSize: moderateScale(14) }}>{route}</TripTitle>
+          <TripTitle style={{ fontFamily: 'Nunito-Bold', fontSize: moderateScale(14) }}>{destination}</TripTitle>
           <TripDate>{date}</TripDate>
         </TripInfo>
 
@@ -128,36 +130,35 @@ const UserRecents = () => {
     ];
 
   return (
-    <StyledContainer style={{ flex: 1, paddingHorizontal: 0 }} colors={[Colors.base_page, Colors.base_page]}>
+    <StyledContainer style={{ padding: 0, paddingTop: 0 }} colors={[Colors.base_page, Colors.base_page]}>
       <StatusBar style="dark" />
-      
-      <BasePage style={{ flex: 1, paddingHorizontal: 0 }}>
-        <View style={{ paddingHorizontal: 20 }}>
-          <Header>Recent Bus Trips</Header>
-        </View>
-        
-        <ScrollView 
-          showsVerticalScrollIndicator={false} 
-          style={{ width: '100%' }}
-          contentContainerStyle={{ alignItems: 'center', paddingTop: 20, paddingBottom: 40 }}
-        >
-          {/* 2. Map through the data */}
-          {tripsData.map((trip) => (
-            <TripItem 
-              key={trip.id} // Important for React performance
-              status={trip.status} 
-              route={trip.route}
-              destination={trip.destination}
-              date={trip.date}
-            />
-          ))}
+      <SafeAreaView style={{ flex: 1 }} edges={['top']}>
+        <BasePage style={{ flex: 1, paddingHorizontal: 0 }}>
+          <View style={{ paddingHorizontal: 20 }}>
+            <Header>Recent Bus Trips</Header>
+          </View>
 
-          {/* 3. Show a message if no trips exist */}
-          {tripsData.length === 0 && (
-             <TripDate style={{ marginTop: 20 }}>No recent trips found.</TripDate>
-          )}
-        </ScrollView>
-      </BasePage>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            style={{ width: '100%' }}
+            contentContainerStyle={{ alignItems: 'center', paddingTop: 20, paddingBottom: NAV_CLEARANCE }}
+          >
+            {tripsData.map((trip) => (
+              <TripItem
+                key={trip.id}
+                status={trip.status}
+                route={trip.route}
+                destination={trip.destination}
+                date={trip.date}
+              />
+            ))}
+
+            {tripsData.length === 0 && (
+              <TripDate style={{ marginTop: 20 }}>No recent trips found.</TripDate>
+            )}
+          </ScrollView>
+        </BasePage>
+      </SafeAreaView>
     </StyledContainer>
   );
 }
