@@ -70,7 +70,6 @@ class LiveMapController extends Controller
             ]);
 
         $routes = Route::query()
-            ->where('is_active', true)
             ->orderByRaw("CASE name WHEN 'North' THEN 1 WHEN 'South' THEN 2 WHEN 'Cebu City' THEN 3 ELSE 4 END")
             ->get()
             ->map(fn (Route $route) => [
@@ -127,6 +126,17 @@ class LiveMapController extends Controller
         ]);
 
         return back()->with('success', 'Stop added successfully.');
+    }
+
+    public function update(Request $request, Stop $stop): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+        ]);
+
+        $stop->update($validated);
+
+        return back()->with('success', 'Stop renamed.');
     }
 
     public function destroy(Stop $stop): RedirectResponse

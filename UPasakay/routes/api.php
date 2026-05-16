@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AdminAuthController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\DeviceTokenController;
 use App\Http\Controllers\Api\DriverAssignmentController;
 use App\Http\Controllers\Api\DriverController;
 use App\Http\Controllers\Api\NotificationController;
@@ -42,6 +43,10 @@ Route::post('notifications/{notification}/schedule', [NotificationController::cl
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('logout', [AuthController::class, 'logout']);
     Route::post('revoke-all-tokens', [AuthController::class, 'revokeAllTokens']);
+
+    // Expo push device token registration
+    Route::post('device-tokens', [DeviceTokenController::class, 'store']);
+    Route::delete('device-tokens', [DeviceTokenController::class, 'destroy']);
 
     // Unified passenger profile endpoints (shared by web and mobile)
     Route::get('passenger/profile', [PassengerProfileController::class, 'show']);

@@ -192,7 +192,16 @@ const submitResetPassword = () => {
 
 // ── Driver overflow menu ──────────────────────────────────────────────────
 const openMenu = ref<number | null>(null);
-const toggleMenu = (id: number) => { openMenu.value = openMenu.value === id ? null : id; };
+const dropdownPos = ref({ top: 0, right: 0 });
+const openMenuDriver = computed(() => props.drivers.data.find(d => d.id === openMenu.value) ?? null);
+
+const toggleMenu = (id: number, event: MouseEvent) => {
+    if (openMenu.value === id) { openMenu.value = null; return; }
+    const btn = event.currentTarget as HTMLElement;
+    const rect = btn.getBoundingClientRect();
+    dropdownPos.value = { top: rect.bottom + 4, right: window.innerWidth - rect.right };
+    openMenu.value = id;
+};
 
 // ── Shuttle filters ───────────────────────────────────────────────────────
 const shuttleSearch       = ref('');
@@ -218,7 +227,16 @@ const filteredShuttles = computed(() => {
 
 // ── Shuttle actions ───────────────────────────────────────────────────────
 const shuttleMenu = ref<number | null>(null);
-const toggleShuttleMenu = (id: number) => { shuttleMenu.value = shuttleMenu.value === id ? null : id; };
+const shuttleDropdownPos = ref({ top: 0, right: 0 });
+const openMenuShuttle = computed(() => filteredShuttles.value.find(s => s.id === shuttleMenu.value) ?? null);
+
+const toggleShuttleMenu = (id: number, event: MouseEvent) => {
+    if (shuttleMenu.value === id) { shuttleMenu.value = null; return; }
+    const btn = event.currentTarget as HTMLElement;
+    const rect = btn.getBoundingClientRect();
+    shuttleDropdownPos.value = { top: rect.bottom + 4, right: window.innerWidth - rect.right };
+    shuttleMenu.value = id;
+};
 
 const showShuttleEditModal = ref(false);
 const editingShuttle = ref<ShuttleItem | null>(null);
@@ -277,6 +295,40 @@ const quickAssignToShuttle = (s: ShuttleItem) => {
         { driver_id: Number(driverId) },
         { preserveScroll: true },
     );
+};
+
+// ── Create Shuttle ─────────────────────────────────────────────────────────
+const showCreateShuttleDrawer = ref(false);
+const createShuttleForm = useForm({
+    shuttle_code: '',
+    shuttle_type: 'van',
+    plate_number: '',
+    capacity: 15,
+});
+const submitCreateShuttle = () => {
+    createShuttleForm.post('/shuttles', {
+        onSuccess: () => { showCreateShuttleDrawer.value = false; createShuttleForm.reset(); },
+    });
+};
+
+// ── Delete Shuttle ─────────────────────────────────────────────────────────
+const showDeleteShuttleModal = ref(false);
+const deletingShuttle = ref<ShuttleItem | null>(null);
+const startDeleteShuttle = (s: ShuttleItem) => {
+    deletingShuttle.value = s;
+    showDeleteShuttleModal.value = true;
+    shuttleMenu.value = null;
+};
+const confirmDeleteShuttle = () => {
+    if (!deletingShuttle.value) return;
+    router.delete(`/shuttles/${deletingShuttle.value.id}`, {
+        preserveScroll: true,
+        onSuccess: () => { showDeleteShuttleModal.value = false; deletingShuttle.value = null; },
+    });
+};
+const cancelDeleteShuttle = () => {
+    showDeleteShuttleModal.value = false;
+    deletingShuttle.value = null;
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────
@@ -390,9 +442,9 @@ const lastActiveClass = (d: DriverItem) => d.is_online ? 'text-green-600 dark:te
 
                 <!-- Drivers Table -->
                 <div class="rounded-2xl border border-border/70 bg-card shadow-sm shadow-black/5 dark:shadow-black/20">
-                    <div class="overflow-x-auto">
+                    <div class="max-h-120 overflow-auto">
                         <table class="w-full text-sm">
-                            <thead>
+                            <thead class="sticky top-0 z-10 bg-card">
                                 <tr class="border-b border-border/50 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
                                     <th class="px-4 py-3 w-8"><input type="checkbox" :checked="allSelected" @change="toggleAll" class="rounded" /></th>
                                     <th class="px-4 py-3">Name</th>
@@ -448,28 +500,10 @@ const lastActiveClass = (d: DriverItem) => d.is_online ? 'text-green-600 dark:te
                                                 class="inline-flex items-center gap-1 rounded-lg border border-border/70 px-2.5 py-1 text-xs font-medium text-muted-foreground hover:bg-accent">
                                                 <Edit class="h-3.5 w-3.5" /> Edit
                                             </button>
-                                            <div class="relative">
-                                                <button @click="toggleMenu(d.id)"
-                                                    class="rounded-lg border border-border/70 p-1.5 text-muted-foreground hover:bg-accent">
-                                                    <MoreHorizontal class="h-4 w-4" />
-                                                </button>
-                                                <div v-if="openMenu === d.id"
-                                                    class="absolute right-0 top-full z-20 mt-1 w-48 rounded-xl border border-border/50 bg-card py-1 shadow-lg">
-                                                    <button @click="openResetPassword(d)"
-                                                        class="flex w-full items-center gap-2.5 px-4 py-2 text-sm text-foreground hover:bg-accent">
-                                                        <Key class="h-4 w-4" /> Reset Password
-                                                    </button>
-                                                    <hr class="my-1 border-border/50" />
-                                                    <button @click="startDelete(d, 'deactivate')"
-                                                        class="flex w-full items-center gap-2.5 px-4 py-2 text-sm text-orange-600 dark:text-orange-400 hover:bg-orange-500/10">
-                                                        <Trash2 class="h-4 w-4" /> Deactivate
-                                                    </button>
-                                                    <button @click="startDelete(d, 'archive')"
-                                                        class="flex w-full items-center gap-2.5 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-500/10">
-                                                        <Archive class="h-4 w-4" /> Archive
-                                                    </button>
-                                                </div>
-                                            </div>
+                                            <button @click="toggleMenu(d.id, $event)"
+                                                class="rounded-lg border border-border/70 p-1.5 text-muted-foreground hover:bg-accent">
+                                                <MoreHorizontal class="h-4 w-4" />
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
@@ -519,7 +553,13 @@ const lastActiveClass = (d: DriverItem) => d.is_online ? 'text-green-600 dark:te
                  SHUTTLE MANAGEMENT
                  ═══════════════════════════════════════════ -->
               <section v-show="activeManagementTab === 'shuttles'" class="space-y-5">
-                <h2 class="text-2xl font-bold text-foreground">Shuttle Management</h2>
+                <div class="flex items-center justify-between">
+                    <h2 class="text-2xl font-bold text-foreground">Shuttle Management</h2>
+                    <button @click="showCreateShuttleDrawer = true"
+                        class="flex items-center gap-2 rounded-xl bg-[#8B0000] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#700000]">
+                        <Bus class="h-4 w-4" /> Add Shuttle
+                    </button>
+                </div>
 
                 <!-- Shuttle Filter bar -->
                 <div class="flex flex-wrap items-center gap-3 rounded-2xl border border-border/70 bg-card p-4 shadow-sm shadow-black/5 dark:shadow-black/20">
@@ -552,9 +592,9 @@ const lastActiveClass = (d: DriverItem) => d.is_online ? 'text-green-600 dark:te
 
                 <!-- Shuttle Table -->
                 <div class="rounded-2xl border border-border/70 bg-card shadow-sm shadow-black/5 dark:shadow-black/20">
-                    <div class="overflow-x-auto">
+                    <div class="max-h-120 overflow-auto">
                         <table class="w-full text-sm">
-                            <thead>
+                            <thead class="sticky top-0 z-10 bg-card">
                                 <tr class="border-b border-border/50 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
                                     <th class="px-4 py-3">Shuttle</th>
                                     <th class="px-4 py-3">Type</th>
@@ -610,36 +650,10 @@ const lastActiveClass = (d: DriverItem) => d.is_online ? 'text-green-600 dark:te
                                         </span>
                                     </td>
                                     <td class="px-4 py-3">
-                                        <div class="relative">
-                                            <button @click="toggleShuttleMenu(s.id)"
-                                                class="rounded-lg border border-border/70 p-1.5 text-muted-foreground hover:bg-accent">
-                                                <MoreHorizontal class="h-4 w-4" />
-                                            </button>
-                                            <div v-if="shuttleMenu === s.id"
-                                                class="absolute right-0 top-full z-20 mt-1 w-48 rounded-xl border border-border/50 bg-card py-1 shadow-lg">
-                                                <button @click="openShuttleEdit(s)"
-                                                    class="flex w-full items-center gap-2.5 px-4 py-2 text-sm text-foreground hover:bg-accent">
-                                                    <Edit class="h-4 w-4" /> Edit Shuttle
-                                                </button>
-                                                <button @click="openAssignDriver(s)"
-                                                    class="flex w-full items-center gap-2.5 px-4 py-2 text-sm text-foreground hover:bg-accent">
-                                                    <Shuffle class="h-4 w-4" /> {{ s.driver_id ? 'Reassign' : 'Assign' }} Driver
-                                                </button>
-                                                <button v-if="s.driver_id" @click="() => { assigningShuttle = s; assignDriverForm.driver_id = null; submitAssignDriver(); shuttleMenu = null; }"
-                                                    class="flex w-full items-center gap-2.5 px-4 py-2 text-sm text-orange-600 dark:text-orange-400 hover:bg-orange-500/10">
-                                                    <UserMinus class="h-4 w-4" /> Unassign Driver
-                                                </button>
-                                                <hr class="my-1 border-border/50" />
-                                                <button v-if="s.status !== 'maintenance'" @click="setShuttleStatus(s, 'maintenance')"
-                                                    class="flex w-full items-center gap-2.5 px-4 py-2 text-sm text-orange-600 dark:text-orange-400 hover:bg-orange-500/10">
-                                                    <Wrench class="h-4 w-4" /> Set Maintenance
-                                                </button>
-                                                <button v-if="s.status !== 'active'" @click="setShuttleStatus(s, 'active')"
-                                                    class="flex w-full items-center gap-2.5 px-4 py-2 text-sm text-green-600 dark:text-green-400 hover:bg-green-500/10">
-                                                    <UserCheck class="h-4 w-4" /> Set Active
-                                                </button>
-                                            </div>
-                                        </div>
+                                        <button @click="toggleShuttleMenu(s.id, $event)"
+                                            class="rounded-lg border border-border/70 p-1.5 text-muted-foreground hover:bg-accent">
+                                            <MoreHorizontal class="h-4 w-4" />
+                                        </button>
                                     </td>
                                 </tr>
                                 <!-- Empty state -->
@@ -656,6 +670,69 @@ const lastActiveClass = (d: DriverItem) => d.is_online ? 'text-green-600 dark:te
             </section>
         </div>
     </AppLayout>
+
+    <!-- ═══ DRIVER ROW DROPDOWN ═══ -->
+    <Teleport to="body">
+        <template v-if="openMenuDriver">
+            <div class="fixed inset-0 z-40" @click="openMenu = null" />
+            <div
+                class="fixed z-50 w-48 rounded-xl border border-border/50 bg-card py-1 shadow-lg"
+                :style="{ top: dropdownPos.top + 'px', right: dropdownPos.right + 'px' }"
+            >
+                <button @click="openResetPassword(openMenuDriver!)"
+                    class="flex w-full items-center gap-2.5 px-4 py-2 text-sm text-foreground hover:bg-accent">
+                    <Key class="h-4 w-4" /> Reset Password
+                </button>
+                <hr class="my-1 border-border/50" />
+                <button @click="startDelete(openMenuDriver!, 'deactivate')"
+                    class="flex w-full items-center gap-2.5 px-4 py-2 text-sm text-orange-600 dark:text-orange-400 hover:bg-orange-500/10">
+                    <Trash2 class="h-4 w-4" /> Deactivate
+                </button>
+                <button @click="startDelete(openMenuDriver!, 'archive')"
+                    class="flex w-full items-center gap-2.5 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-500/10">
+                    <Archive class="h-4 w-4" /> Archive
+                </button>
+            </div>
+        </template>
+    </Teleport>
+
+    <!-- ═══ SHUTTLE ROW DROPDOWN ═══ -->
+    <Teleport to="body">
+        <template v-if="openMenuShuttle">
+            <div class="fixed inset-0 z-40" @click="shuttleMenu = null" />
+            <div
+                class="fixed z-50 w-48 rounded-xl border border-border/50 bg-card py-1 shadow-lg"
+                :style="{ top: shuttleDropdownPos.top + 'px', right: shuttleDropdownPos.right + 'px' }"
+            >
+                <button @click="openShuttleEdit(openMenuShuttle!)"
+                    class="flex w-full items-center gap-2.5 px-4 py-2 text-sm text-foreground hover:bg-accent">
+                    <Edit class="h-4 w-4" /> Edit Shuttle
+                </button>
+                <button @click="openAssignDriver(openMenuShuttle!)"
+                    class="flex w-full items-center gap-2.5 px-4 py-2 text-sm text-foreground hover:bg-accent">
+                    <Shuffle class="h-4 w-4" /> {{ openMenuShuttle!.driver_id ? 'Reassign' : 'Assign' }} Driver
+                </button>
+                <button v-if="openMenuShuttle!.driver_id" @click="() => { assigningShuttle = openMenuShuttle; assignDriverForm.driver_id = null; submitAssignDriver(); shuttleMenu = null; }"
+                    class="flex w-full items-center gap-2.5 px-4 py-2 text-sm text-orange-600 dark:text-orange-400 hover:bg-orange-500/10">
+                    <UserMinus class="h-4 w-4" /> Unassign Driver
+                </button>
+                <hr class="my-1 border-border/50" />
+                <button v-if="openMenuShuttle!.status !== 'maintenance'" @click="setShuttleStatus(openMenuShuttle!, 'maintenance')"
+                    class="flex w-full items-center gap-2.5 px-4 py-2 text-sm text-orange-600 dark:text-orange-400 hover:bg-orange-500/10">
+                    <Wrench class="h-4 w-4" /> Set Maintenance
+                </button>
+                <button v-if="openMenuShuttle!.status !== 'active'" @click="setShuttleStatus(openMenuShuttle!, 'active')"
+                    class="flex w-full items-center gap-2.5 px-4 py-2 text-sm text-green-600 dark:text-green-400 hover:bg-green-500/10">
+                    <UserCheck class="h-4 w-4" /> Set Active
+                </button>
+                <hr class="my-1 border-border/50" />
+                <button @click="startDeleteShuttle(openMenuShuttle!)"
+                    class="flex w-full items-center gap-2.5 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-500/10">
+                    <Trash2 class="h-4 w-4" /> Remove Shuttle
+                </button>
+            </div>
+        </template>
+    </Teleport>
 
     <!-- ═══ CREATE DRIVER DRAWER ═══ -->
     <Teleport to="body">
@@ -970,6 +1047,88 @@ const lastActiveClass = (d: DriverItem) => d.is_online ? 'text-green-600 dark:te
                         </button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </Teleport>
+
+    <!-- ═══ CREATE SHUTTLE DRAWER ═══ -->
+    <Teleport to="body">
+        <div v-if="showCreateShuttleDrawer" class="fixed inset-0 z-50 flex">
+            <div class="flex-1 bg-black/30" @click="showCreateShuttleDrawer = false"></div>
+            <div class="w-full max-w-md overflow-y-auto bg-card shadow-xl">
+                <div class="flex items-center justify-between border-b border-border/70 px-6 py-4">
+                    <h2 class="text-base font-semibold text-foreground">Add New Shuttle</h2>
+                    <button @click="showCreateShuttleDrawer = false" class="text-muted-foreground hover:text-foreground text-xl leading-none">&times;</button>
+                </div>
+                <form @submit.prevent="submitCreateShuttle" class="p-6 space-y-5">
+                    <div>
+                        <label class="mb-1 block text-sm font-medium text-foreground">Shuttle Code / Name *</label>
+                        <input v-model="createShuttleForm.shuttle_code" type="text" required placeholder="e.g. DEMO-1"
+                            class="w-full rounded-lg border border-border/70 bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-[#8B0000]" />
+                        <p v-if="createShuttleForm.errors.shuttle_code" class="mt-1 text-xs text-red-500">{{ createShuttleForm.errors.shuttle_code }}</p>
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-sm font-medium text-foreground">Shuttle Type *</label>
+                        <select v-model="createShuttleForm.shuttle_type"
+                            class="w-full rounded-lg border border-border/70 bg-card px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-[#8B0000]">
+                            <option value="van">Van</option>
+                            <option value="minibus">Minibus</option>
+                            <option value="bus">Bus</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-sm font-medium text-foreground">Plate Number *</label>
+                        <input v-model="createShuttleForm.plate_number" type="text" required
+                            class="w-full rounded-lg border border-border/70 bg-transparent px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-[#8B0000]" />
+                        <p v-if="createShuttleForm.errors.plate_number" class="mt-1 text-xs text-red-500">{{ createShuttleForm.errors.plate_number }}</p>
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-sm font-medium text-foreground">Capacity (seats) *</label>
+                        <input v-model.number="createShuttleForm.capacity" type="number" min="1" max="100" required
+                            class="w-full rounded-lg border border-border/70 bg-transparent px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-[#8B0000]" />
+                        <p v-if="createShuttleForm.errors.capacity" class="mt-1 text-xs text-red-500">{{ createShuttleForm.errors.capacity }}</p>
+                    </div>
+                    <hr class="border-border/50" />
+                    <div class="flex justify-end gap-3">
+                        <button type="button" @click="showCreateShuttleDrawer = false"
+                            class="rounded-lg border border-border/70 px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-accent">
+                            Cancel
+                        </button>
+                        <button type="submit" :disabled="createShuttleForm.processing"
+                            class="rounded-lg bg-[#8B0000] px-4 py-2 text-sm font-semibold text-white hover:bg-[#700000] disabled:opacity-50">
+                            Add Shuttle
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </Teleport>
+
+    <!-- ═══ DELETE SHUTTLE MODAL ═══ -->
+    <Teleport to="body">
+        <div v-if="showDeleteShuttleModal" class="fixed inset-0 z-50 flex items-center justify-center">
+            <div class="absolute inset-0 bg-black/40" @click="cancelDeleteShuttle"></div>
+            <div class="relative w-full max-w-sm rounded-2xl bg-card p-6 shadow-xl">
+                <div class="mb-4 flex items-center gap-3">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-full bg-red-500/15">
+                        <Trash2 class="h-5 w-5 text-red-600 dark:text-red-400" />
+                    </div>
+                    <h3 class="text-lg font-semibold text-foreground">Remove Shuttle?</h3>
+                </div>
+                <p class="mb-6 text-sm text-muted-foreground">
+                    Are you sure you want to remove <strong class="text-foreground">{{ deletingShuttle?.shuttle_code }} ({{ deletingShuttle?.plate_number }})</strong>?
+                    This will unassign its driver and cannot be undone.
+                </p>
+                <div class="flex justify-end gap-3">
+                    <button @click="cancelDeleteShuttle"
+                        class="rounded-lg border border-border/70 px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-accent">
+                        Cancel
+                    </button>
+                    <button @click="confirmDeleteShuttle"
+                        class="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700">
+                        Yes, Remove
+                    </button>
+                </div>
             </div>
         </div>
     </Teleport>

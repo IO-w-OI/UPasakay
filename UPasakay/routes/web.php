@@ -29,6 +29,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('live-map', [LiveMapController::class, 'index'])->name('live-map');
     Route::post('live-map/stops', [LiveMapController::class, 'store'])->name('live-map.stops.store');
+    Route::patch('live-map/stops/{stop}', [LiveMapController::class, 'update'])->name('live-map.stops.update');
     Route::delete('live-map/stops/{stop}', [LiveMapController::class, 'destroy'])->name('live-map.stops.destroy');
 
     // Admins
@@ -43,9 +44,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('drivers/{driver}', [DriverController::class, 'destroy'])->name('drivers.destroy');
 
     // Shuttles
+    Route::post('shuttles', [ShuttleWebController::class, 'store'])->name('shuttles.store');
     Route::patch('shuttles/{shuttle}', [ShuttleWebController::class, 'update'])->name('shuttles.update');
     Route::patch('shuttles/{shuttle}/assign-driver', [ShuttleWebController::class, 'assignDriver'])->name('shuttles.assign-driver');
     Route::patch('shuttles/{shuttle}/status', [ShuttleWebController::class, 'updateStatus'])->name('shuttles.update-status');
+    Route::delete('shuttles/{shuttle}', [ShuttleWebController::class, 'destroy'])->name('shuttles.destroy');
 
     // Pickup Requests
     Route::get('pickup-requests', [PickupRequestController::class, 'index'])->name('pickup-requests.index');

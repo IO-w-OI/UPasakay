@@ -1,12 +1,14 @@
 import { Nunito_400Regular, Nunito_700Bold, useFonts } from '@expo-google-fonts/nunito';
-import { Stack } from 'expo-router';
+import { router, Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 import * as Notifications from 'expo-notifications';
 
 import { TripProvider } from '../context/TripContext';
 import ActiveTripBanner from '../components/ActiveTripBanner';
+import { currentUser, restoreSession } from '../services/UserStore';
+import { registerForPushNotifications, routeForNotificationData } from '../services/pushNotifications';
 
 // This determines how notifications appear when the app is foregrounded
 Notifications.setNotificationHandler({
@@ -28,14 +30,47 @@ export default function RootLayout() {
     Nunito_700Bold,
   });
 
+  // Restore any persisted login session before the navigator mounts so
+  // API calls and the index route see currentUser immediately.
+  const [sessionChecked, setSessionChecked] = useState(false);
+
   useEffect(() => {
-    if (loaded || error) {
+    restoreSession()
+      .then((user) => {
+        // Re-register for push if a session was restored (token may have rotated).
+        if (user?.token || currentUser?.token) {
+          registerForPushNotifications();
+        }
+      })
+      .finally(() => setSessionChecked(true));
+  }, []);
+
+  // Tapping a push notification deep-links to the relevant screen.
+  useEffect(() => {
+    const go = (response: Notifications.NotificationResponse | null) => {
+      const data = response?.notification?.request?.content?.data;
+      const path = routeForNotificationData(data);
+      if (path) {
+        router.push(path as any);
+      }
+    };
+
+    // Cold start: app opened by tapping a notification.
+    Notifications.getLastNotificationResponseAsync().then(go);
+
+    // Warm: tapped while app was running/backgrounded.
+    const sub = Notifications.addNotificationResponseReceivedListener(go);
+    return () => sub.remove();
+  }, []);
+
+  useEffect(() => {
+    if ((loaded || error) && sessionChecked) {
       SplashScreen.hideAsync();
     }
-  }, [loaded, error]);
+  }, [loaded, error, sessionChecked]);
 
-  // If fonts aren't loaded and there's no error, keep showing the splash screen
-  if (!loaded && !error) {
+  // Keep the splash screen until fonts AND the session check are done
+  if ((!loaded && !error) || !sessionChecked) {
     return null;
   }
 
