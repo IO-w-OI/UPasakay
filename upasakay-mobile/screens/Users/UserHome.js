@@ -15,22 +15,8 @@ import { useRouter } from 'expo-router';
 // database
 import { currentUser } from '../../services/UserStore';
 
-import * as Notifications from 'expo-notifications';
-
 const UserHome = () => {
     const router = useRouter();
-
-    const handleTestNotify = async () => {
-        console.log("Attempting to trigger notification..."); 
-        await Notifications.scheduleNotificationAsync({
-            content: {
-                title: "UPasakay 🚌",
-                body: "You pressed the notification button. I work!",
-                sound: true,
-            },
-            trigger: null,
-        });
-    };
 
     // 1. Updated handleSubmit to accept bus details
     const handleBusSelection = (busName, busId) => {
@@ -108,9 +94,11 @@ const UserHome = () => {
                     </ButtonText>
                 </StyledButton>   
 
+                        {/* * muted ka muna baks
                 <StyledButton onPress={handleTestNotify} style={{ marginTop: 10 }}>
                     <ButtonText style={{ fontWeight: 'bold' }}>Test Notification</ButtonText>
-                </StyledButton>       
+                </StyledButton>
+                        */}       
 
             </BasePage>
         </StyledContainer>
