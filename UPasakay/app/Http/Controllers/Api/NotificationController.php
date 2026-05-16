@@ -3,11 +3,17 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\DeviceToken;
 use App\Models\Notification;
+use App\Services\ExpoPushService;
 use Illuminate\Http\Request;
 
 class NotificationController extends Controller
 {
+    public function __construct(
+        private ExpoPushService $expoPush,
+    ) {}
+
     public function index(Request $request)
     {
         $query = Notification::query();
@@ -97,6 +103,18 @@ class NotificationController extends Controller
     public function send(Notification $notification)
     {
         $notification->markAsSent();
+
+        // Fan out to every registered device alongside the existing record /
+        // Pusher behaviour. Audience targeting stays coarse to match the model.
+        $tokens = DeviceToken::query()->pluck('expo_token')->all();
+        if (! empty($tokens)) {
+            $this->expoPush->send(
+                $tokens,
+                $notification->title,
+                $notification->message ?? '',
+                ['type' => 'announcement', 'notification_id' => $notification->id],
+            );
+        }
 
         return response()->json([
             'message' => 'Notification sent successfully',

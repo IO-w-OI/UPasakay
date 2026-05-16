@@ -53,7 +53,9 @@
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff",
-          "dark": { "backgroundColor": "#000000" }
+          "dark": {
+            "backgroundColor": "#000000"
+          }
         }
       ],
       [
@@ -69,12 +71,21 @@
       [
         "expo-build-properties",
         {
-          "ios": { "deploymentTarget": "18.0" },
+          "ios": {
+            "deploymentTarget": "18.0"
+          },
           "android": {
             "compileSdkVersion": 35,
             "targetSdkVersion": 35,
             "buildToolsVersion": "35.0.0"
           }
+        }
+      ],
+      "expo-secure-store",
+      [
+        "expo-notifications",
+        {
+          "color": "#701929"
         }
       ]
     ],
