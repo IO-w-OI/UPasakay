@@ -80,6 +80,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Driver app: read-only trip feed + notifications, plus the only
     // mutating actions allowed (at the point of boarding at a stop).
+    Route::patch('driver/status', [DriverApiController::class, 'setStatus']);
     Route::get('driver/queue', [DriverApiController::class, 'queue']);
     Route::get('driver/notifications', [DriverApiController::class, 'notifications']);
     Route::patch('pickup-requests/{pickupRequest}/board', [DriverApiController::class, 'board']);

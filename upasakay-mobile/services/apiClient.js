@@ -49,14 +49,27 @@ export const apiFetch = async (path, { method = 'GET', body, headers = {}, ...re
         ...headers,
     };
 
-    const response = await fetch(buildUrl(path), {
-        method,
-        headers: finalHeaders,
-        ...(body !== undefined
-            ? { body: isForm || typeof body === 'string' ? body : JSON.stringify(body) }
-            : {}),
-        ...rest,
-    });
+    let response;
+    try {
+        response = await fetch(buildUrl(path), {
+            method,
+            headers: finalHeaders,
+            ...(body !== undefined
+                ? { body: isForm || typeof body === 'string' ? body : JSON.stringify(body) }
+                : {}),
+            ...rest,
+        });
+    } catch (err) {
+        // Offline / DNS / TLS failure: fetch rejects with
+        // "TypeError: Network request failed". Return a handled result so
+        // callers show their error UI instead of an unhandled rejection.
+        console.warn('[api] network error:', err?.message ?? err);
+        return {
+            ok: false,
+            status: 0,
+            data: { message: 'Network error. Check your connection.' },
+        };
+    }
 
     if (response.status === 401) {
         await handleUnauthorized();

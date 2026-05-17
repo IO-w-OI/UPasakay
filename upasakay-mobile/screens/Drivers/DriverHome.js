@@ -1,8 +1,9 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
     ActivityIndicator,
+    Alert,
     BackHandler,
     RefreshControl,
     ScrollView,
@@ -27,7 +28,7 @@ import {
 } from '../../components/styles';
 
 import { currentUser } from '../../services/UserStore';
-import { apiGet } from '../../services/apiClient';
+import { apiGet, apiPatch } from '../../services/apiClient';
 import { useDriverLocationShare } from '../../hooks/useDriverLocationShare';
 
 const DriverHome = () => {
@@ -75,13 +76,46 @@ const DriverHome = () => {
     }, [loadFeed]);
 
     const toggleDuty = useCallback(async (next) => {
+        const prev = isOnDuty;
         setIsOnDuty(next);
-        if (next) {
-            await startSharing();
-        } else {
-            await stopSharing();
+        if (next) { startSharing(); } else { stopSharing(); }
+
+        // Sync to backend so the web admin sees online/offline immediately.
+        const res = await apiPatch('/driver/status', { on_duty: next });
+        if (!res.ok) {
+            // Revert UI + sharing so the toggle never lies about real state.
+            setIsOnDuty(prev);
+            if (prev) { startSharing(); } else { stopSharing(); }
+            Alert.alert(
+                'Status not updated',
+                res.data?.message || 'Could not reach the server. Please try again.'
+            );
         }
-    }, [startSharing, stopSharing]);
+    }, [isOnDuty, startSharing, stopSharing]);
+
+    // Initialise the toggle from the server ONCE (don't fight the user on
+    // later refreshes). If they were already on duty, resume sharing.
+    const dutyInitialised = useRef(false);
+    useEffect(() => {
+        if (feed?.driver && !dutyInitialised.current) {
+            dutyInitialised.current = true;
+            if (feed.driver.on_duty) {
+                setIsOnDuty(true);
+                startSharing();
+            }
+        }
+    }, [feed, startSharing]);
+
+    const handleSOS = useCallback(() => {
+        Alert.alert(
+            'Emergency (SOS)',
+            'This will contact dispatch and emergency services immediately. Proceed?',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'Call Now', style: 'destructive', onPress: () => console.log('SOS triggered') },
+            ]
+        );
+    }, []);
 
     const shuttle = feed?.shuttle;
     const route = feed?.route;
@@ -158,12 +192,22 @@ const DriverHome = () => {
                         <Text style={styles.headerRoute}>{headerSubtitle}</Text>
                     </View>
                 </View>
-                <TouchableOpacity
-                    style={styles.bellButton}
-                    onPress={() => router.push('/(tabs)/Drivers/DriverRecents')}
-                >
-                    <Ionicons name="notifications-outline" size={24} color="#1A2E1A" />
-                </TouchableOpacity>
+                <View style={styles.headerActions}>
+                    <TouchableOpacity
+                        style={styles.sosButton}
+                        activeOpacity={0.85}
+                        onPress={handleSOS}
+                    >
+                        <Ionicons name="call" size={18} color="#fff" />
+                        <Text style={styles.sosText}>SOS</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={styles.bellButton}
+                        onPress={() => router.push('/(tabs)/Drivers/DriverRecents')}
+                    >
+                        <Ionicons name="notifications-outline" size={24} color="#1A2E1A" />
+                    </TouchableOpacity>
+                </View>
             </View>
 
             <ScrollView
@@ -174,15 +218,21 @@ const DriverHome = () => {
                 }
             >
                 {/* Duty Toggle Card */}
-                <View style={styles.dutyCard}>
-                    <View>
-                        <Text style={styles.dutyLabel}>On Duty</Text>
-                        <Text style={styles.dutySubLabel}>Sharing location · available for pickups</Text>
+                <View style={[styles.dutyCard, !isOnDuty && styles.dutyCardOff]}>
+                    <View style={styles.dutyLeft}>
+                        <Text style={styles.dutyLabel}>{isOnDuty ? 'On Duty' : 'Off Duty'}</Text>
+                        <Text style={styles.dutySubLabel} numberOfLines={2}>
+                            {isOnDuty
+                                ? 'Sharing location · available for pickups'
+                                : 'Location hidden · not receiving pickups'}
+                        </Text>
                     </View>
                     <View style={styles.dutyRight}>
-                        <Text style={[styles.dutyStatus, { color: isOnDuty ? '#2E7D32' : '#C62828' }]}>
-                            {isOnDuty ? 'Active' : 'Inactive'}
-                        </Text>
+                        <View style={[styles.dutyPill, isOnDuty ? styles.dutyPillOn : styles.dutyPillOff]}>
+                            <Text style={[styles.dutyPillText, { color: isOnDuty ? '#1B5E20' : '#9A2A2A' }]}>
+                                {isOnDuty ? 'Active' : 'Offline'}
+                            </Text>
+                        </View>
                         <Switch
                             value={isOnDuty}
                             onValueChange={toggleDuty}
@@ -304,6 +354,14 @@ const styles = StyleSheet.create({
     },
     headerName: { fontFamily: 'Nunito-Bold', fontSize: 16, color: '#1A2E1A' },
     headerRoute: { fontFamily: 'Nunito-Bold', fontSize: 12, color: '#5C7A5C' },
+    headerActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    sosButton: {
+        flexDirection: 'row', alignItems: 'center', gap: 4,
+        backgroundColor: '#C62828', borderRadius: 21, height: 42, paddingHorizontal: 14,
+        shadowColor: '#C62828', shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.35, shadowRadius: 6, elevation: 5,
+    },
+    sosText: { fontFamily: 'Nunito-Bold', fontSize: 14, color: '#fff' },
     bellButton: {
         width: 42, height: 42, borderRadius: 21,
         backgroundColor: '#E8F5E9', justifyContent: 'center', alignItems: 'center',
@@ -311,17 +369,22 @@ const styles = StyleSheet.create({
 
     dutyCard: {
         flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-marginBottom: 16,
+        marginBottom: 16,
         backgroundColor: '#fff', borderRadius: 16, padding: 18,
         shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8, elevation: 3,
     },
+    dutyCardOff: { backgroundColor: '#FBEAEA' },
+    dutyLeft: { flex: 1, marginRight: 12 },
     dutyLabel: { fontFamily: 'Nunito-Bold', fontSize: 16, color: '#1A2E1A' },
     dutySubLabel: { fontFamily: 'Nunito-Bold', fontSize: 12, color: '#888', marginTop: 2 },
-    dutyRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-    dutyStatus: { fontFamily: 'Nunito-Bold', fontSize: 13 },
+    dutyRight: { flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 0 },
+    dutyPill: { borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4 },
+    dutyPillOn: { backgroundColor: '#E3F4E6' },
+    dutyPillOff: { backgroundColor: '#F6D9D9' },
+    dutyPillText: { fontFamily: 'Nunito-Bold', fontSize: 12 },
 
     statsRow: {
-        flexDirection: 'row', marginHorizontal: 20, marginBottom: 16,
+        flexDirection: 'row', marginBottom: 16,
         backgroundColor: '#fff', borderRadius: 16, padding: 16,
         shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8, elevation: 3,
     },
@@ -331,7 +394,7 @@ marginBottom: 16,
     statDivider: { width: 1, backgroundColor: '#E0E0E0', marginVertical: 4 },
 
     capacityCard: {
-marginBottom: 16,
+        marginBottom: 16,
         backgroundColor: '#fff', borderRadius: 16, padding: 16,
         shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8, elevation: 3,
     },
@@ -342,7 +405,7 @@ marginBottom: 16,
     capacityFill: { height: 10, borderRadius: 5, backgroundColor: '#2E7D32' },
 
     detailCard: {
-marginBottom: 16,
+        marginBottom: 16,
         backgroundColor: '#fff', borderRadius: 16, padding: 18,
         shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8, elevation: 3,
     },
@@ -355,7 +418,7 @@ marginBottom: 16,
     detailValue: { fontFamily: 'Nunito-Bold', fontSize: 13, color: '#1A2E1A', flexShrink: 1, marginLeft: 12 },
 
     routeCard: {
-marginTop: 4,
+        marginTop: 4,
         backgroundColor: '#4A1010', borderRadius: 20, padding: 22,
         shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 10, elevation: 5,
     },

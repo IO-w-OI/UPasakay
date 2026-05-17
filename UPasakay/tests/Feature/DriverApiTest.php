@@ -269,6 +269,37 @@ class DriverApiTest extends TestCase
             ->assertStatus(403);
     }
 
+    public function test_driver_can_toggle_on_off_duty_status(): void
+    {
+        $env = $this->setupRouteWithDriver(capacity: 3);
+
+        $this->withHeaders($this->authHeaders($env['driverUser']))
+            ->patchJson('/api/driver/status', ['on_duty' => false])
+            ->assertOk()
+            ->assertJsonPath('on_duty', false)
+            ->assertJsonPath('driver_status', 'offline');
+
+        $this->assertSame(0, (int) $env['driver']->fresh()->is_available);
+        $this->assertSame('offline', $env['driver']->fresh()->driver_status);
+
+        $this->withHeaders($this->authHeaders($env['driverUser']))
+            ->patchJson('/api/driver/status', ['on_duty' => true])
+            ->assertOk()
+            ->assertJsonPath('on_duty', true)
+            ->assertJsonPath('driver_status', 'active');
+
+        $this->assertSame(1, (int) $env['driver']->fresh()->is_available);
+    }
+
+    public function test_driver_status_requires_boolean(): void
+    {
+        $env = $this->setupRouteWithDriver(capacity: 3);
+
+        $this->withHeaders($this->authHeaders($env['driverUser']))
+            ->patchJson('/api/driver/status', [])
+            ->assertStatus(422);
+    }
+
     public function test_driver_notifications_returns_driver_audience_log(): void
     {
         $env = $this->setupRouteWithDriver(capacity: 3);

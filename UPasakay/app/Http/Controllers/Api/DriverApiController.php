@@ -37,6 +37,33 @@ class DriverApiController extends Controller
      * shuttle, route, ordered stops with waiting counts, and the
      * hybrid-ordered queue with per-passenger status.
      */
+    /**
+     * Driver flips on/off duty from the mobile app. Mirrors the value the
+     * web admin dashboard reads (is_available + driver_status), so going
+     * offline immediately shows as "offline" there too.
+     */
+    public function setStatus(Request $request)
+    {
+        $driver = $this->driverFor($request);
+        if (! $driver) {
+            return response()->json(['message' => 'No driver profile found.'], 404);
+        }
+
+        $validated = $request->validate([
+            'on_duty' => 'required|boolean',
+        ]);
+
+        $driver->update([
+            'is_available' => $validated['on_duty'],
+            'driver_status' => $validated['on_duty'] ? 'active' : 'offline',
+        ]);
+
+        return response()->json([
+            'on_duty' => (bool) $validated['on_duty'],
+            'driver_status' => $driver->driver_status,
+        ]);
+    }
+
     public function queue(Request $request)
     {
         $driver = $this->driverFor($request);
@@ -49,7 +76,7 @@ class DriverApiController extends Controller
 
         if (! $route) {
             return response()->json([
-                'driver' => ['id' => $driver->id, 'name' => $driver->full_name],
+                'driver' => ['id' => $driver->id, 'name' => $driver->full_name, 'on_duty' => (bool) $driver->is_available],
                 'shuttle' => $shuttle ? $this->shuttlePayload($shuttle) : null,
                 'route' => null,
                 'stops' => [],

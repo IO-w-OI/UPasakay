@@ -1,7 +1,7 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native';
 
 import { apiPost } from '../../services/apiClient';
 import { unregisterPushNotifications } from '../../services/pushNotifications';
@@ -69,15 +69,20 @@ const DriverProfile = () => {
     return (
         <StyledContainer style={{ flex: 1, paddingHorizontal: 0 }} colors={[Colors.base_page, Colors.base_page]}>
             <StatusBar style="dark" />
-            <BasePage style={{ flex: 1, paddingHorizontal: 0, alignItems: 'center' }}>
+            <BasePage style={{ flex: 1, paddingHorizontal: 0 }}>
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                style={{ width: '100%' }}
+                contentContainerStyle={{ alignItems: 'center', paddingTop: 8, paddingBottom: 130 }}
+              >
 
                 {/* Profile Info */}
                 <AvatarContainer>
                     <MaterialCommunityIcons name="account-circle" size={85} color="#1A2E1A" />
                 </AvatarContainer>
 
-                <UserName>{currentUser?.name || 'Ben Dela Cruz'}</UserName>
-                <UserEmail>{currentUser?.email || 'bdelaCruz1@upedu.ph'}</UserEmail>
+                <UserName>{currentUser?.full_name || 'Driver'}</UserName>
+                <UserEmail>{currentUser?.email || '—'}</UserEmail>
                 <UserRole>Driver</UserRole>
 
                 {/* My Account */}
@@ -133,6 +138,7 @@ const DriverProfile = () => {
                     <Text style={styles.sosText}>Emergency Call (SOS)</Text>
                 </TouchableOpacity>
 
+              </ScrollView>
             </BasePage>
         </StyledContainer>
     );
