@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AdminAuthController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DeviceTokenController;
+use App\Http\Controllers\Api\DriverApiController;
 use App\Http\Controllers\Api\DriverAssignmentController;
 use App\Http\Controllers\Api\DriverController;
 use App\Http\Controllers\Api\NotificationController;
@@ -76,4 +77,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('driver-assignments', DriverAssignmentController::class);
     Route::apiResource('shuttle-locations', ShuttleLocationController::class);
     Route::post('driver/location', [ShuttleLocationController::class, 'storeFromDriver']);
+
+    // Driver app: read-only trip feed + notifications, plus the only
+    // mutating actions allowed (at the point of boarding at a stop).
+    Route::get('driver/queue', [DriverApiController::class, 'queue']);
+    Route::get('driver/notifications', [DriverApiController::class, 'notifications']);
+    Route::patch('pickup-requests/{pickupRequest}/board', [DriverApiController::class, 'board']);
+    Route::patch('pickup-requests/{pickupRequest}/no-show', [DriverApiController::class, 'noShow']);
+    Route::patch('pickup-requests/{pickupRequest}/decline', [DriverApiController::class, 'decline']);
 });

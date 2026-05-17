@@ -15,8 +15,16 @@ import {
 import { WebView } from 'react-native-webview';
 
 import { apiGet } from '../../services/apiClient';
-import { getRouteColor, getMergedStops } from '../../services/mobileRouteData';
 import { moderateScale, scale } from '../../utils/responsive';
+
+const ROUTE_COLORS = { north: '#3b82f6', south: '#22c55e', 'cebu city': '#f97316' };
+const getRouteColor = (name = '') => {
+  const n = name.toLowerCase();
+  for (const [k, c] of Object.entries(ROUTE_COLORS)) {
+    if (n.includes(k)) return c;
+  }
+  return '#f97316';
+};
 
 // Leaflet map HTML — all JS lives here and communicates back via ReactNativeWebView.postMessage
 const leafletHTML = `
@@ -144,24 +152,15 @@ const UserMap = () => {
     );
   }, []);
 
-  // ── 2. Build stop list: hardcoded landmarks + admin-added API stops ───────
+  // ── 2. Fetch route stops from the API ─────────────────────────────────────
   useEffect(() => {
-    const color = getRouteColor(busName);
-    setRouteColor(color);
-
-    const load = async () => {
-      let apiStops = [];
-      if (routeId) {
-        const { ok, data } = await apiGet(`routes/${routeId}`);
-        if (ok && Array.isArray(data?.stops)) {
-          apiStops = data.stops;
-        }
+    setRouteColor(getRouteColor(busName));
+    if (!routeId) return;
+    apiGet(`routes/${routeId}`).then(({ ok, data }) => {
+      if (ok && Array.isArray(data?.stops)) {
+        setRouteStops(data.stops.filter(s => s.is_active));
       }
-      // Always include hardcoded landmarks; admin stops are merged on top
-      setRouteStops(getMergedStops(busName, apiStops));
-    };
-
-    load();
+    });
   }, [routeId, busName]);
 
   // ── 3. Inject stop pins once map is loaded and stops are fetched ───────────

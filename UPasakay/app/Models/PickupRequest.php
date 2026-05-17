@@ -10,7 +10,7 @@ class PickupRequest extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['user_id', 'route_id', 'pickup_stop_id', 'dropoff_stop_id', 'status', 'eta_minutes', 'assigned_at', 'completed_at'];
+    protected $fillable = ['user_id', 'route_id', 'pickup_stop_id', 'dropoff_stop_id', 'status', 'eta_minutes', 'queue_position', 'assigned_at', 'completed_at'];
 
     /**
      * Scope: Filter only active pickup requests.
@@ -28,6 +28,23 @@ class PickupRequest extends Model
     public function scopeInactive(Builder $query): Builder
     {
         return $query->whereIn('status', ['completed', 'cancelled']);
+    }
+
+    /**
+     * Scope: active requests for a route, ordered "Hybrid" —
+     * by the pickup stop's sequence along the route, then FCFS (created_at)
+     * as the tiebreaker within the same stop. This mirrors how the shuttle
+     * physically drives the route while staying fair within each stop.
+     */
+    public function scopeQueuedForRoute(Builder $query, int $routeId): Builder
+    {
+        return $query
+            ->where('pickup_requests.route_id', $routeId)
+            ->whereIn('pickup_requests.status', ['pending', 'accepted', 'in_progress'])
+            ->leftJoin('stops', 'stops.id', '=', 'pickup_requests.pickup_stop_id')
+            ->orderBy('stops.sequence', 'asc')
+            ->orderBy('pickup_requests.created_at', 'asc')
+            ->select('pickup_requests.*');
     }
 
     public function user()
