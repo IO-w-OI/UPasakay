@@ -25,6 +25,16 @@ import {
 
 const DriverProfile = () => {
 
+<<<<<<< Updated upstream
+=======
+    const doLogout = async () => {
+        try { await unregisterPushNotifications(); } catch {}
+        try { await apiPost('/logout'); } catch {}
+        await logoutUser();
+        router.replace('/');
+    };
+
+>>>>>>> Stashed changes
     const handleLogout = () => {
         Alert.alert(
             'Sign Out',
@@ -65,8 +75,8 @@ const DriverProfile = () => {
                     <MaterialCommunityIcons name="account-circle" size={85} color="#1A2E1A" />
                 </AvatarContainer>
 
-                <UserName>{currentUser?.name || 'Ben Dela Cruz'}</UserName>
-                <UserEmail>{currentUser?.email || 'bdelaCruz1@upedu.ph'}</UserEmail>
+                <UserName>{currentUser?.full_name || 'Driver'}</UserName>
+                <UserEmail>{currentUser?.email || 'No email'}</UserEmail>
                 <UserRole>Driver</UserRole>
 
                 {/* My Account */}
@@ -112,7 +122,7 @@ const DriverProfile = () => {
                     <LogOutText>Log Out</LogOutText>
                 </LogOutButton>
 
-                {/* SOS Button — driver exclusive */}
+                {/* SOS Button */}
                 <TouchableOpacity
                     style={styles.sosButton}
                     activeOpacity={0.85}

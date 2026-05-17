@@ -18,6 +18,7 @@ return array(
     'App\\Http\\Controllers\\AdminController' => $baseDir . '/app/Http/Controllers/AdminController.php',
     'App\\Http\\Controllers\\Api\\AdminAuthController' => $baseDir . '/app/Http/Controllers/Api/AdminAuthController.php',
     'App\\Http\\Controllers\\Api\\AuthController' => $baseDir . '/app/Http/Controllers/Api/AuthController.php',
+    'App\\Http\\Controllers\\Api\\DeviceTokenController' => $baseDir . '/app/Http/Controllers/Api/DeviceTokenController.php',
     'App\\Http\\Controllers\\Api\\DriverAssignmentController' => $baseDir . '/app/Http/Controllers/Api/DriverAssignmentController.php',
     'App\\Http\\Controllers\\Api\\DriverController' => $baseDir . '/app/Http/Controllers/Api/DriverController.php',
     'App\\Http\\Controllers\\Api\\NotificationController' => $baseDir . '/app/Http/Controllers/Api/NotificationController.php',
@@ -55,8 +56,13 @@ return array(
     'App\\Http\\Requests\\UpdatePassengerRequest' => $baseDir . '/app/Http/Requests/UpdatePassengerRequest.php',
     'App\\Listeners\\LogSuccessfulLogin' => $baseDir . '/app/Listeners/LogSuccessfulLogin.php',
     'App\\Mail\\BookingConfirmed' => $baseDir . '/app/Mail/BookingConfirmed.php',
+<<<<<<< Updated upstream
+=======
+    'App\\Mail\\PasswordResetCode' => $baseDir . '/app/Mail/PasswordResetCode.php',
+>>>>>>> Stashed changes
     'App\\Models\\ActivityLog' => $baseDir . '/app/Models/ActivityLog.php',
     'App\\Models\\Admin' => $baseDir . '/app/Models/Admin.php',
+    'App\\Models\\DeviceToken' => $baseDir . '/app/Models/DeviceToken.php',
     'App\\Models\\Driver' => $baseDir . '/app/Models/Driver.php',
     'App\\Models\\DriverAssignment' => $baseDir . '/app/Models/DriverAssignment.php',
     'App\\Models\\Notification' => $baseDir . '/app/Models/Notification.php',
@@ -74,6 +80,7 @@ return array(
     'App\\Providers\\AppServiceProvider' => $baseDir . '/app/Providers/AppServiceProvider.php',
     'App\\Providers\\FortifyServiceProvider' => $baseDir . '/app/Providers/FortifyServiceProvider.php',
     'App\\Services\\DriverAssignmentService' => $baseDir . '/app/Services/DriverAssignmentService.php',
+    'App\\Services\\ExpoPushService' => $baseDir . '/app/Services/ExpoPushService.php',
     'App\\Services\\PickupRequestService' => $baseDir . '/app/Services/PickupRequestService.php',
     'Attribute' => $vendorDir . '/symfony/polyfill-php80/Resources/stubs/Attribute.php',
     'BaconQrCode\\Common\\BitArray' => $vendorDir . '/bacon/bacon-qr-code/src/Common/BitArray.php',

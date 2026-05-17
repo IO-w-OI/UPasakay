@@ -622,6 +622,7 @@ class ComposerStaticInit8e121cfec4f9e137f13f96f56fef7523
         'App\\Http\\Controllers\\AdminController' => __DIR__ . '/../..' . '/app/Http/Controllers/AdminController.php',
         'App\\Http\\Controllers\\Api\\AdminAuthController' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/AdminAuthController.php',
         'App\\Http\\Controllers\\Api\\AuthController' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/AuthController.php',
+        'App\\Http\\Controllers\\Api\\DeviceTokenController' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/DeviceTokenController.php',
         'App\\Http\\Controllers\\Api\\DriverAssignmentController' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/DriverAssignmentController.php',
         'App\\Http\\Controllers\\Api\\DriverController' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/DriverController.php',
         'App\\Http\\Controllers\\Api\\NotificationController' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/NotificationController.php',
@@ -659,8 +660,13 @@ class ComposerStaticInit8e121cfec4f9e137f13f96f56fef7523
         'App\\Http\\Requests\\UpdatePassengerRequest' => __DIR__ . '/../..' . '/app/Http/Requests/UpdatePassengerRequest.php',
         'App\\Listeners\\LogSuccessfulLogin' => __DIR__ . '/../..' . '/app/Listeners/LogSuccessfulLogin.php',
         'App\\Mail\\BookingConfirmed' => __DIR__ . '/../..' . '/app/Mail/BookingConfirmed.php',
+<<<<<<< Updated upstream
+=======
+        'App\\Mail\\PasswordResetCode' => __DIR__ . '/../..' . '/app/Mail/PasswordResetCode.php',
+>>>>>>> Stashed changes
         'App\\Models\\ActivityLog' => __DIR__ . '/../..' . '/app/Models/ActivityLog.php',
         'App\\Models\\Admin' => __DIR__ . '/../..' . '/app/Models/Admin.php',
+        'App\\Models\\DeviceToken' => __DIR__ . '/../..' . '/app/Models/DeviceToken.php',
         'App\\Models\\Driver' => __DIR__ . '/../..' . '/app/Models/Driver.php',
         'App\\Models\\DriverAssignment' => __DIR__ . '/../..' . '/app/Models/DriverAssignment.php',
         'App\\Models\\Notification' => __DIR__ . '/../..' . '/app/Models/Notification.php',
@@ -678,6 +684,7 @@ class ComposerStaticInit8e121cfec4f9e137f13f96f56fef7523
         'App\\Providers\\AppServiceProvider' => __DIR__ . '/../..' . '/app/Providers/AppServiceProvider.php',
         'App\\Providers\\FortifyServiceProvider' => __DIR__ . '/../..' . '/app/Providers/FortifyServiceProvider.php',
         'App\\Services\\DriverAssignmentService' => __DIR__ . '/../..' . '/app/Services/DriverAssignmentService.php',
+        'App\\Services\\ExpoPushService' => __DIR__ . '/../..' . '/app/Services/ExpoPushService.php',
         'App\\Services\\PickupRequestService' => __DIR__ . '/../..' . '/app/Services/PickupRequestService.php',
         'Attribute' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/Attribute.php',
         'BaconQrCode\\Common\\BitArray' => __DIR__ . '/..' . '/bacon/bacon-qr-code/src/Common/BitArray.php',

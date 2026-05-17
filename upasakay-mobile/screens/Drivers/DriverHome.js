@@ -8,93 +8,32 @@ import { useEffect } from 'react';
 
 import {
     BasePage,
-    ButtonText,
     Colors,
-    Header,
-    PageLogo,
-    StyledButton,
     StyledContainer,
-    SubHeader,
-    UserName,
 } from '../../components/styles';
 
-// Replace with your actual driver store
 import { currentUser } from '../../services/UserStore';
-console.log('DriverHome screen loaded'); // Debug log to confirm screen load
-
-
 
 const DriverHome = () => {
-    // Block Android back button
     useEffect(() => {
-        const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
-            return true; // returning true blocks the back action
-        });
+        const backHandler = BackHandler.addEventListener('hardwareBackPress', () => true);
         return () => backHandler.remove();
     }, []);
 
     const router = useRouter();
-    const [isOnDuty, setIsOnDuty] = useState(false);
+    const [isOnDuty, setIsOnDuty] = useState(true);
 
-    // Mock nearby requests — replace with real data later
-    const nearbyRequests = [
-        { id: 1, name: 'Sisa Santos', location: 'Jollibee', distance: '0.3 km' },
-        { id: 2, name: 'Cuervo dela Cruz', location: 'AS Gate 2', distance: '0.7 km' },
-    ];
+    // ─── REAL DATA FROM currentUser ──────────────────────────────────────────
+    const driverName = currentUser?.full_name
+        ? currentUser.full_name.split(' ')[0]
+        : 'Driver';
 
     const stats = {
-        pendingPickup: 6,
-        boardedPax: 12,
+        pendingPickup: 0,   // wire to API later
+        boardedPax: 0,      // wire to API later
         shuttleCapacity: 20,
     };
 
-    // ─── OFF DUTY: Simple Welcome Screen ───────────────────────────────────────
-    if (!isOnDuty) {
-        return (
-            <StyledContainer colors={[Colors.base_page, Colors.base_page]}>
-                <StatusBar style="dark" />
-                <BasePage style={{ padding: 20, alignItems: 'center', justifyContent: 'center' }}>
-                    <PageLogo
-                        resizeMode="contain"
-                        source={require('../../assets/images/UPasakayBig.png')}
-                        style={{ width: 723 * 0.5, height: 406 * 0.5, marginBottom: 16 }}
-                    />
-
-                    <Header>
-                        Welcome, <UserName style={{ fontSize: 30 }}>
-                            {currentUser?.name ? currentUser.name.split(' ')[0] : 'Driver'}
-                        </UserName>!
-                    </Header>
-
-                    <SubHeader style={{ marginBottom: 32, textAlign: 'center' }}>
-                        You are currently off duty.
-                    </SubHeader>
-
-                    {/* Go On Duty */}
-                    <StyledButton
-                        onPress={() => setIsOnDuty(true)}
-                        style={{ width: '100%', height: 54, marginBottom: 14 }}
-                    >
-                        <ButtonText style={{ fontSize: 20, color: Colors.golden_brown, fontFamily: 'Nunito-Bold' }}>
-                            Drive
-                        </ButtonText>
-                    </StyledButton>
-
-                    {/* Pickup only */}
-                    <StyledButton
-                        onPress={() => setIsOnDuty(true)}
-                        style={{ width: '100%', height: 54, backgroundColor: '#FFB82E' }}
-                    >
-                        <ButtonText style={{ fontSize: 20, color: '#1A2E1A', fontFamily: 'Nunito-Bold' }}>
-                            Pickup
-                        </ButtonText>
-                    </StyledButton>
-                </BasePage>
-            </StyledContainer>
-        );
-    }
-
-    // ─── ON DUTY: Active Dashboard ──────────────────────────────────────────────
     return (
         <StyledContainer colors={[Colors.base_page, Colors.base_page]}>
             <StatusBar style="dark" />
@@ -107,9 +46,11 @@ const DriverHome = () => {
                     </View>
                     <View>
                         <Text style={styles.headerName}>
-                            {currentUser?.name || 'Ben Dela Cruz'}
+                            {currentUser?.full_name || 'Driver'}
                         </Text>
-                        <Text style={styles.headerRoute}>South Bound · SH-0001</Text>
+                        <Text style={styles.headerRoute}>
+                            Driver · {currentUser?.driver_id ? `DRV-${currentUser.driver_id}` : 'Unassigned'}
+                        </Text>
                     </View>
                 </View>
                 <TouchableOpacity style={styles.bellButton}>
@@ -117,8 +58,10 @@ const DriverHome = () => {
                 </TouchableOpacity>
             </View>
 
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
-
+            <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ paddingBottom: 40 }}
+            >
                 {/* Duty Toggle Card */}
                 <View style={styles.dutyCard}>
                     <View>
@@ -147,7 +90,7 @@ const DriverHome = () => {
                     <View style={styles.statDivider} />
                     <View style={styles.statItem}>
                         <Text style={styles.statNumber}>{stats.boardedPax}</Text>
-                        <Text style={styles.statLabel}>Boarded pax</Text>
+                        <Text style={styles.statLabel}>Boarded Pax</Text>
                     </View>
                     <View style={styles.statDivider} />
                     <View style={styles.statItem}>
@@ -156,33 +99,17 @@ const DriverHome = () => {
                     </View>
                 </View>
 
-                {/* Nearby Requests */}
-                <View style={styles.sectionRow}>
-                    <Text style={styles.sectionTitle}>Nearby requests</Text>
-                    <View style={styles.newBadge}>
-                        <Text style={styles.newBadgeText}>2 new</Text>
-                    </View>
-                </View>
-
-                {nearbyRequests.map((req) => (
-                    <TouchableOpacity key={req.id} style={styles.nearbyCard} activeOpacity={0.75}>
-                        <View style={styles.nearbyAvatar}>
-                            <MaterialCommunityIcons name="account" size={20} color="#1A2E1A" />
-                        </View>
-                        <View style={{ flex: 1 }}>
-                            <Text style={styles.nearbyName}>{req.name}</Text>
-                            <Text style={styles.nearbyLocation}>{req.location}</Text>
-                        </View>
-                        <Text style={styles.nearbyDistance}>{req.distance}</Text>
-                    </TouchableOpacity>
-                ))}
-
                 {/* Route Card */}
                 <View style={styles.routeCard}>
                     <View style={styles.routeCardTop}>
-                        <Text style={styles.routeCardTitle}>South Bound</Text>
-                        <Text style={styles.routeCardSub}>Talamban → UP Cebu</Text>
-                        <Text style={styles.routeCardSub}>8 stops · 3 pax confirmed</Text>
+                        <Text style={styles.routeCardTitle}>
+                            {currentUser?.route_name || 'No Route Assigned'}
+                        </Text>
+                        <Text style={styles.routeCardSub}>
+                            {currentUser?.shuttle_id
+                                ? `Shuttle #${currentUser.shuttle_id}`
+                                : 'No shuttle assigned'}
+                        </Text>
                     </View>
                     <TouchableOpacity
                         style={styles.startButton}
@@ -199,7 +126,6 @@ const DriverHome = () => {
 };
 
 const styles = StyleSheet.create({
-    // Header
     headerBar: {
         flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
         paddingHorizontal: 20, paddingTop: 60, paddingBottom: 16,
@@ -216,8 +142,6 @@ const styles = StyleSheet.create({
         width: 42, height: 42, borderRadius: 21,
         backgroundColor: '#E8F5E9', justifyContent: 'center', alignItems: 'center',
     },
-
-    // Duty Card
     dutyCard: {
         flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
         marginHorizontal: 20, marginBottom: 16,
@@ -228,8 +152,6 @@ const styles = StyleSheet.create({
     dutySubLabel: { fontFamily: 'Nunito-Bold', fontSize: 12, color: '#888', marginTop: 2 },
     dutyRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     dutyStatus: { fontFamily: 'Nunito-Bold', fontSize: 13 },
-
-    // Stats
     statsRow: {
         flexDirection: 'row', marginHorizontal: 20, marginBottom: 20,
         backgroundColor: '#fff', borderRadius: 16, padding: 16,
@@ -239,34 +161,6 @@ const styles = StyleSheet.create({
     statNumber: { fontFamily: 'Nunito-Bold', fontSize: 26, color: '#1A2E1A' },
     statLabel: { fontFamily: 'Nunito-Bold', fontSize: 11, color: '#888', textAlign: 'center', marginTop: 2 },
     statDivider: { width: 1, backgroundColor: '#E0E0E0', marginVertical: 4 },
-
-    // Nearby Section
-    sectionRow: {
-        flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-        marginHorizontal: 20, marginBottom: 10,
-    },
-    sectionTitle: { fontFamily: 'Nunito-Bold', fontSize: 16, color: '#1A2E1A' },
-    newBadge: {
-        backgroundColor: '#FFB82E', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 3,
-    },
-    newBadgeText: { fontFamily: 'Nunito-Bold', fontSize: 12, color: '#1A2E1A' },
-
-    // Nearby Card
-    nearbyCard: {
-        flexDirection: 'row', alignItems: 'center',
-        marginHorizontal: 20, marginBottom: 10,
-        backgroundColor: '#fff', borderRadius: 14, padding: 14,
-        shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 6, elevation: 2,
-    },
-    nearbyAvatar: {
-        width: 36, height: 36, borderRadius: 18,
-        backgroundColor: '#E8F5E9', justifyContent: 'center', alignItems: 'center', marginRight: 12,
-    },
-    nearbyName: { fontFamily: 'Nunito-Bold', fontSize: 14, color: '#1A2E1A' },
-    nearbyLocation: { fontFamily: 'Nunito-Bold', fontSize: 12, color: '#888' },
-    nearbyDistance: { fontFamily: 'Nunito-Bold', fontSize: 13, color: '#5C7A5C' },
-
-    // Route Card
     routeCard: {
         marginHorizontal: 20, marginTop: 10,
         backgroundColor: '#4A1010', borderRadius: 20, padding: 22,
