@@ -9,6 +9,7 @@ use App\Models\DriverAssignment;
 use App\Models\PickupRequest;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use InvalidArgumentException;
 
 class DriverAssignmentService
@@ -46,7 +47,16 @@ class DriverAssignmentService
                 ]
             );
 
-            $pickupRequest->update($this->pickupUpdatesForStatus($status));
+            $updates = $this->pickupUpdatesForStatus($status);
+
+            // Mint a boarding code the first time the request becomes accepted.
+            // Idempotent: a re-promotion / reassignment keeps the same code so
+            // a QR the passenger may already be showing stays valid.
+            if (($updates['status'] ?? null) === 'accepted' && empty($pickupRequest->boarding_code)) {
+                $updates['boarding_code'] = $this->generateBoardingCode();
+            }
+
+            $pickupRequest->update($updates);
 
             return $assignment->fresh([
                 'driver.user',
@@ -79,7 +89,11 @@ class DriverAssignmentService
                 $tokens,
                 'Driver assigned',
                 $body,
-                ['type' => 'ride_accepted', 'pickup_request_id' => $pickupRequestForNotify->id],
+                [
+                    'type' => 'ride_accepted',
+                    'pickup_request_id' => $pickupRequestForNotify->id,
+                    'boarding_code' => $pickupRequestForNotify->boarding_code,
+                ],
             );
         }
 
@@ -151,5 +165,22 @@ class DriverAssignmentService
             'cancelled' => ['status' => 'cancelled'],
             default => ['status' => 'accepted', 'assigned_at' => now(), 'completed_at' => null],
         };
+    }
+
+    /**
+     * Generate a collision-free 8-character uppercase boarding code.
+     */
+    private function generateBoardingCode(): string
+    {
+        for ($attempt = 0; $attempt < 5; $attempt++) {
+            $code = strtoupper(Str::random(8));
+
+            if (! PickupRequest::query()->where('boarding_code', $code)->exists()) {
+                return $code;
+            }
+        }
+
+        // Practically unreachable (36^8 space); fall back to a unique-enough code.
+        return strtoupper(Str::random(8));
     }
 }

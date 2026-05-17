@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\PassengerBoarded;
 use App\Http\Controllers\Controller;
+use App\Models\DeviceToken;
 use App\Models\Driver;
 use App\Models\Notification;
 use App\Models\PickupRequest;
 use App\Services\DriverAssignmentService;
+use App\Services\ExpoPushService;
 use App\Services\PickupRequestService;
 use Illuminate\Http\Request;
 
@@ -15,6 +18,7 @@ class DriverApiController extends Controller
     public function __construct(
         private PickupRequestService $pickupRequests,
         private DriverAssignmentService $driverAssignments,
+        private ExpoPushService $expoPush,
     ) {}
 
     /**
@@ -187,14 +191,69 @@ class DriverApiController extends Controller
         // Set the pickup directly: DriverAssignmentService::updateStatus only
         // maps completed/cancelled (default → 'accepted'), so routing
         // 'in_progress' through it would wrongly reset the pickup to accepted.
-        $pickupRequest->update(['status' => 'in_progress']);
+        $pickupRequest->update(['status' => 'in_progress', 'boarded_at' => now()]);
         if ($pickupRequest->assignment) {
             $pickupRequest->assignment->update(['status' => 'in_progress']);
         }
 
+        broadcast(new PassengerBoarded($pickupRequest->fresh(['user.passenger'])));
+
         $this->pickupRequests->logDriverNotification(
             $pickupRequest->fresh(['user', 'pickupStop']),
             ($pickupRequest->user?->full_name ?? 'Passenger').' boarded.'
+        );
+
+        return response()->json($pickupRequest->fresh());
+    }
+
+    /**
+     * Confirm boarding by scanning the passenger's QR code. The scanned value
+     * must match the boarding_code minted when the request was accepted.
+     */
+    public function confirmBoarding(Request $request, PickupRequest $pickupRequest)
+    {
+        if ($error = $this->authorizeDriverOwnsRequest($request, $pickupRequest)) {
+            return $error;
+        }
+
+        $validated = $request->validate([
+            'code' => 'required|string',
+        ]);
+
+        if (! $pickupRequest->boarding_code) {
+            return response()->json(['message' => 'No boarding code on this request.'], 409);
+        }
+
+        // Already boarded — tolerate a re-scan instead of erroring.
+        if ($pickupRequest->status === 'in_progress') {
+            return response()->json($pickupRequest->fresh());
+        }
+
+        if (! hash_equals((string) $pickupRequest->boarding_code, strtoupper(trim($validated['code'])))) {
+            return response()->json(['message' => 'Invalid boarding code.'], 422);
+        }
+
+        // Set the pickup directly (same reasoning as board()).
+        $pickupRequest->update(['status' => 'in_progress', 'boarded_at' => now()]);
+        if ($pickupRequest->assignment) {
+            $pickupRequest->assignment->update(['status' => 'in_progress']);
+        }
+
+        broadcast(new PassengerBoarded($pickupRequest->fresh(['user.passenger'])));
+
+        $tokens = DeviceToken::expoTokensForUser($pickupRequest->user);
+        if (! empty($tokens)) {
+            $this->expoPush->send(
+                $tokens,
+                "You're on board",
+                'Enjoy your ride with UPasakay!',
+                ['type' => 'passenger_boarded', 'pickup_request_id' => $pickupRequest->id],
+            );
+        }
+
+        $this->pickupRequests->logDriverNotification(
+            $pickupRequest->fresh(['user', 'pickupStop']),
+            ($pickupRequest->user?->full_name ?? 'Passenger').' boarded via QR.'
         );
 
         return response()->json($pickupRequest->fresh());

@@ -14,7 +14,8 @@
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "UPasakay needs your location to show you where the nearest bus is.",
         "NSLocationAlwaysUsageDescription": "UPasakay needs background location to track the bus and update your ETA.",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "UPasakay needs your location to provide real-time bus tracking and driver routing."
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "UPasakay needs your location to provide real-time bus tracking and driver routing.",
+        "NSCameraUsageDescription": "UPasakay needs camera access so drivers can scan passenger boarding QR codes."
       }
     },
     "android": {
@@ -34,7 +35,9 @@
         "ACCESS_BACKGROUND_LOCATION",
         "FOREGROUND_SERVICE",
         "android.permission.ACCESS_COARSE_LOCATION",
-        "android.permission.ACCESS_FINE_LOCATION"
+        "android.permission.ACCESS_FINE_LOCATION",
+        "CAMERA",
+        "android.permission.CAMERA"
       ]
     },
     "web": {
@@ -89,6 +92,12 @@
         "expo-notifications",
         {
           "color": "#701929"
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "UPasakay needs camera access so drivers can scan passenger boarding QR codes."
         }
       ]
     ],

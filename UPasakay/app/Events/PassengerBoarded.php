@@ -9,7 +9,7 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class RideAccepted implements ShouldBroadcastNow
+class PassengerBoarded implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
@@ -19,6 +19,10 @@ class RideAccepted implements ShouldBroadcastNow
 
     /**
      * Get the channels the event should broadcast on.
+     *
+     * Mirrors RideAccepted's derivation — PickupRequest has no passenger_id
+     * column, so the passenger channel is keyed off the related passenger id
+     * (falling back to user_id), matching the app's subscription.
      *
      * @return array<int, Channel>
      */
@@ -30,7 +34,6 @@ class RideAccepted implements ShouldBroadcastNow
 
         return [
             new Channel('passenger-'.$channelId),
-            new Channel('admin-rides'),
         ];
     }
 
@@ -41,20 +44,10 @@ class RideAccepted implements ShouldBroadcastNow
      */
     public function broadcastWith(): array
     {
-        $assignment = data_get($this->pickupRequest, 'assignment');
-        $driver = data_get($assignment, 'driver');
-
         return [
             'pickup_request_id' => $this->pickupRequest->id,
-            'driver_id' => data_get($assignment, 'driver_id'),
-            'driver_name' => data_get($driver, 'user.name')
-                ?? data_get($driver, 'full_name'),
-            'driver_rating' => data_get($driver, 'rating'),
-            'shuttle_id' => data_get($driver, 'shuttle.id'),
-            'shuttle_number' => data_get($driver, 'shuttle.shuttle_code'),
-            'status' => 'accepted',
-            'eta_minutes' => $this->pickupRequest->eta_minutes,
-            'boarding_code' => $this->pickupRequest->boarding_code,
+            'status' => 'in_progress',
+            'boarded_at' => $this->pickupRequest->boarded_at,
         ];
     }
 
@@ -63,6 +56,6 @@ class RideAccepted implements ShouldBroadcastNow
      */
     public function broadcastAs(): string
     {
-        return 'ride.accepted';
+        return 'passenger.boarded';
     }
 }
