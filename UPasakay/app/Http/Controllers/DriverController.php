@@ -89,6 +89,12 @@ class DriverController extends Controller
 
         $routes = Route::where('is_active', true)->pluck('name');
 
+        // id + name pairs for the shuttle route-assignment dropdown
+        $routeOptions = Route::where('is_active', true)
+            ->orderBy('name')
+            ->get()
+            ->map(fn ($r) => ['id' => $r->id, 'name' => $r->name]);
+
         // All shuttles for the shuttle management table
         $shuttles = Shuttle::with(['route', 'driver'])->orderBy('shuttle_code')->get()->map(fn ($s) => [
             'id' => $s->id,
@@ -121,6 +127,7 @@ class DriverController extends Controller
             'unassignedShuttles' => $unassignedShuttles,
             'allDrivers' => $allDrivers,
             'routes' => $routes,
+            'routeOptions' => $routeOptions,
             'filters' => $request->only(['search', 'status', 'route']),
         ]);
     }

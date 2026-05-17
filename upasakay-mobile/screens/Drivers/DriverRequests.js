@@ -100,7 +100,7 @@ const DriverNotifications = () => {
                     <ScrollView
                         showsVerticalScrollIndicator={false}
                         style={{ width: '100%' }}
-                        contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 40 }}
+                        contentContainerStyle={{ paddingTop: 12, paddingBottom: 120 }}
                         refreshControl={
                             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#2E7D32" />
                         }
@@ -123,7 +123,7 @@ const DriverNotifications = () => {
 const styles = StyleSheet.create({
     headerRow: {
         flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-        paddingHorizontal: 20, paddingTop: 60, paddingBottom: 8,
+        paddingTop: 4, paddingBottom: 10,
     },
     card: {
         flexDirection: 'row', alignItems: 'flex-start', gap: 12,

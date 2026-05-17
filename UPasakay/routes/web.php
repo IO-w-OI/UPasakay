@@ -47,6 +47,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('shuttles', [ShuttleWebController::class, 'store'])->name('shuttles.store');
     Route::patch('shuttles/{shuttle}', [ShuttleWebController::class, 'update'])->name('shuttles.update');
     Route::patch('shuttles/{shuttle}/assign-driver', [ShuttleWebController::class, 'assignDriver'])->name('shuttles.assign-driver');
+    Route::patch('shuttles/{shuttle}/assign-route', [ShuttleWebController::class, 'assignRoute'])->name('shuttles.assign-route');
     Route::patch('shuttles/{shuttle}/status', [ShuttleWebController::class, 'updateStatus'])->name('shuttles.update-status');
     Route::delete('shuttles/{shuttle}', [ShuttleWebController::class, 'destroy'])->name('shuttles.destroy');
 

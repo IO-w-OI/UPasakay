@@ -129,7 +129,7 @@ const DriverTrip = () => {
                 <View style={{ flex: 1 }}>
                     <Text style={styles.headerTitle}>{route?.name ?? 'Trip'}</Text>
                     {route ? (
-                        <Text style={styles.headerSub}>{route.start_location} → {route.end_location}</Text>
+                        <Text style={styles.headerSub}>{route.start_location} to {route.end_location}</Text>
                     ) : null}
                 </View>
             </View>
@@ -265,8 +265,8 @@ const DriverTrip = () => {
 
 const styles = StyleSheet.create({
     header: {
-        flexDirection: 'row', alignItems: 'center', gap: 8,
-        paddingHorizontal: 16, paddingTop: 60, paddingBottom: 16,
+        flexDirection: 'row', alignItems: 'center', gap: 10,
+        paddingTop: 4, paddingBottom: 18,
     },
     backBtn: {
         width: 40, height: 40, borderRadius: 20,
@@ -276,7 +276,7 @@ const styles = StyleSheet.create({
     headerSub: { fontFamily: 'Nunito-Bold', fontSize: 12, color: '#5C7A5C', marginTop: 2 },
 
     upNextCard: {
-        marginHorizontal: 20, marginBottom: 18,
+marginBottom: 18,
         backgroundColor: '#4A1010', borderRadius: 20, padding: 24,
         shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 10, elevation: 5,
     },
@@ -288,7 +288,7 @@ const styles = StyleSheet.create({
     upNextMeta: { fontFamily: 'Nunito-Bold', fontSize: 15, color: 'rgba(255,255,255,0.9)' },
 
     stopCard: {
-        marginHorizontal: 20, marginBottom: 12,
+marginBottom: 12,
         backgroundColor: '#fff', borderRadius: 16,
         shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 6, elevation: 2,
         overflow: 'hidden',

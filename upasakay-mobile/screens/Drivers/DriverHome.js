@@ -168,7 +168,7 @@ const DriverHome = () => {
 
             <ScrollView
                 showsVerticalScrollIndicator={false}
-                contentContainerStyle={{ paddingBottom: 40 }}
+                contentContainerStyle={{ paddingBottom: 120 }}
                 refreshControl={
                     <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#2E7D32" />
                 }
@@ -245,8 +245,8 @@ const DriverHome = () => {
                             <DetailRow label="Capacity" value={capacity ? `${capacity} seats` : '—'} />
                             <DetailRow label="Route" value={route?.name ?? 'Unassigned'} />
                             <DetailRow
-                                label="From → To"
-                                value={route ? `${route.start_location} → ${route.end_location}` : '—'}
+                                label="Route Path"
+                                value={route ? `${route.start_location} to ${route.end_location}` : '—'}
                             />
                             <DetailRow label="Driver" value={feed?.driver?.name ?? '—'} last />
                         </View>
@@ -294,7 +294,7 @@ const DetailRow = ({ label, value, last }) => (
 const styles = StyleSheet.create({
     headerBar: {
         flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-        paddingHorizontal: 20, paddingTop: 60, paddingBottom: 16,
+        paddingTop: 4, paddingBottom: 18,
         backgroundColor: 'transparent',
     },
     headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
 
     dutyCard: {
         flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-        marginHorizontal: 20, marginBottom: 16,
+marginBottom: 16,
         backgroundColor: '#fff', borderRadius: 16, padding: 18,
         shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8, elevation: 3,
     },
@@ -331,7 +331,7 @@ const styles = StyleSheet.create({
     statDivider: { width: 1, backgroundColor: '#E0E0E0', marginVertical: 4 },
 
     capacityCard: {
-        marginHorizontal: 20, marginBottom: 16,
+marginBottom: 16,
         backgroundColor: '#fff', borderRadius: 16, padding: 16,
         shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8, elevation: 3,
     },
@@ -342,7 +342,7 @@ const styles = StyleSheet.create({
     capacityFill: { height: 10, borderRadius: 5, backgroundColor: '#2E7D32' },
 
     detailCard: {
-        marginHorizontal: 20, marginBottom: 16,
+marginBottom: 16,
         backgroundColor: '#fff', borderRadius: 16, padding: 18,
         shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8, elevation: 3,
     },
@@ -355,7 +355,7 @@ const styles = StyleSheet.create({
     detailValue: { fontFamily: 'Nunito-Bold', fontSize: 13, color: '#1A2E1A', flexShrink: 1, marginLeft: 12 },
 
     routeCard: {
-        marginHorizontal: 20, marginTop: 4,
+marginTop: 4,
         backgroundColor: '#4A1010', borderRadius: 20, padding: 22,
         shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 10, elevation: 5,
     },
