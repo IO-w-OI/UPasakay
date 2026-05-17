@@ -1,7 +1,15 @@
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import {
+    ActivityIndicator,
+    RefreshControl,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
 
 import {
     BasePage,
@@ -10,123 +18,103 @@ import {
     StyledContainer,
 } from '../../components/styles';
 
-// ─── Initial mock data — swap with Laravel fetch later ──────────────────────
-const INITIAL_REQUESTS = [
-    { id: 1, name: 'Ben Dela Cruz',   role: 'UP Student', date: '11 Dec 2026, 05:30 PM', status: null },
-    { id: 2, name: 'Isabel Ollaban',  role: 'UP Student', date: '11 Dec 2026, 05:30 PM', status: null },
-    { id: 3, name: 'Kyle Olmedo',     role: 'UP Student', date: '11 Dec 2026, 05:30 PM', status: null },
-    { id: 4, name: 'Jason Bisuela',   role: 'UP Student', date: '11 Dec 2026, 05:30 PM', status: null },
-    { id: 5, name: 'Ben Dayagbil',    role: 'UP Student', date: '11 Dec 2026, 05:30 PM', status: null },
-    { id: 6, name: 'Ryan Dulaca',     role: 'Teacher',    date: '11 Dec 2026, 05:30 PM', status: null },
-    { id: 7, name: 'Demelo Lao',      role: 'Teacher',    date: '11 Dec 2026, 05:30 PM', status: null },
-];
+import { apiGet } from '../../services/apiClient';
 
-const PassengerCard = ({ passenger, onAccept, onDecline }) => {
-    const isAccepted  = passenger.status === 'Accepted';
-    const isDeclined  = passenger.status === 'Declined';
-    const isResolved  = isAccepted || isDeclined;
+// Read-only activity log. The driver no longer accepts/declines here —
+// pickups are auto-accepted by shuttle capacity on the backend; the only
+// driver action (Boarded / No-Show / Decline) lives on the trip screen,
+// at the point of boarding, never while driving.
 
-    return (
-        <View style={[styles.card, isResolved && styles.cardResolved]}>
-            <View style={styles.cardTop}>
-                {/* Avatar */}
-                <View style={styles.avatar}>
-                    <MaterialCommunityIcons name="account" size={26} color="#1A2E1A" />
-                </View>
-
-                {/* Info */}
-                <View style={{ flex: 1 }}>
-                    <Text style={styles.passengerName}>{passenger.name}</Text>
-                    <Text style={styles.passengerRole}>{passenger.role}</Text>
-                    <Text style={styles.passengerDate}>{passenger.date}</Text>
-                </View>
-
-                {/* Status pill or message icon */}
-                {isResolved ? (
-                    <View style={[styles.statusPill, isAccepted ? styles.pillAccepted : styles.pillDeclined]}>
-                        <Text style={styles.statusText}>{passenger.status}</Text>
-                    </View>
-                ) : (
-                    <TouchableOpacity style={styles.messageIcon} activeOpacity={0.7}>
-                        <Ionicons name="chatbubble-outline" size={20} color="#1A2E1A" />
-                    </TouchableOpacity>
-                )}
-            </View>
-
-            {/* Bottom label */}
-            <View style={styles.cardBottom}>
-                <Text style={styles.bottomLabel}>Makisakay ko Kuya!</Text>
-            </View>
-
-            {/* Action buttons — hidden once resolved */}
-            {!isResolved && (
-                <View style={styles.actionRow}>
-                    <TouchableOpacity
-                        style={[styles.actionButton, styles.declineButton]}
-                        activeOpacity={0.75}
-                        onPress={() => onDecline(passenger.id)}
-                    >
-                        <Ionicons name="close" size={26} color="#C62828" />
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={[styles.actionButton, styles.acceptButton]}
-                        activeOpacity={0.75}
-                        onPress={() => onAccept(passenger.id)}
-                    >
-                        <Ionicons name="checkmark" size={26} color="#2E7D32" />
-                    </TouchableOpacity>
-                </View>
-            )}
-        </View>
-    );
+const iconForType = (type) => {
+    switch (type) {
+        case 'alert': return 'notifications';
+        case 'delay': return 'time';
+        case 'change': return 'swap-horizontal';
+        case 'announcement': return 'megaphone';
+        default: return 'information-circle';
+    }
 };
 
-const DriverRequests = () => {
-    const [requests, setRequests] = useState(INITIAL_REQUESTS);
+const NotificationCard = ({ item }) => (
+    <View style={styles.card}>
+        <View style={styles.iconCircle}>
+            <Ionicons name={iconForType(item.type)} size={20} color="#1A2E1A" />
+        </View>
+        <View style={{ flex: 1 }}>
+            <Text style={styles.cardTitle}>{item.title}</Text>
+            <Text style={styles.cardMessage}>{item.message}</Text>
+            <Text style={styles.cardTime}>{item.date} · {item.time}</Text>
+        </View>
+    </View>
+);
 
-    const handleAccept = (id) => {
-        setRequests(prev =>
-            prev.map(r => r.id === id ? { ...r, status: 'Accepted' } : r)
-        );
-    };
+const DriverNotifications = () => {
+    const [items, setItems] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
+    const [error, setError] = useState(null);
 
-    const handleDecline = (id) => {
-        setRequests(prev =>
-            prev.map(r => r.id === id ? { ...r, status: 'Declined' } : r)
-        );
-    };
+    const load = useCallback(async () => {
+        setError(null);
+        const res = await apiGet('/driver/notifications');
+        if (res.ok) {
+            setItems(res.data?.data ?? []);
+        } else {
+            setError(res.data?.message || 'Could not load notifications.');
+        }
+        setLoading(false);
+        setRefreshing(false);
+    }, []);
 
-    const pending  = requests.filter(r => r.status === null).length;
+    useEffect(() => {
+        load();
+    }, [load]);
+
+    const onRefresh = useCallback(() => {
+        setRefreshing(true);
+        load();
+    }, [load]);
 
     return (
         <StyledContainer colors={[Colors.base_page, Colors.base_page]}>
             <StatusBar style="dark" />
             <BasePage style={{ flex: 1, paddingHorizontal: 0 }}>
-
                 <View style={styles.headerRow}>
-                    <Header style={{ marginBottom: 0 }}>Passenger Requests</Header>
-                    {pending > 0 && (
-                        <View style={styles.pendingBadge}>
-                            <Text style={styles.pendingBadgeText}>{pending}</Text>
-                        </View>
-                    )}
+                    <Header style={{ marginBottom: 0 }}>Notifications</Header>
                 </View>
 
-                <ScrollView
-                    showsVerticalScrollIndicator={false}
-                    style={{ width: '100%' }}
-                    contentContainerStyle={{ alignItems: 'center', paddingTop: 12, paddingBottom: 40 }}
-                >
-                    {requests.map((req) => (
-                        <PassengerCard
-                            key={req.id}
-                            passenger={req}
-                            onAccept={handleAccept}
-                            onDecline={handleDecline}
-                        />
-                    ))}
-                </ScrollView>
+                {loading ? (
+                    <View style={styles.centerBox}>
+                        <ActivityIndicator size="large" color="#2E7D32" />
+                        <Text style={styles.mutedText}>Loading…</Text>
+                    </View>
+                ) : error ? (
+                    <View style={styles.centerBox}>
+                        <Ionicons name="cloud-offline-outline" size={36} color="#C62828" />
+                        <Text style={styles.errorText}>{error}</Text>
+                        <TouchableOpacity style={styles.retryBtn} onPress={load}>
+                            <Text style={styles.retryText}>Retry</Text>
+                        </TouchableOpacity>
+                    </View>
+                ) : (
+                    <ScrollView
+                        showsVerticalScrollIndicator={false}
+                        style={{ width: '100%' }}
+                        contentContainerStyle={{ paddingTop: 12, paddingBottom: 120 }}
+                        refreshControl={
+                            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#2E7D32" />
+                        }
+                    >
+                        {items.length === 0 ? (
+                            <View style={styles.centerBox}>
+                                <Ionicons name="notifications-off-outline" size={36} color="#8E8E93" />
+                                <Text style={styles.mutedText}>No notifications yet.</Text>
+                            </View>
+                        ) : (
+                            items.map((item) => <NotificationCard key={item.id} item={item} />)
+                        )}
+                    </ScrollView>
+                )}
             </BasePage>
         </StyledContainer>
     );
@@ -134,67 +122,27 @@ const DriverRequests = () => {
 
 const styles = StyleSheet.create({
     headerRow: {
-        flexDirection: 'row', alignItems: 'center', gap: 10,
-        paddingHorizontal: 20, paddingTop: 10, paddingBottom: 4,
+        flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+        paddingTop: 4, paddingBottom: 10,
     },
-    pendingBadge: {
-        backgroundColor: '#FFB82E', borderRadius: 20,
-        paddingHorizontal: 10, paddingVertical: 3, marginTop: 2,
-    },
-    pendingBadgeText: { fontFamily: 'Nunito-Bold', fontSize: 13, color: '#1A2E1A' },
-
-    // Card
     card: {
-        width: '90%', backgroundColor: '#fff',
-        borderRadius: 18, marginBottom: 14,
-        paddingHorizontal: 16, paddingTop: 14, paddingBottom: 10,
-        shadowColor: '#000', shadowOpacity: 0.07, shadowRadius: 8, elevation: 3,
+        flexDirection: 'row', alignItems: 'flex-start', gap: 12,
+        backgroundColor: '#fff', borderRadius: 14, padding: 16, marginBottom: 10,
+        shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 6, elevation: 2,
     },
-    cardResolved: { opacity: 0.85 },
-    cardTop: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 8 },
-
-    // Avatar
-    avatar: {
-        width: 44, height: 44, borderRadius: 22,
-        backgroundColor: '#E8F5E9', justifyContent: 'center',
-        alignItems: 'center', marginRight: 12,
+    iconCircle: {
+        width: 38, height: 38, borderRadius: 19,
+        backgroundColor: '#E8F5E9', justifyContent: 'center', alignItems: 'center',
     },
+    cardTitle: { fontFamily: 'Nunito-Bold', fontSize: 15, color: '#1A2E1A' },
+    cardMessage: { fontFamily: 'Nunito-Bold', fontSize: 13, color: '#555', marginTop: 3 },
+    cardTime: { fontFamily: 'Nunito-Bold', fontSize: 11, color: '#999', marginTop: 6 },
 
-    // Text
-    passengerName: { fontFamily: 'Nunito-Bold', fontSize: 15, color: '#1A2E1A' },
-    passengerRole: { fontFamily: 'Nunito-Bold', fontSize: 12, color: '#5C7A5C' },
-    passengerDate: { fontFamily: 'Nunito-Bold', fontSize: 11, color: '#aaa', marginTop: 2 },
-
-    // Message icon
-    messageIcon: {
-        width: 36, height: 36, borderRadius: 18,
-        backgroundColor: '#F0F4F0', justifyContent: 'center', alignItems: 'center',
-    },
-
-    // Status Pill
-    statusPill: {
-        borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5,
-        alignSelf: 'flex-start',
-    },
-    pillAccepted: { backgroundColor: '#C8E6C9' },
-    pillDeclined: { backgroundColor: '#FFCDD2' },
-    statusText: { fontFamily: 'Nunito-Bold', fontSize: 12, color: '#1A2E1A' },
-
-    // Bottom label
-    cardBottom: {
-        borderTopWidth: 1, borderTopColor: '#F0F4F0',
-        paddingTop: 8, marginBottom: 6,
-    },
-    bottomLabel: { fontFamily: 'Nunito-Bold', fontSize: 13, color: '#C8872A' },
-
-    // Action buttons
-    actionRow: { flexDirection: 'row', gap: 10, marginTop: 4 },
-    actionButton: {
-        flex: 1, height: 48, borderRadius: 12,
-        justifyContent: 'center', alignItems: 'center',
-    },
-    declineButton: { backgroundColor: '#FFEBEE' },
-    acceptButton:  { backgroundColor: '#E8F5E9' },
+    centerBox: { alignItems: 'center', justifyContent: 'center', padding: 50, gap: 12 },
+    mutedText: { fontFamily: 'Nunito-Bold', fontSize: 14, color: '#888' },
+    errorText: { fontFamily: 'Nunito-Bold', fontSize: 14, color: '#C62828', textAlign: 'center' },
+    retryBtn: { backgroundColor: '#2E7D32', borderRadius: 24, paddingHorizontal: 24, paddingVertical: 10 },
+    retryText: { fontFamily: 'Nunito-Bold', fontSize: 14, color: '#fff' },
 });
 
-export default DriverRequests;
+export default DriverNotifications;

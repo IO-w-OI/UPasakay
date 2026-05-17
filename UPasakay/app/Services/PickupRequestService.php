@@ -4,7 +4,9 @@ namespace App\Services;
 
 use App\Models\DeviceToken;
 use App\Models\Driver;
+use App\Models\Notification;
 use App\Models\PickupRequest;
+use App\Models\Shuttle;
 use App\Models\ShuttleLocation;
 use App\Models\Stop;
 use App\Models\User;
@@ -14,6 +16,7 @@ class PickupRequestService
 {
     public function __construct(
         private ExpoPushService $expoPush,
+        private DriverAssignmentService $driverAssignments,
     ) {}
 
     /**
@@ -87,9 +90,170 @@ class PickupRequestService
             $pickupRequest->save();
         }
 
+        $pickupRequest->load('pickupStop');
+
         $this->notifyOnDutyDrivers($pickupRequest, $passenger);
 
-        return $pickupRequest;
+        // Capacity-gated auto-accept: if the route's active shuttle still has
+        // free seats, accept immediately and assign its driver. Otherwise the
+        // request waits in the route queue (status stays 'pending').
+        $this->placeInQueue($pickupRequest);
+
+        $this->logDriverNotification(
+            $pickupRequest,
+            ($passenger->full_name ?? 'A passenger').' is waiting at '
+                .($pickupRequest->pickupStop?->name ?? 'a stop')
+                .($pickupRequest->pickupStop?->sequence !== null
+                    ? ' (Stop '.((int) $pickupRequest->pickupStop->sequence + 1).')'
+                    : '')
+                .'.'
+        );
+
+        return $pickupRequest->fresh();
+    }
+
+    /**
+     * Resolve the active shuttle assigned to a route (assumes one active
+     * shuttle per route — see plan note if a route can have several).
+     */
+    private function activeShuttleForRoute(int $routeId): ?Shuttle
+    {
+        return Shuttle::where('route_id', $routeId)
+            ->where('status', 'active')
+            ->first();
+    }
+
+    /**
+     * Accept the request if the route's active shuttle has a free seat,
+     * otherwise leave it queued and stamp its waiting position.
+     */
+    private function placeInQueue(PickupRequest $pickupRequest): void
+    {
+        $shuttle = $this->activeShuttleForRoute($pickupRequest->route_id);
+
+        if (! $shuttle || ! $shuttle->driver_id) {
+            // No shuttle/driver yet — keep it pending, position it in queue.
+            $pickupRequest->update([
+                'queue_position' => $this->nextQueuePosition($pickupRequest->route_id),
+            ]);
+
+            return;
+        }
+
+        $capacity = (int) ($shuttle->capacity ?? 0);
+
+        // Seats already taken = active requests on this route that are not
+        // still waiting (accepted or in_progress), excluding this one.
+        $taken = PickupRequest::where('route_id', $pickupRequest->route_id)
+            ->whereIn('status', ['accepted', 'in_progress'])
+            ->where('id', '!=', $pickupRequest->id)
+            ->count();
+
+        if ($taken < $capacity) {
+            // Free seat → auto-accept and assign the shuttle's driver.
+            $this->driverAssignments->assignToPickupRequest(
+                $shuttle->driver_id,
+                $pickupRequest,
+                'active',
+            );
+            $pickupRequest->update(['queue_position' => null]);
+
+            return;
+        }
+
+        // Full → stays pending, gets a queue position.
+        $pickupRequest->update([
+            'queue_position' => $this->nextQueuePosition($pickupRequest->route_id),
+        ]);
+    }
+
+    private function nextQueuePosition(int $routeId): int
+    {
+        return (int) PickupRequest::where('route_id', $routeId)
+            ->where('status', 'pending')
+            ->max('queue_position') + 1;
+    }
+
+    /**
+     * Free a seat (after a no-show / decline at boarding) and promote the
+     * next waiting passenger on the route to 'accepted'.
+     */
+    public function promoteNextInQueue(int $routeId): ?PickupRequest
+    {
+        $shuttle = $this->activeShuttleForRoute($routeId);
+        if (! $shuttle || ! $shuttle->driver_id) {
+            return null;
+        }
+
+        $next = PickupRequest::queuedForRoute($routeId)
+            ->where('pickup_requests.status', 'pending')
+            ->orderBy('pickup_requests.queue_position', 'asc')
+            ->first();
+
+        if (! $next) {
+            return null;
+        }
+
+        $this->driverAssignments->assignToPickupRequest(
+            $shuttle->driver_id,
+            $next,
+            'active',
+        );
+        $next->update(['queue_position' => null]);
+
+        $tokens = DeviceToken::expoTokensForUser($next->user);
+        if (! empty($tokens)) {
+            $this->expoPush->send(
+                $tokens,
+                "You're next",
+                'A seat just opened up — your driver is on the way.',
+                ['type' => 'ride_accepted', 'pickup_request_id' => $next->id],
+            );
+        }
+
+        return $next->fresh();
+    }
+
+    /**
+     * Hybrid-ordered active queue for a route (stop sequence, then FCFS).
+     */
+    public function queueForRoute(int $routeId)
+    {
+        return PickupRequest::queuedForRoute($routeId)
+            ->with(['user', 'pickupStop', 'dropoffStop'])
+            ->get();
+    }
+
+    /**
+     * Write a driver-facing notification log entry and push it to on-duty
+     * drivers. Reuses the existing Notification model + Expo push pipeline.
+     */
+    public function logDriverNotification(PickupRequest $pickupRequest, string $message): void
+    {
+        Notification::create([
+            'title' => 'Passenger update',
+            'message' => $message,
+            'type' => 'alert',
+            'audience' => 'drivers',
+            'status' => 'sent',
+            'route_id' => $pickupRequest->route_id,
+            'sent_at' => now(),
+        ]);
+
+        $driverUserIds = Driver::where('is_available', true)
+            ->whereNotNull('user_id')
+            ->pluck('user_id')
+            ->all();
+
+        $tokens = DeviceToken::expoTokensForUserIds($driverUserIds);
+        if (! empty($tokens)) {
+            $this->expoPush->send(
+                $tokens,
+                'Passenger update',
+                $message,
+                ['type' => 'driver_log', 'pickup_request_id' => $pickupRequest->id],
+            );
+        }
     }
 
     /**

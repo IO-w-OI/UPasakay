@@ -16,13 +16,8 @@ function NativeTabsLayout() {
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="DriverRecents">
-        <Icon sf="clock.fill" drawable="ic_menu_recent_history" />
-        <Label>Recents</Label>
-      </NativeTabs.Trigger>
-
-      <NativeTabs.Trigger name="DriverMap">
-        <Icon sf="map.fill" drawable="ic_menu_mapmode" />
-        <Label>Map</Label>
+        <Icon sf="bell.fill" drawable="ic_popup_reminder" />
+        <Label>Notifications</Label>
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="DriverProfile">
@@ -54,15 +49,8 @@ function CustomJSLayout() {
       <Tabs.Screen
         name="DriverRecents"
         options={{
-          title: 'Recents',
-          tabBarIcon: ({ color }) => <Ionicons name="time" size={24} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="DriverMap"
-        options={{
-          title: 'Map',
-          tabBarIcon: ({ color }) => <Ionicons name="map" size={24} color={color} />,
+          title: 'Notifications',
+          tabBarIcon: ({ color }) => <Ionicons name="notifications" size={24} color={color} />,
         }}
       />
       <Tabs.Screen

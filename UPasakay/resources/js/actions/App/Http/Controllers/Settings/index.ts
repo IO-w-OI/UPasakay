@@ -1,5 +1,5 @@
-import PasswordController from './PasswordController'
 import ProfileController from './ProfileController'
+import PasswordController from './PasswordController'
 import TwoFactorAuthenticationController from './TwoFactorAuthenticationController'
 const Settings = {
     ProfileController: Object.assign(ProfileController, ProfileController),

@@ -3,7 +3,7 @@ import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import {
     Search, Download, UserPlus, Eye, EyeOff, Edit, MoreHorizontal,
     Trash2, Key, Bus, AlertTriangle, Archive, Wrench, UserMinus,
-    UserCheck, RefreshCw, Shuffle, CircleDot,
+    UserCheck, RefreshCw, Shuffle, CircleDot, X,
 } from 'lucide-vue-next';
 import { ref, computed, onBeforeUnmount } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -37,6 +37,7 @@ const props = defineProps<{
     unassignedShuttles: Array<{ id: number; shuttle_code: string }>;
     allDrivers: Array<{ id: number; full_name: string }>;
     routes: string[];
+    routeOptions: Array<{ id: number; name: string }>;
     filters: { search?: string; status?: string; route?: string };
 }>();
 
@@ -293,6 +294,26 @@ const quickAssignToShuttle = (s: ShuttleItem) => {
     router.patch(
         `/shuttles/${s.id}/assign-driver`,
         { driver_id: Number(driverId) },
+        { preserveScroll: true },
+    );
+};
+
+const quickAssignRoute = ref<Record<number, number | ''>>({});
+const quickAssignRouteToShuttle = (s: ShuttleItem) => {
+    const routeId = quickAssignRoute.value[s.id];
+    if (!routeId) return;
+
+    router.patch(
+        `/shuttles/${s.id}/assign-route`,
+        { route_id: Number(routeId) },
+        { preserveScroll: true },
+    );
+};
+
+const clearShuttleRoute = (s: ShuttleItem) => {
+    router.patch(
+        `/shuttles/${s.id}/assign-route`,
+        { route_id: null },
         { preserveScroll: true },
     );
 };
@@ -621,7 +642,34 @@ const lastActiveClass = (d: DriverItem) => d.is_online ? 'text-green-600 dark:te
                                     <td class="px-4 py-3 text-muted-foreground">{{ s.plate_number }}</td>
                                     <td class="px-4 py-3 text-muted-foreground">{{ s.capacity }} seats</td>
                                     <td class="px-4 py-3">
-                                        <span class="rounded-full px-2.5 py-0.5 text-xs font-medium" :class="routeBadge(s.route)">{{ s.route }}</span>
+                                        <div v-if="!s.route_id" class="flex flex-wrap items-center gap-2">
+                                            <select
+                                                v-model="quickAssignRoute[s.id]"
+                                                class="rounded-md border border-border/70 bg-card px-2 py-1 text-xs text-foreground focus:outline-none"
+                                            >
+                                                <option value="">Assign route...</option>
+                                                <option v-for="r in routeOptions" :key="r.id" :value="r.id">{{ r.name }}</option>
+                                            </select>
+                                            <button
+                                                type="button"
+                                                class="rounded-md bg-[#8B0000] px-2.5 py-1 text-xs font-semibold text-white hover:bg-[#700000] disabled:opacity-50"
+                                                :disabled="!quickAssignRoute[s.id]"
+                                                @click="quickAssignRouteToShuttle(s)"
+                                            >
+                                                Assign
+                                            </button>
+                                        </div>
+                                        <span v-else class="inline-flex items-center gap-1.5">
+                                            <span class="rounded-full px-2.5 py-0.5 text-xs font-medium" :class="routeBadge(s.route)">{{ s.route }}</span>
+                                            <button
+                                                type="button"
+                                                title="Unassign route"
+                                                class="text-muted-foreground hover:text-red-600"
+                                                @click="clearShuttleRoute(s)"
+                                            >
+                                                <X class="h-3.5 w-3.5" />
+                                            </button>
+                                        </span>
                                     </td>
                                     <td class="px-4 py-3 text-muted-foreground">
                                         <div v-if="s.status === 'idle' || !s.driver_id" class="flex flex-wrap items-center gap-2">

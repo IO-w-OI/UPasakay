@@ -84,6 +84,17 @@ class ShuttleWebController extends Controller
         return back()->with('success', $request->driver_id ? 'Driver assigned.' : 'Driver unassigned.');
     }
 
+    public function assignRoute(Request $request, Shuttle $shuttle)
+    {
+        $request->validate([
+            'route_id' => 'nullable|integer|exists:routes,id',
+        ]);
+
+        $shuttle->update(['route_id' => $request->route_id]);
+
+        return back()->with('success', $request->route_id ? 'Route assigned.' : 'Route unassigned.');
+    }
+
     public function updateStatus(Request $request, Shuttle $shuttle)
     {
         $request->validate([

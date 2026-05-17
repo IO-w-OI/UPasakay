@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\NotificationController::store
- * @see app/Http/Controllers/NotificationController.php:154
+ * @see app/Http/Controllers/NotificationController.php:131
  * @route '/notifications/schedules'
  */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -16,7 +16,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\NotificationController::store
- * @see app/Http/Controllers/NotificationController.php:154
+ * @see app/Http/Controllers/NotificationController.php:131
  * @route '/notifications/schedules'
  */
 store.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\NotificationController::store
- * @see app/Http/Controllers/NotificationController.php:154
+ * @see app/Http/Controllers/NotificationController.php:131
  * @route '/notifications/schedules'
  */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -35,7 +35,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\NotificationController::store
- * @see app/Http/Controllers/NotificationController.php:154
+ * @see app/Http/Controllers/NotificationController.php:131
  * @route '/notifications/schedules'
  */
     const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -45,7 +45,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\NotificationController::store
- * @see app/Http/Controllers/NotificationController.php:154
+ * @see app/Http/Controllers/NotificationController.php:131
  * @route '/notifications/schedules'
  */
         storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -56,7 +56,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     store.form = storeForm
 /**
 * @see \App\Http\Controllers\NotificationController::update
- * @see app/Http/Controllers/NotificationController.php:175
+ * @see app/Http/Controllers/NotificationController.php:152
  * @route '/notifications/schedules/{id}'
  */
 export const update = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -71,7 +71,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\NotificationController::update
- * @see app/Http/Controllers/NotificationController.php:175
+ * @see app/Http/Controllers/NotificationController.php:152
  * @route '/notifications/schedules/{id}'
  */
 update.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -99,7 +99,7 @@ update.url = (args: { id: string | number } | [id: string | number ] | string | 
 
 /**
 * @see \App\Http\Controllers\NotificationController::update
- * @see app/Http/Controllers/NotificationController.php:175
+ * @see app/Http/Controllers/NotificationController.php:152
  * @route '/notifications/schedules/{id}'
  */
 update.patch = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -109,7 +109,7 @@ update.patch = (args: { id: string | number } | [id: string | number ] | string 
 
     /**
 * @see \App\Http\Controllers\NotificationController::update
- * @see app/Http/Controllers/NotificationController.php:175
+ * @see app/Http/Controllers/NotificationController.php:152
  * @route '/notifications/schedules/{id}'
  */
     const updateForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -124,7 +124,7 @@ update.patch = (args: { id: string | number } | [id: string | number ] | string 
 
             /**
 * @see \App\Http\Controllers\NotificationController::update
- * @see app/Http/Controllers/NotificationController.php:175
+ * @see app/Http/Controllers/NotificationController.php:152
  * @route '/notifications/schedules/{id}'
  */
         updateForm.patch = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -140,7 +140,7 @@ update.patch = (args: { id: string | number } | [id: string | number ] | string 
     update.form = updateForm
 /**
 * @see \App\Http\Controllers\NotificationController::toggle
- * @see app/Http/Controllers/NotificationController.php:199
+ * @see app/Http/Controllers/NotificationController.php:176
  * @route '/notifications/schedules/{id}/toggle'
  */
 export const toggle = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -155,7 +155,7 @@ toggle.definition = {
 
 /**
 * @see \App\Http\Controllers\NotificationController::toggle
- * @see app/Http/Controllers/NotificationController.php:199
+ * @see app/Http/Controllers/NotificationController.php:176
  * @route '/notifications/schedules/{id}/toggle'
  */
 toggle.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -183,7 +183,7 @@ toggle.url = (args: { id: string | number } | [id: string | number ] | string | 
 
 /**
 * @see \App\Http\Controllers\NotificationController::toggle
- * @see app/Http/Controllers/NotificationController.php:199
+ * @see app/Http/Controllers/NotificationController.php:176
  * @route '/notifications/schedules/{id}/toggle'
  */
 toggle.patch = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -193,7 +193,7 @@ toggle.patch = (args: { id: string | number } | [id: string | number ] | string 
 
     /**
 * @see \App\Http\Controllers\NotificationController::toggle
- * @see app/Http/Controllers/NotificationController.php:199
+ * @see app/Http/Controllers/NotificationController.php:176
  * @route '/notifications/schedules/{id}/toggle'
  */
     const toggleForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -208,7 +208,7 @@ toggle.patch = (args: { id: string | number } | [id: string | number ] | string 
 
             /**
 * @see \App\Http\Controllers\NotificationController::toggle
- * @see app/Http/Controllers/NotificationController.php:199
+ * @see app/Http/Controllers/NotificationController.php:176
  * @route '/notifications/schedules/{id}/toggle'
  */
         toggleForm.patch = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -224,7 +224,7 @@ toggle.patch = (args: { id: string | number } | [id: string | number ] | string 
     toggle.form = toggleForm
 /**
 * @see \App\Http\Controllers\NotificationController::destroy
- * @see app/Http/Controllers/NotificationController.php:210
+ * @see app/Http/Controllers/NotificationController.php:187
  * @route '/notifications/schedules/{id}'
  */
 export const destroy = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -239,7 +239,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\NotificationController::destroy
- * @see app/Http/Controllers/NotificationController.php:210
+ * @see app/Http/Controllers/NotificationController.php:187
  * @route '/notifications/schedules/{id}'
  */
 destroy.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -267,7 +267,7 @@ destroy.url = (args: { id: string | number } | [id: string | number ] | string |
 
 /**
 * @see \App\Http\Controllers\NotificationController::destroy
- * @see app/Http/Controllers/NotificationController.php:210
+ * @see app/Http/Controllers/NotificationController.php:187
  * @route '/notifications/schedules/{id}'
  */
 destroy.delete = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -277,7 +277,7 @@ destroy.delete = (args: { id: string | number } | [id: string | number ] | strin
 
     /**
 * @see \App\Http\Controllers\NotificationController::destroy
- * @see app/Http/Controllers/NotificationController.php:210
+ * @see app/Http/Controllers/NotificationController.php:187
  * @route '/notifications/schedules/{id}'
  */
     const destroyForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -292,7 +292,7 @@ destroy.delete = (args: { id: string | number } | [id: string | number ] | strin
 
             /**
 * @see \App\Http\Controllers\NotificationController::destroy
- * @see app/Http/Controllers/NotificationController.php:210
+ * @see app/Http/Controllers/NotificationController.php:187
  * @route '/notifications/schedules/{id}'
  */
         destroyForm.delete = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

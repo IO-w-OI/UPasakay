@@ -99,6 +99,7 @@ export default function RootLayout() {
           <Stack.Screen name="ForgotPassword" />
           <Stack.Screen name="ResetPassword" />
           <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="DriverTrip" />
         </Stack>
         <ActiveTripBanner />
       </TripProvider>
