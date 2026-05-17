@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
+use App\Models\Driver;
+use App\Models\Shuttle;
 
 class AuthController extends Controller
 {
@@ -162,30 +164,40 @@ class AuthController extends Controller
 
     private function buildAuthPayload(Model $authUser, ?Passenger $passenger, string $token): array
     {
-        // We call this first to get the cleaned data
-        $formattedPassenger = $this->formatPassenger($passenger);
+         $formattedPassenger = $this->formatPassenger($passenger);
 
-        return [
-            'user' => [
-                'id' => $authUser->getKey(),
-                'email' => $authUser->email,
-                'full_name' => $formattedPassenger['full_name'] ?? $authUser->name,
-                'name' => $formattedPassenger['full_name'] ?? $authUser->name,
-                
-                // THIS LINE IS MISSING: This is why the Profile screen is blank
-                'department_office' => $formattedPassenger['department_office'] ?? null,
-                'department' => $formattedPassenger['department_office'] ?? null,
-            ],
-            'passenger' => $formattedPassenger,
-            'onboarding' => [
-                'required' => !($passenger?->profile_completed ?? false),
-                'profile_completed' => (bool) ($passenger?->profile_completed ?? false),
-                'next_route' => $this->routeForPassengerType($passenger?->passenger_type),
-            ],
-            'token' => $token,
-        ];
-    }
+    // Get driver profile if exists
+    $driver = Driver::where('user_id', $authUser->getKey())->first();
+    $shuttle = $driver ? Shuttle::where('driver_id', $driver->id)->first() : null;
 
+    return [
+        'user' => [
+            'id' => $authUser->getKey(),
+            'email' => $authUser->email,
+            'full_name' => $driver?->full_name ?? $formattedPassenger['full_name'] ?? $authUser->name,
+            'name' => $driver?->full_name ?? $formattedPassenger['full_name'] ?? $authUser->name,
+            'department_office' => $formattedPassenger['department_office'] ?? null,
+            'department' => $formattedPassenger['department_office'] ?? null,
+        ],
+        'passenger' => $formattedPassenger,
+        'driver' => $driver ? [
+            'id' => $driver->id,
+            'full_name' => $driver->full_name,
+            'license_number' => $driver->license_number,
+            'driver_status' => $driver->driver_status,
+            'shuttle_id' => $shuttle?->id,
+            'shuttle_code' => $shuttle?->shuttle_code,
+            'route_id' => $shuttle?->route_id,
+        ] : null,
+        'role' => $driver ? 'driver' : 'passenger',
+        'onboarding' => [
+            'required' => !($passenger?->profile_completed ?? false),
+            'profile_completed' => (bool) ($passenger?->profile_completed ?? false),
+            'next_route' => $this->routeForPassengerType($passenger?->passenger_type),
+        ],
+        'token' => $token,
+    ];
+}
     private function formatPassenger(?Passenger $passenger): ?array
     {
         if (! $passenger) return null;
