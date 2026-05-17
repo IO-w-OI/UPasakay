@@ -1,9 +1,5 @@
-// app/UserBooking.tsx
-import { useLocalSearchParams } from 'expo-router';
-import UserBookingScreen from '../screens/Users/UserBooking'; // Import from your screens folder
+import UserMapScreen from '../screens/Users/UserMap';
 
-export default function Route() {
-  const { busId } = useLocalSearchParams();
-
-  return <UserBookingScreen busId={busId} />;
+export default function UserBooking() {
+  return <UserMapScreen />;
 }
