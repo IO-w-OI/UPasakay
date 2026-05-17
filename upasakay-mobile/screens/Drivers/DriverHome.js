@@ -16,15 +16,8 @@ import {
 import { useFocusEffect, useRouter } from 'expo-router';
 
 import {
-    BasePage,
-    ButtonText,
     Colors,
-    Header,
-    PageLogo,
-    StyledButton,
     StyledContainer,
-    SubHeader,
-    UserName,
 } from '../../components/styles';
 
 import { currentUser } from '../../services/UserStore';
@@ -128,53 +121,6 @@ const DriverHome = () => {
         ? `${route.name} · ${shuttle.shuttle_code ?? ''}`.trim()
         : 'No route assigned';
 
-    // ─── OFF DUTY: Simple Welcome Screen ───────────────────────────────────────
-    if (!isOnDuty) {
-        return (
-            <StyledContainer colors={[Colors.base_page, Colors.base_page]}>
-                <StatusBar style="dark" />
-                <BasePage style={{ padding: 20, alignItems: 'center', justifyContent: 'center' }}>
-                    <PageLogo
-                        resizeMode="contain"
-                        source={require('../../assets/images/UPasakayBig.png')}
-                        style={{ width: 723 * 0.5, height: 406 * 0.5, marginBottom: 16 }}
-                    />
-
-                    <Header>
-                        Welcome, <UserName style={{ fontSize: 30 }}>
-                            {currentUser?.full_name ? currentUser.full_name.split(' ')[0] : 'Driver'}
-                        </UserName>!
-                    </Header>
-
-                    <SubHeader style={{ marginBottom: 32, textAlign: 'center' }}>
-                        You are currently off duty.
-                    </SubHeader>
-
-                    {/* Go on duty AND open the trip flow */}
-                    <StyledButton
-                        onPress={async () => { await toggleDuty(true); router.push('/DriverTrip'); }}
-                        style={{ width: '100%', height: 54, marginBottom: 14 }}
-                    >
-                        <ButtonText style={{ fontSize: 20, color: Colors.golden_brown, fontFamily: 'Nunito-Bold' }}>
-                            Drive
-                        </ButtonText>
-                    </StyledButton>
-
-                    {/* Go on duty, pickups only — stays on dashboard */}
-                    <StyledButton
-                        onPress={() => toggleDuty(true)}
-                        style={{ width: '100%', height: 54, backgroundColor: '#FFB82E' }}
-                    >
-                        <ButtonText style={{ fontSize: 20, color: '#1A2E1A', fontFamily: 'Nunito-Bold' }}>
-                            Pickup
-                        </ButtonText>
-                    </StyledButton>
-                </BasePage>
-            </StyledContainer>
-        );
-    }
-
-    // ─── ON DUTY: Active Dashboard ──────────────────────────────────────────────
     return (
         <StyledContainer colors={[Colors.base_page, Colors.base_page]}>
             <StatusBar style="dark" />
@@ -192,22 +138,14 @@ const DriverHome = () => {
                         <Text style={styles.headerRoute}>{headerSubtitle}</Text>
                     </View>
                 </View>
-                <View style={styles.headerActions}>
-                    <TouchableOpacity
-                        style={styles.sosButton}
-                        activeOpacity={0.85}
-                        onPress={handleSOS}
-                    >
-                        <Ionicons name="call" size={18} color="#fff" />
-                        <Text style={styles.sosText}>SOS</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={styles.bellButton}
-                        onPress={() => router.push('/(tabs)/Drivers/DriverRecents')}
-                    >
-                        <Ionicons name="notifications-outline" size={24} color="#1A2E1A" />
-                    </TouchableOpacity>
-                </View>
+                <TouchableOpacity
+                    style={styles.sosButton}
+                    activeOpacity={0.85}
+                    onPress={handleSOS}
+                >
+                    <Ionicons name="call" size={18} color="#fff" />
+                    <Text style={styles.sosText}>SOS</Text>
+                </TouchableOpacity>
             </View>
 
             <ScrollView
@@ -354,7 +292,6 @@ const styles = StyleSheet.create({
     },
     headerName: { fontFamily: 'Nunito-Bold', fontSize: 16, color: '#1A2E1A' },
     headerRoute: { fontFamily: 'Nunito-Bold', fontSize: 12, color: '#5C7A5C' },
-    headerActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     sosButton: {
         flexDirection: 'row', alignItems: 'center', gap: 4,
         backgroundColor: '#C62828', borderRadius: 21, height: 42, paddingHorizontal: 14,
@@ -362,10 +299,6 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.35, shadowRadius: 6, elevation: 5,
     },
     sosText: { fontFamily: 'Nunito-Bold', fontSize: 14, color: '#fff' },
-    bellButton: {
-        width: 42, height: 42, borderRadius: 21,
-        backgroundColor: '#E8F5E9', justifyContent: 'center', alignItems: 'center',
-    },
 
     dutyCard: {
         flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
