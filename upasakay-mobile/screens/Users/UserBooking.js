@@ -121,7 +121,7 @@ const UserMapScreen = () => {
   // Fetch stops for the selected route
   useEffect(() => {
     if (!routeId) return;
-    apiGet(`api/routes/${routeId}`).then(({ ok, data }) => {
+    apiGet(`routes/${routeId}`).then(({ ok, data }) => {
       if (ok && data?.stops?.length) {
         setRouteStops(data.stops);
         setRouteColor(getRouteColor(data.name));

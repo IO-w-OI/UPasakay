@@ -45,7 +45,7 @@ const UserHome = () => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        apiGet('api/routes').then(({ ok, data }) => {
+        apiGet('routes').then(({ ok, data }) => {
             if (ok && Array.isArray(data)) setRoutes(data);
             setLoading(false);
         });
