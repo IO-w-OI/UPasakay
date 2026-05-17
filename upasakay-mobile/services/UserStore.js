@@ -67,12 +67,17 @@ export const validateUser = async (email, password) => {
             const payload = result.data;
 
             setCurrentUser({
-                id: payload.user?.id,
-                passenger_id: payload.passenger?.id,       // used for Pusher channel & pickup requests
-                full_name: payload.user?.full_name || payload.passenger?.full_name || "User",
+                 id: payload.user?.id,
+                passenger_id: payload.passenger?.id,
+                driver_id: payload.driver?.id,
+                role: payload.role || (payload.driver ? "driver" : "passenger"),
+                full_name: payload.user?.full_name || payload.driver?.full_name || payload.passenger?.full_name || "User",
                 email: payload.user?.email,
                 passenger_type: payload.passenger?.passenger_type || "student",
-                token: result.token,                        // Sanctum token for API calls
+                shuttle_id: payload.driver?.shuttle_id,
+                shuttle_code: payload.driver?.shuttle_code,
+                route_id: payload.driver?.route_id,
+                token: result.token,
             });
 
             console.log("Login Success! Session stored for:", currentUser.full_name);
