@@ -105,10 +105,19 @@ class ShuttleLocationController extends Controller
             'speed_kmh' => $validated['speed_kmh'] ?? null,
         ]);
 
+        // A live GPS ping means the shuttle is on the road. Stamp last_seen_at
+        // so the Live Map can tell when a driver goes silent (lost internet),
+        // and bring the marker back to "active" if it had gone stale/offline.
+        $shuttle->update([
+            'last_seen_at' => now(),
+            'status' => 'active',
+        ]);
+
         broadcast(new ShuttleLocationUpdated(
             $shuttleId,
             (float) $validated['latitude'],
             (float) $validated['longitude'],
+            'active',
         ));
 
         return response()->json(array_merge($location->toArray(), [

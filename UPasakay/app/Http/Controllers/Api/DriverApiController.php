@@ -57,13 +57,29 @@ class DriverApiController extends Controller
             'on_duty' => 'required|boolean',
         ]);
 
+        $onDuty = $validated['on_duty'];
+
         $driver->update([
-            'is_available' => $validated['on_duty'],
-            'driver_status' => $validated['on_duty'] ? 'active' : 'offline',
+            'is_available' => $onDuty,
+            'driver_status' => $onDuty ? 'active' : 'offline',
         ]);
 
+        // Mirror onto the assigned shuttle so the web Live Map adds the
+        // marker when on duty and drops it the moment the driver toggles off.
+        $shuttle = $driver->shuttle;
+        if ($shuttle) {
+            $shuttle->update([
+                'status' => $onDuty ? 'active' : 'offline',
+                'last_seen_at' => now(),
+            ]);
+            broadcast(new \App\Events\ShuttleStatusChanged(
+                $shuttle->id,
+                $onDuty ? 'active' : 'offline',
+            ));
+        }
+
         return response()->json([
-            'on_duty' => (bool) $validated['on_duty'],
+            'on_duty' => (bool) $onDuty,
             'driver_status' => $driver->driver_status,
         ]);
     }

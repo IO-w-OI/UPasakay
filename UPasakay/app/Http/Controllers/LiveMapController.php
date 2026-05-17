@@ -15,24 +15,34 @@ class LiveMapController extends Controller
 {
     public function index()
     {
+        // A shuttle that hasn't pinged within this window is treated as
+        // offline even if its status column still says active — covers a
+        // driver who lost internet without sending an off-duty signal.
+        $staleBefore = now()->subMinutes(2);
+
         // Active & idle shuttles with latest location
         $shuttles = Shuttle::with(['route', 'driver', 'locations' => fn ($q) => $q->latest('recorded_at')->limit(1)])
             ->whereIn('status', ['active', 'idle'])
             ->orderBy('shuttle_code')
             ->get()
-            ->map(fn ($s) => [
-                'id' => $s->id,
-                'code' => $s->shuttle_code,
-                'driver' => $s->driver?->full_name ?? '—',
-                'route' => $s->route?->name ?? '—',
-                'status' => $s->status,
-                'speed' => $s->locations->first()?->speed_kmh ?? 0,
-                'last_seen' => $s->last_seen_at
-                    ? $s->last_seen_at->diffForHumans(null, true).' ago'
-                    : '—',
-                'latitude' => $s->locations->first()?->latitude,
-                'longitude' => $s->locations->first()?->longitude,
-            ]);
+            ->map(function ($s) use ($staleBefore) {
+                $isStale = ! $s->last_seen_at || $s->last_seen_at->lt($staleBefore);
+
+                return [
+                    'id' => $s->id,
+                    'code' => $s->shuttle_code,
+                    'driver' => $s->driver?->full_name ?? '—',
+                    'route' => $s->route?->name ?? '—',
+                    'status' => $isStale ? 'offline' : $s->status,
+                    'speed' => $isStale ? 0 : ($s->locations->first()?->speed_kmh ?? 0),
+                    'last_seen' => $s->last_seen_at
+                        ? $s->last_seen_at->diffForHumans(null, true).' ago'
+                        : '—',
+                    // No coordinates when stale → no marker is drawn.
+                    'latitude' => $isStale ? null : $s->locations->first()?->latitude,
+                    'longitude' => $isStale ? null : $s->locations->first()?->longitude,
+                ];
+            });
 
         // Offline shuttles
         $offlineShuttles = Shuttle::with(['route', 'driver'])

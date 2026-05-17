@@ -8,15 +8,18 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class ShuttleLocationUpdated implements ShouldBroadcastNow
+/**
+ * Fired when a shuttle's availability changes without a new GPS fix —
+ * e.g. the driver toggles off duty. The live map uses this to drop the
+ * marker immediately instead of waiting for it to go stale.
+ */
+class ShuttleStatusChanged implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public function __construct(
         public readonly int $shuttleId,
-        public readonly float $latitude,
-        public readonly float $longitude,
-        public readonly ?string $status = null,
+        public readonly string $status,
     ) {}
 
     public function broadcastOn(): Channel
@@ -26,15 +29,13 @@ class ShuttleLocationUpdated implements ShouldBroadcastNow
 
     public function broadcastAs(): string
     {
-        return 'location.updated';
+        return 'shuttle.status';
     }
 
     public function broadcastWith(): array
     {
         return [
             'id' => $this->shuttleId,
-            'latitude' => $this->latitude,
-            'longitude' => $this->longitude,
             'status' => $this->status,
         ];
     }
