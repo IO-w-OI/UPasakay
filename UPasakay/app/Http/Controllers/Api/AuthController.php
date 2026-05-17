@@ -65,7 +65,10 @@ class AuthController extends Controller
             'department_office' => $request->department_office ?? $request->department,
             'department' => $request->department_office ?? $request->department,
             'phone_number' => $request->phone ?? $request->phone_number,
-            'passenger_status' => 'active',
+            // New accounts wait for admin approval: this puts them in the
+            // "Pending Approvals" tab of the web admin and keeps them off
+            // approval-gated endpoints until reviewed.
+            'passenger_status' => 'pending',
             'verification_status' => 'pending',
         ]);
 

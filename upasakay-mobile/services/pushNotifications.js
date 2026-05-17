@@ -95,6 +95,10 @@ export const routeForNotificationData = (data) => {
             return '/UserBooking';
         case 'announcement':
             return '/(tabs)/Users/UserHome';
+        case 'account_approved':
+            // The session still says "pending" until the next login, so send
+            // the tap to the login screen to refresh approval state.
+            return '/';
         default:
             return null;
     }
