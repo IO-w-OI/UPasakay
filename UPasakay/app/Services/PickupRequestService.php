@@ -284,8 +284,42 @@ class PickupRequestService
     }
 
     private function calculateETA($driverLat, $driverLng, $passengerLat, $passengerLng): int
-    { // Calculates ETA based on Haversine Formula and location of both passenger and driver
+    {
         /**
+         * Calculate ETA in minutes from driver's current position to passenger's pickup stop.
+         * Uses OSRM for road-accurate ETA with Haversine as fallback.
+         */
+        try {
+            $url = "http://router.project-osrm.org/route/v1/driving/"
+                 . "{$driverLng},{$driverLat};{$passengerLng},{$passengerLat}"
+                 . "?overview=false";
+
+            $context = stream_context_create([
+                'http' => ['timeout' => 3]
+            ]);
+
+            $response = file_get_contents($url, false, $context);
+
+            if ($response) {
+                $data = json_decode($response, true);
+                if (isset($data['routes'][0]['duration'])) {
+                    return (int) round($data['routes'][0]['duration'] / 60);
+                }
+            }
+        } catch (\Exception $e) {
+            // Fall through to Haversine
+        }
+
+        return $this->haversineETA($driverLat, $driverLng, $passengerLat, $passengerLng);
+    }
+
+    private function haversineETA($driverLat, $driverLng, $passengerLat, $passengerLng): int
+    {
+        /**
+         * Fallback ETA calculation using Haversine formula.
+         * Assumes 30 km/h average shuttle speed.
+         */
+        /*
          * Calculate ETA in minutes from driver's current position to passenger's pickup stop.
          * Uses the Haversine formula to compute distance, assumes 30 km/h average shuttle speed.
          *
@@ -306,3 +340,4 @@ class PickupRequestService
         return (int) round(($distance / 30) * 60);
     }
 }
+
