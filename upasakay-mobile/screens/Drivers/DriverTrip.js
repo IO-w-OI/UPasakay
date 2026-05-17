@@ -1,6 +1,6 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
     ActivityIndicator,
@@ -95,6 +95,39 @@ const leafletHTML = `
 
     var stopMarkers = [];
     var routeLine = null;
+    var routeToken = 0;
+
+    // OSM road-snapping — same OSRM driving API + per-segment stitching the
+    // web admin Live Map uses (resources/js/pages/LiveMap.vue).
+    function fetchSegmentedRoute(stops, cb) {
+      if (stops.length < 2) { cb(stops); return; }
+      var fullPath = [];
+      var i = 0;
+      function nextSeg() {
+        if (i >= stops.length - 1) { cb(fullPath); return; }
+        var from = stops[i], to = stops[i + 1];
+        var coords = from[1] + ',' + from[0] + ';' + to[1] + ',' + to[0];
+        var url = 'https://router.project-osrm.org/route/v1/driving/' +
+          coords + '?overview=full&geometries=geojson';
+        fetch(url).then(function(r) { return r.json(); }).then(function(data) {
+          if (data.routes && data.routes.length) {
+            var seg = data.routes[0].geometry.coordinates.map(function(c) {
+              return [c[1], c[0]];
+            });
+            fullPath = fullPath.concat(i === 0 ? seg : seg.slice(1));
+          } else {
+            if (i === 0) fullPath.push(from);
+            fullPath.push(to);
+          }
+          i++; nextSeg();
+        }).catch(function() {
+          if (i === 0) fullPath.push(from);
+          fullPath.push(to);
+          i++; nextSeg();
+        });
+      }
+      nextSeg();
+    }
 
     window.renderStops = function(stops, nextStopId) {
       stopMarkers.forEach(function(m) { map.removeLayer(m); });
@@ -135,11 +168,26 @@ const leafletHTML = `
         stopMarkers.push(marker);
       });
 
-      if (latlngs.length >= 2) {
-        routeLine = L.polyline(latlngs, { color: '#2E7D32', weight: 4, opacity: 0.65 }).addTo(map);
-      }
       if (stopMarkers.length > 0) {
         map.fitBounds(L.featureGroup(stopMarkers).getBounds(), { padding: [50, 50], maxZoom: 16 });
+      }
+
+      if (latlngs.length >= 2) {
+        // Faint straight line first (instant), then replace with the
+        // OSM road-snapped path once OSRM responds.
+        routeLine = L.polyline(latlngs, {
+          color: '#2E7D32', weight: 3, opacity: 0.3, dashArray: '6,8',
+        }).addTo(map);
+
+        routeToken++;
+        var myToken = routeToken;
+        fetchSegmentedRoute(latlngs, function(snapped) {
+          if (myToken !== routeToken) return; // a newer render superseded this
+          if (routeLine) { map.removeLayer(routeLine); }
+          routeLine = L.polyline(snapped, {
+            color: '#2E7D32', weight: 5, opacity: 0.7, smoothFactor: 1.5,
+          }).addTo(map);
+        });
       }
     };
 
@@ -178,11 +226,19 @@ const DriverTrip = () => {
     }, []);
 
     useEffect(() => {
-        loadFeed();
         startSharing().catch(() => {});
         return () => { stopSharing(); };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    // Reload whenever the screen regains focus (e.g. returning from the QR
+    // scanner) so a just-confirmed boarding shows immediately. Also covers
+    // the initial mount.
+    useFocusEffect(
+        useCallback(() => {
+            loadFeed();
+        }, [loadFeed]),
+    );
 
     // Real-time: refresh queue/counts on new bookings or ride-accepted events.
     useEffect(() => {
@@ -457,6 +513,27 @@ const DriverTrip = () => {
                                                             {p.status !== 'in_progress' && (
                                                                 <View style={styles.paxActions}>
                                                                     <TouchableOpacity
+                                                                        style={[styles.actionBtn, styles.scanBtn]}
+                                                                        onPress={() =>
+                                                                            router.push({
+                                                                                pathname: '/DriverScan',
+                                                                                params: {
+                                                                                    requestId: p.id,
+                                                                                    passenger: p.passenger,
+                                                                                },
+                                                                            })
+                                                                        }
+                                                                    >
+                                                                        <Ionicons
+                                                                            name="qr-code"
+                                                                            size={18}
+                                                                            color="#fff"
+                                                                        />
+                                                                        <Text style={styles.actionText}>
+                                                                            Scan QR
+                                                                        </Text>
+                                                                    </TouchableOpacity>
+                                                                    <TouchableOpacity
                                                                         style={[styles.actionBtn, styles.boardBtn]}
                                                                         disabled={actingId === p.id}
                                                                         onPress={() =>
@@ -621,6 +698,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4,
         paddingVertical: 11, paddingHorizontal: 14, borderRadius: 12,
     },
+    scanBtn: { backgroundColor: '#1565C0', flex: 1 },
     boardBtn: { backgroundColor: '#2E7D32', flex: 1 },
     noShowBtn: { backgroundColor: '#FFE0B2', flex: 1 },
     declineBtn: { backgroundColor: '#C62828', width: 48 },

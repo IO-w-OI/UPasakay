@@ -84,6 +84,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('driver/queue', [DriverApiController::class, 'queue']);
     Route::get('driver/notifications', [DriverApiController::class, 'notifications']);
     Route::patch('pickup-requests/{pickupRequest}/board', [DriverApiController::class, 'board']);
+    Route::post('pickup-requests/{pickupRequest}/confirm-boarding', [DriverApiController::class, 'confirmBoarding']);
     Route::patch('pickup-requests/{pickupRequest}/no-show', [DriverApiController::class, 'noShow']);
     Route::patch('pickup-requests/{pickupRequest}/decline', [DriverApiController::class, 'decline']);
 });

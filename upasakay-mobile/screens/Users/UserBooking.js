@@ -4,6 +4,7 @@ import { WebView } from 'react-native-webview';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Pusher } from 'pusher-js/react-native';
+import QRCode from 'react-native-qrcode-svg';
 import { currentUser } from '../../services/UserStore';
 
 import * as Notifications from 'expo-notifications';
@@ -53,6 +54,7 @@ const UserMapScreen = () => {
   const [currentCoords, setCurrentCoords] = useState({ lat: 10.3381, lng: 123.9116 });
   const [searchText, setSearchText] = useState('');
   const [driverInfo, setDriverInfo] = useState(null);
+  const [boardingCode, setBoardingCode] = useState(null);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [routeStops, setRouteStops] = useState([]);
   const [routeColor, setRouteColor] = useState('#f97316');
@@ -81,12 +83,27 @@ const UserMapScreen = () => {
         shuttleNumber: data.shuttle_number,
         eta: data.eta_minutes,
       });
+      setBoardingCode(data.boarding_code ?? null);
       LayoutAnimation.configureNext(SnappyAnim);
       setStatus('booking');
       Notifications.scheduleNotificationAsync({
         content: {
           title: 'Your Para! was accepted! 🚌',
           body: `${data.driver_name} is on the way. ETA: ${data.eta_minutes ?? '?'} min.`,
+          sound: true,
+        },
+        trigger: null,
+      });
+    });
+
+    passengerCh.bind('passenger.boarded', () => {
+      LayoutAnimation.configureNext(SnappyAnim);
+      setBoardingCode(null);
+      setStatus('onboard');
+      Notifications.scheduleNotificationAsync({
+        content: {
+          title: "You're on board ✅",
+          body: 'Enjoy your ride with UPasakay!',
           sound: true,
         },
         trigger: null,
@@ -427,6 +444,14 @@ const UserMapScreen = () => {
               <Text style={styles.paraText}>Para!</Text>
             </TouchableOpacity>
           </>
+        ) : status === 'onboard' ? (
+          <View style={styles.waitingContent}>
+            <View style={styles.onboardBox}>
+              <Ionicons name="checkmark-circle" size={48} color="#1A7F37" />
+              <Text style={styles.onboardTitle}>You're on board</Text>
+              <Text style={styles.onboardSub}>Enjoy your ride with UPasakay!</Text>
+            </View>
+          </View>
         ) : (
           <View style={styles.waitingContent}>
             <View style={styles.row}>
@@ -449,6 +474,13 @@ const UserMapScreen = () => {
                 <Text style={styles.dRoute}>UP Cebu Bus Route</Text>
               </View>
             </View>
+            {boardingCode ? (
+              <View style={styles.qrBox}>
+                <QRCode value={boardingCode} size={180} />
+                <Text style={styles.qrCaption}>Show this to your driver to board</Text>
+                <Text style={styles.qrCode}>{boardingCode}</Text>
+              </View>
+            ) : null}
             <TouchableOpacity style={styles.cancelBtn} onPress={handleCancel}>
               <Text style={styles.cancelText}>Cancel Para</Text>
             </TouchableOpacity>
@@ -517,6 +549,12 @@ const styles = StyleSheet.create({
   avatar: { width: 60, height: 60, borderRadius: 30, marginRight: 15 },
   modalTop: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
   modalAvatar: { width: 60, height: 60, borderRadius: 30, marginRight: 15 },
+  qrBox: { alignItems: 'center', backgroundColor: '#fff', borderRadius: 20, paddingVertical: 20, marginBottom: 20, borderWidth: 1.5, borderColor: '#3e5141' },
+  qrCaption: { fontSize: 14, color: '#444', fontFamily: 'Nunito-Regular', marginTop: 12 },
+  qrCode: { fontSize: 22, color: '#1A2E1A', fontFamily: 'Nunito-Black', letterSpacing: 3, marginTop: 4 },
+  onboardBox: { alignItems: 'center', paddingVertical: 30 },
+  onboardTitle: { fontSize: 22, color: '#1A2E1A', fontFamily: 'Nunito-Bold', marginTop: 10 },
+  onboardSub: { fontSize: 14, color: '#666', fontFamily: 'Nunito-Regular', marginTop: 4 },
 });
 
 export default UserMapScreen;
