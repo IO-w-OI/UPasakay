@@ -13,6 +13,8 @@ use App\Http\Controllers\Api\ShuttleController;
 use App\Http\Controllers\Api\ShuttleLocationController;
 use App\Http\Controllers\Api\StopController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\DriverProfileController;
+
 
 // Heroku keepalive / health (no DB) — use with cron-job.org every ~10 minutes
 Route::get('ping', fn () => response()->json([
@@ -56,6 +58,13 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('profile/complete', [PassengerProfileController::class, 'complete']);
         Route::get('verification', [PassengerProfileController::class, 'verification']);
     });
+
+    // Driver self-edit
+    Route::get('driver/profile', [DriverProfileController::class, 'show']);
+    Route::patch('driver/profile', [DriverProfileController::class, 'update']);
+
+    // Passenger restricted self-edit
+    Route::patch('passenger/profile/self', [PassengerProfileController::class, 'selfUpdate']);
 
     Route::apiResource('routes', RouteController::class);
     Route::apiResource('stops', StopController::class);
