@@ -3,12 +3,13 @@ import { StyleSheet, View, TextInput, TouchableOpacity, Text, Image, LayoutAnima
 import { WebView } from 'react-native-webview';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Pusher } from 'pusher-js/react-native'; 
+import { Pusher } from 'pusher-js/react-native';
 import { currentUser } from '../../services/UserStore';
 
 import * as Notifications from 'expo-notifications';
-import { useTrip } from '../../context/TripContext'; 
+import { useTrip } from '../../context/TripContext';
 import { ROUTE_STOPS } from '../../services/UserRouteStops';
+import { apiGet } from '../../services/apiClient';
 
 const { width } = Dimensions.get('window');
 
@@ -26,9 +27,23 @@ const SnappyAnim = {
 const PUSHER_KEY    = 'f21efd02988d084b7b35';
 const PUSHER_CLUSTER = 'ap1';
 
+const ROUTE_COLORS = {
+  north:      '#3b82f6',
+  south:      '#22c55e',
+  'cebu city': '#f97316',
+};
+
+const getRouteColor = (name = '') => {
+  const n = name.toLowerCase();
+  for (const [key, color] of Object.entries(ROUTE_COLORS)) {
+    if (n.includes(key)) return color;
+  }
+  return '#f97316';
+};
+
 const UserMapScreen = () => {
-  const { active } = useLocalSearchParams();
-  const { setActiveTrip } = useTrip(); 
+  const { active, routeId } = useLocalSearchParams();
+  const { setActiveTrip } = useTrip();
   const webViewRef = useRef(null);
   const reverseGeocodeTimer = useRef(null);
   const pusherRef = useRef(null);
@@ -38,6 +53,9 @@ const UserMapScreen = () => {
   const [currentCoords, setCurrentCoords] = useState({ lat: 10.3381, lng: 123.9116 });
   const [searchText, setSearchText] = useState('');
   const [driverInfo, setDriverInfo] = useState(null);
+  const [mapLoaded, setMapLoaded] = useState(false);
+  const [routeStops, setRouteStops] = useState([]);
+  const [routeColor, setRouteColor] = useState('#f97316');
 
   // ── Pusher real-time subscriptions ────────────────────────────────────────
   useEffect(() => {
@@ -100,6 +118,26 @@ const UserMapScreen = () => {
   }, []);
   // ──────────────────────────────────────────────────────────────────────────
 
+  // Fetch stops for the selected route
+  useEffect(() => {
+    if (!routeId) return;
+    apiGet(`api/routes/${routeId}`).then(({ ok, data }) => {
+      if (ok && data?.stops?.length) {
+        setRouteStops(data.stops);
+        setRouteColor(getRouteColor(data.name));
+      }
+    });
+  }, [routeId]);
+
+  // Inject stop markers once the map WebView has loaded and stops are ready
+  useEffect(() => {
+    if (!mapLoaded || routeStops.length === 0) return;
+    const stopsJson = JSON.stringify(routeStops);
+    webViewRef.current?.injectJavaScript(
+      `window.renderRouteStops(${stopsJson}, '${routeColor}'); true;`
+    );
+  }, [mapLoaded, routeStops, routeColor]);
+
   // Prepare Waypoints for OSRM URL
   const waypointsString = ROUTE_STOPS.map(s => `${s.lng},${s.lat}`).join(';');
 
@@ -143,6 +181,32 @@ const UserMapScreen = () => {
           var estimatorLine = null;
           var fullRouteLine = null;
           window.stopDrive = false;
+
+          var stopMarkers = [];
+          window.renderRouteStops = function(stops, color) {
+            stopMarkers.forEach(function(m) { map.removeLayer(m); });
+            stopMarkers = [];
+            var valid = stops.filter(function(s) {
+              return s.is_active && s.latitude && s.longitude;
+            });
+            valid.forEach(function(stop) {
+              var marker = L.circleMarker(
+                [parseFloat(stop.latitude), parseFloat(stop.longitude)],
+                { radius: 8, color: color, fillColor: color, fillOpacity: 1, weight: 2, bubblingMouseEvents: false }
+              )
+              .bindPopup(
+                '<div style="font-family:sans-serif;min-width:110px">' +
+                '<b>' + stop.name + '</b><br>' +
+                '<span style="color:#666;font-size:12px">Stop #' + stop.sequence + '</span>' +
+                '</div>'
+              )
+              .addTo(map);
+              stopMarkers.push(marker);
+            });
+            if (stopMarkers.length > 0) {
+              map.fitBounds(L.featureGroup(stopMarkers).getBounds(), { padding: [60, 60] });
+            }
+          };
 
           function clearRoute() {
             if (busMarker)      { map.removeLayer(busMarker);      busMarker = null; }
@@ -306,6 +370,7 @@ const UserMapScreen = () => {
           ref={webViewRef}
           source={{ html: mapHtml }}
           onMessage={handleMessage}
+          onLoad={() => setMapLoaded(true)}
           style={styles.map}
           containerStyle={{ backgroundColor: '#fff' }}
         />
