@@ -3,7 +3,9 @@ import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-import { currentUser } from '../../services/UserStore';
+import { apiPost } from '../../services/apiClient';
+import { unregisterPushNotifications } from '../../services/pushNotifications';
+import { currentUser, logoutUser } from '../../services/UserStore';
 
 import {
     AvatarContainer,
@@ -25,6 +27,15 @@ import {
 
 const DriverProfile = () => {
 
+    const doLogout = async () => {
+        // Best-effort server-side cleanup while the token is still valid:
+        // stop pushes to this device, then revoke the Sanctum token.
+        try { await unregisterPushNotifications(); } catch {}
+        try { await apiPost('/logout'); } catch {}
+        await logoutUser();          // clears in-memory + SecureStore session
+        router.replace('/');
+    };
+
     const handleLogout = () => {
         Alert.alert(
             'Sign Out',
@@ -34,7 +45,7 @@ const DriverProfile = () => {
                 {
                     text: 'Log Out',
                     style: 'destructive',
-                    onPress: () => router.replace('/'),
+                    onPress: doLogout,
                 },
             ]
         );

@@ -1,14 +1,13 @@
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { router, usePathname } from 'expo-router';
 import { useTrip } from '../context/TripContext';
-import { Ionicons } from '@expo/vector-icons';
 
 export default function ActiveTripBanner() {
   const { activeTrip } = useTrip();
   const pathname = usePathname();
 
-  // Hides only if no trip OR if currently on the Map/Booking screen
-  if (!activeTrip || pathname.includes('UserMapScreen') || pathname.includes('UserBooking')) {
+  // Hides only if no trip OR if currently on the booking/map screen
+  if (!activeTrip || pathname.includes('UserBooking')) {
     return null;
   }
 
@@ -17,8 +16,8 @@ export default function ActiveTripBanner() {
       style={styles.wrap}
       activeOpacity={0.9}
       onPress={() => router.push({
-        pathname: '/Users/UserMapScreen',
-        params: { active: 'true' }
+        pathname: '/UserBooking',
+        params: { active: 'true', busName: activeTrip.route || '' }
       })}
     >
       <View style={styles.topAccent} />

@@ -3,180 +3,378 @@ import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Formik } from 'formik';
 import { useState } from 'react';
-import { Alert, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { SelectList } from 'react-native-dropdown-select-list';
 
-// Styled Components
+import { addUser, setCurrentUser } from '../services/UserStore';
+import { affiliationsForRole, PASSWORD_RULES, ROLES, signupSchema } from '../utils/validation';
+import { moderateScale } from '../utils/responsive';
+
 import {
     ButtonText,
     Colors,
     ExtraSmallText,
     ExtraText,
-    ExtraView,
     GoogleLogo,
-    InnerContainer,
     LeftIcon,
     Line,
     LineContainer,
     OrText,
     PageLogo,
     RightIcon,
-    SmallTextLinkContent,
     StyledButton,
     StyledContainer,
     StyledFormArea,
-    StyledInputLabel,
     StyledTextInput,
     TextLink,
-    TextLinkContent
+    TextLinkContent,
 } from '../components/styles';
+
+// Styling for the role / affiliation dropdowns so they match StyledTextInput.
+const dropdownBox = {
+    backgroundColor: Colors.base_page,
+    borderWidth: 0,
+    borderRadius: 16,
+    height: 55,
+    alignItems: 'center',
+    paddingHorizontal: 18,
+};
+const dropdownList = {
+    backgroundColor: Colors.base_page,
+    borderWidth: 0,
+    borderRadius: 16,
+    marginTop: 4,
+};
+const dropdownInput = { color: Colors.text_active, fontSize: 16 };
+
+const FieldError = ({ touched, error }) =>
+    touched && error ? (
+        <Text style={{ color: '#ef4444', fontSize: 12, marginTop: 4, marginLeft: 6 }}>{error}</Text>
+    ) : null;
+
+const MyTextInput = ({ icon, isPassword, hidePassword, setHidePassword, error, touched, ...props }) => (
+    <View style={{ marginBottom: 12 }}>
+        <View style={{ justifyContent: 'center' }}>
+            <LeftIcon>
+                <Octicons name={icon} size={20} color={touched && error ? '#ef4444' : Colors.text_idle} />
+            </LeftIcon>
+            <StyledTextInput {...props} style={touched && error ? { borderWidth: 1, borderColor: '#ef4444' } : {}} />
+            {isPassword && (
+                <RightIcon onPress={() => setHidePassword(!hidePassword)}>
+                    <Ionicons name={hidePassword ? 'eye-off' : 'eye'} size={20} color={Colors.text_idle} />
+                </RightIcon>
+            )}
+        </View>
+        <FieldError touched={touched} error={error} />
+    </View>
+);
 
 const Signup = () => {
     const router = useRouter();
     const [hidePassword, setHidePassword] = useState(true);
     const [hideConfirmPassword, setHideConfirmPassword] = useState(true);
+    const [formError, setFormError] = useState('');
+
+    const handleRegister = async (values, { setSubmitting }) => {
+        setFormError('');
+        const passenger_type = values.role.toLowerCase();
+        const result = await addUser(
+            values.full_name,
+            values.email,
+            values.password,
+            values.phone,
+            passenger_type,
+            values.department_office
+        );
+        setSubmitting(false);
+
+        if (result.success) {
+            await setCurrentUser({
+                full_name: values.full_name,
+                name: values.full_name,
+                email: values.email,
+                passenger_type,
+                department_office: values.department_office,
+            });
+            router.replace('/UserOnboarding4');
+        } else {
+            setFormError(result.message);
+        }
+    };
 
     return (
         <StyledContainer>
             <StatusBar style="light" />
-            <InnerContainer>
-                <PageLogo 
-                    resizeMode="contain" 
-                    source={require('../assets/images/UPasakayBig.png')} 
-                    style={{ 
-                        width: 723 * 0.35, 
-                        height: 406 * 0.35 
-                    }} 
-                />
-
-                <Formik
-                    initialValues={{ email: '', password: '', confirmPassword: '' }}
-                    onSubmit={(values) => {
-                        const upEmailRegex = /^[a-zA-Z0-9._%+-]+@up\.edu\.ph$/;
-
-                        if (!values.email || !values.password) {
-                            Alert.alert("Missing Info", "Please fill out all fields.");
-                            return;
-                        }
-
-                        if (!upEmailRegex.test(values.email)) {
-                            Alert.alert("Invalid Email", "Please use your official @up.edu.ph email address.");
-                            return;
-                        }
-
-                        if (values.password !== values.confirmPassword) {
-                            Alert.alert("Error", "Passwords do not match.");
-                            return;
-                        }
-
-                        // Routing only account credentials to Onboarding 1
-                        router.push({
-                            pathname: '/UserOnboarding1',
-                            params: { 
-                                email: values.email,
-                                password: values.password
-                            }
-                        });
-                    }}
+            <SafeAreaView style={{ flex: 1 }} edges={['bottom']}>
+                <KeyboardAvoidingView
+                    style={{ flex: 1 }}
+                    behavior={Platform.OS === 'ios' ? 'padding' : undefined}
                 >
-                    {({handleChange, handleBlur, handleSubmit, values}) => (
-                        <StyledFormArea>
-                            {/* --- EMAIL INPUT --- */}
-                            <MyTextInput
-                                icon="mail"
-                                placeholder="Enter your email address"
-                                placeholderTextColor={Colors.text_idle}
-                                onChangeText={handleChange('email')}
-                                onBlur={handleBlur('email')}
-                                value={values.email}
-                                keyboardType="email-address"
-                            />
-
-                            {/* --- PASSWORD INPUT --- */}
-                            <MyTextInput
-                                icon="lock"
-                                placeholder="Enter your password"
-                                placeholderTextColor={Colors.text_idle}
-                                onChangeText={handleChange('password')}
-                                onBlur={handleBlur('password')}
-                                value={values.password}
-                                secureTextEntry={hidePassword}
-                                isPassword={true}
-                                hidePassword={hidePassword}
-                                setHidePassword={setHidePassword}
-                            />
-
-                            {/* --- CONFIRM PASSWORD INPUT --- */}
-                            <MyTextInput
-                                icon="lock"
-                                placeholder="Confirm your password"
-                                placeholderTextColor={Colors.text_idle}
-                                onChangeText={handleChange('confirmPassword')}
-                                onBlur={handleBlur('confirmPassword')}
-                                value={values.confirmPassword}
-                                secureTextEntry={hideConfirmPassword} 
-                                isPassword={true}
-                                hidePassword={hideConfirmPassword}    
-                                setHidePassword={setHideConfirmPassword} 
-                            />
-
-                            <ExtraView style={{ marginTop: 5 }}>
-                                <ExtraSmallText>
-                                    By clicking 'Continue', you have read and agreed to our{"\n"}
-                                    <TextLinkContent style={{ color: Colors.button_loginsignup }}>Terms of Service</TextLinkContent>
-                                    <ExtraSmallText> and </ExtraSmallText>
-                                    <TextLinkContent style={{ color: Colors.button_loginsignup }}>Privacy Policy</TextLinkContent>
-                                </ExtraSmallText>
-                            </ExtraView>
-
-                            <StyledButton onPress={handleSubmit}>
-                                <ButtonText>Continue</ButtonText>
-                            </StyledButton>
-
-                            <LineContainer>
-                                <Line />
-                                <OrText> OR </OrText>
-                                <Line />
-                            </LineContainer>
-
-                            <StyledButton google={true}>
-                                <GoogleLogo source={require('../assets/images/google-logo.png')} /> 
-                                <ButtonText google={true}>Sign Up with Google</ButtonText>
-                            </StyledButton>
-                            
-                            <ExtraView>
-                                <ExtraText>Already have an account? </ExtraText>
-                                <TextLink onPress={() => router.replace('/Login')}>
-                                    <TextLinkContent>Log In</TextLinkContent>
-                                </TextLink>
-                            </ExtraView>
-                        </StyledFormArea>
-                    )}
-                </Formik>
-            </InnerContainer>
-        </StyledContainer>
-    );
-}
-
-const MyTextInput = ({ label, icon, isPassword, hidePassword, setHidePassword, ...props }) => {
-    return (
-        <View style={{ marginBottom: 10 }}> 
-            <StyledInputLabel>{label}</StyledInputLabel>
-            <View style={{ justifyContent: 'center' }}> 
-                <LeftIcon>
-                    <Octicons name={icon} size={20} color={Colors.text_idle} />
-                </LeftIcon>
-                <StyledTextInput {...props} />
-                {isPassword && (
-                    <RightIcon onPress={() => setHidePassword(!hidePassword)}>
-                        <Ionicons 
-                            name={hidePassword ? 'eye-off' : 'eye'} 
-                            size={20} 
-                            color={Colors.text_idle} 
+                    <ScrollView
+                        showsVerticalScrollIndicator={false}
+                        keyboardShouldPersistTaps="handled"
+                        contentContainerStyle={{ alignItems: 'center', paddingBottom: 40 }}
+                    >
+                        <PageLogo
+                            resizeMode="contain"
+                            source={require('../assets/images/UPasakayBig.png')}
+                            style={{ width: moderateScale(220), height: moderateScale(124) }}
                         />
-                    </RightIcon>
-                )}
-            </View>
-        </View>
+
+                        <Text
+                            style={{
+                                color: Colors.white,
+                                fontSize: moderateScale(26),
+                                fontFamily: 'Nunito-Bold',
+                                alignSelf: 'flex-start',
+                                marginLeft: '2.5%',
+                                marginBottom: 12,
+                            }}
+                        >
+                            Create your account
+                        </Text>
+
+                        <Formik
+                            initialValues={{
+                                email: '',
+                                password: '',
+                                confirmPassword: '',
+                                full_name: '',
+                                phone: '',
+                                role: '',
+                                department_office: '',
+                            }}
+                            validationSchema={signupSchema}
+                            onSubmit={handleRegister}
+                        >
+                            {({
+                                handleChange,
+                                handleBlur,
+                                handleSubmit,
+                                setFieldValue,
+                                setFieldTouched,
+                                values,
+                                errors,
+                                touched,
+                                isValid,
+                                dirty,
+                                isSubmitting,
+                            }) => (
+                                <StyledFormArea>
+                                    {formError ? (
+                                        <View
+                                            style={{
+                                                backgroundColor: 'rgba(239,68,68,0.15)',
+                                                borderColor: '#ef4444',
+                                                borderWidth: 1,
+                                                borderRadius: 12,
+                                                padding: 12,
+                                                marginBottom: 12,
+                                            }}
+                                        >
+                                            <Text style={{ color: '#ffd9d9', fontSize: 13, textAlign: 'center' }}>
+                                                {formError}
+                                            </Text>
+                                        </View>
+                                    ) : null}
+
+                                    <MyTextInput
+                                        icon="mail"
+                                        placeholder="Enter your email address"
+                                        placeholderTextColor={Colors.text_idle}
+                                        onChangeText={handleChange('email')}
+                                        onBlur={handleBlur('email')}
+                                        value={values.email}
+                                        keyboardType="email-address"
+                                        autoCapitalize="none"
+                                        error={errors.email}
+                                        touched={touched.email}
+                                    />
+
+                                    <MyTextInput
+                                        icon="lock"
+                                        placeholder="Enter your password"
+                                        placeholderTextColor={Colors.text_idle}
+                                        onChangeText={handleChange('password')}
+                                        onBlur={handleBlur('password')}
+                                        value={values.password}
+                                        secureTextEntry={hidePassword}
+                                        isPassword
+                                        hidePassword={hidePassword}
+                                        setHidePassword={setHidePassword}
+                                        error={errors.password}
+                                        touched={touched.password}
+                                    />
+
+                                    {/* Live password requirements checklist */}
+                                    <View style={{ marginBottom: 12, marginLeft: 4 }}>
+                                        {PASSWORD_RULES.map((rule) => {
+                                            const ok = rule.test(values.password || '');
+                                            return (
+                                                <View
+                                                    key={rule.key}
+                                                    style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 2 }}
+                                                >
+                                                    <Ionicons
+                                                        name={ok ? 'checkmark-circle' : 'ellipse-outline'}
+                                                        size={15}
+                                                        color={ok ? '#4ade80' : Colors.text_idle}
+                                                    />
+                                                    <Text
+                                                        style={{
+                                                            color: ok ? '#4ade80' : Colors.white,
+                                                            fontSize: 12,
+                                                            marginLeft: 6,
+                                                        }}
+                                                    >
+                                                        {rule.label}
+                                                    </Text>
+                                                </View>
+                                            );
+                                        })}
+                                    </View>
+
+                                    <MyTextInput
+                                        icon="lock"
+                                        placeholder="Confirm your password"
+                                        placeholderTextColor={Colors.text_idle}
+                                        onChangeText={handleChange('confirmPassword')}
+                                        onBlur={handleBlur('confirmPassword')}
+                                        value={values.confirmPassword}
+                                        secureTextEntry={hideConfirmPassword}
+                                        isPassword
+                                        hidePassword={hideConfirmPassword}
+                                        setHidePassword={setHideConfirmPassword}
+                                        error={errors.confirmPassword}
+                                        touched={touched.confirmPassword}
+                                    />
+
+                                    <MyTextInput
+                                        icon="person"
+                                        placeholder="Full Name"
+                                        placeholderTextColor={Colors.text_idle}
+                                        onChangeText={handleChange('full_name')}
+                                        onBlur={handleBlur('full_name')}
+                                        value={values.full_name}
+                                        error={errors.full_name}
+                                        touched={touched.full_name}
+                                    />
+
+                                    <MyTextInput
+                                        icon="device-mobile"
+                                        placeholder="Phone Number"
+                                        placeholderTextColor={Colors.text_idle}
+                                        onChangeText={handleChange('phone')}
+                                        onBlur={handleBlur('phone')}
+                                        value={values.phone}
+                                        keyboardType="phone-pad"
+                                        error={errors.phone}
+                                        touched={touched.phone}
+                                    />
+
+                                    {/* ROLE */}
+                                    <View style={{ marginBottom: 12 }}>
+                                        <SelectList
+                                            setSelected={(val) => {
+                                                setFieldValue('role', val);
+                                                setFieldTouched('role', true);
+                                                setFieldValue('department_office', '');
+                                            }}
+                                            data={ROLES.map((r) => ({ key: r, value: r }))}
+                                            save="value"
+                                            search={false}
+                                            maxHeight={240}
+                                            placeholder="Select your role"
+                                            boxStyles={dropdownBox}
+                                            dropdownStyles={dropdownList}
+                                            inputStyles={dropdownInput}
+                                            dropdownTextStyles={dropdownInput}
+                                        />
+                                        <FieldError touched={touched.role} error={errors.role} />
+                                    </View>
+
+                                    {/* COLLEGE / OFFICE */}
+                                    <View style={{ marginBottom: 12 }}>
+                                        <SelectList
+                                            key={values.role || 'no-role'}
+                                            setSelected={(val) => {
+                                                setFieldValue('department_office', val);
+                                                setFieldTouched('department_office', true);
+                                            }}
+                                            data={affiliationsForRole(values.role).map((a) => ({
+                                                key: a,
+                                                value: a,
+                                            }))}
+                                            save="value"
+                                            search={false}
+                                            maxHeight={240}
+                                            placeholder={
+                                                values.role ? 'Select College/Office' : 'Select your role first'
+                                            }
+                                            boxStyles={dropdownBox}
+                                            dropdownStyles={dropdownList}
+                                            inputStyles={dropdownInput}
+                                            dropdownTextStyles={dropdownInput}
+                                        />
+                                        <FieldError
+                                            touched={touched.department_office}
+                                            error={errors.department_office}
+                                        />
+                                    </View>
+
+                                    <ExtraSmallText style={{ marginTop: 4 }}>
+                                        By clicking 'Create Account', you have read and agreed to our{'\n'}
+                                        <TextLinkContent style={{ color: Colors.button_loginsignup, fontSize: 12 }}>
+                                            Terms of Service
+                                        </TextLinkContent>
+                                        <ExtraSmallText> and </ExtraSmallText>
+                                        <TextLinkContent style={{ color: Colors.button_loginsignup, fontSize: 12 }}>
+                                            Privacy Policy
+                                        </TextLinkContent>
+                                    </ExtraSmallText>
+
+                                    <StyledButton
+                                        onPress={handleSubmit}
+                                        disabled={!isValid || !dirty || isSubmitting}
+                                        style={{ marginTop: 12, opacity: !isValid || !dirty || isSubmitting ? 0.5 : 1 }}
+                                    >
+                                        <ButtonText>
+                                            {isSubmitting ? 'Creating account...' : 'Create Account'}
+                                        </ButtonText>
+                                    </StyledButton>
+
+                                    <LineContainer>
+                                        <Line />
+                                        <OrText> OR </OrText>
+                                        <Line />
+                                    </LineContainer>
+
+                                    <StyledButton google>
+                                        <GoogleLogo source={require('../assets/images/google-logo.png')} />
+                                        <ButtonText google>Sign Up with Google</ButtonText>
+                                    </StyledButton>
+
+                                    <View
+                                        style={{
+                                            flexDirection: 'row',
+                                            justifyContent: 'center',
+                                            alignItems: 'center',
+                                            marginTop: 14,
+                                        }}
+                                    >
+                                        <ExtraText style={{ marginTop: 0 }}>Already have an account? </ExtraText>
+                                        <TextLink onPress={() => router.replace('/Login')}>
+                                            <TextLinkContent>Log In</TextLinkContent>
+                                        </TextLink>
+                                    </View>
+                                </StyledFormArea>
+                            )}
+                        </Formik>
+                    </ScrollView>
+                </KeyboardAvoidingView>
+            </SafeAreaView>
+        </StyledContainer>
     );
 };
 

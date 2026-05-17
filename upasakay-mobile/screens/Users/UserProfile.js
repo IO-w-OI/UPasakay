@@ -1,10 +1,13 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { Alert } from 'react-native';
+import { Alert, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { moderateScale, NAV_CLEARANCE } from '../../utils/responsive';
 
 // 1. IMPORT THE CURRENT USER DATA
-import { currentUser } from '../../services/UserStore';
+import { currentUser, logoutUser } from '../../services/UserStore';
 
 import {
     AvatarContainer,
@@ -33,26 +36,35 @@ const UserProfile = () => {
             "Are you sure you want to log out of UPasakay?",
             [
                 { text: "Cancel", style: "cancel" },
-                { 
-                    text: "Log Out", 
-                    style: "destructive", 
-                    onPress: () => {
-                        // Redirect to the welcome/login screen
-                        router.replace('/'); 
-                    } 
+                {
+                    text: "Log Out",
+                    style: "destructive",
+                    onPress: async () => {
+                        // Clear the in-memory + persisted session FIRST, otherwise
+                        // app/index.tsx still sees currentUser.token and bounces
+                        // straight back to Home.
+                        await logoutUser();
+                        router.replace('/');
+                    }
                 }
             ]
         );
     };
 
     return (
-        <StyledContainer style={{ flex: 1, paddingHorizontal: 0 }} colors={[Colors.base_page, Colors.base_page]}>
+        <StyledContainer style={{ padding: 0, paddingTop: 0 }} colors={[Colors.base_page, Colors.base_page]}>
             <StatusBar style="dark" />
-            <BasePage style={{ flex: 1, paddingHorizontal: 0, alignItems: 'center' }}>
-                
+            <SafeAreaView style={{ flex: 1 }} edges={['top']}>
+            <ScrollView
+                showsVerticalScrollIndicator={false}
+                style={{ flex: 1 }}
+                contentContainerStyle={{ flexGrow: 1, paddingBottom: NAV_CLEARANCE }}
+            >
+            <BasePage style={{ flex: 0, paddingHorizontal: 0, paddingTop: moderateScale(20), alignItems: 'center' }}>
+
                 {/* Profile Info */}
                 <AvatarContainer>
-                    <MaterialCommunityIcons name="account-circle" size={85} color="#1A2E1A" />
+                    <MaterialCommunityIcons name="account-circle" size={moderateScale(82)} color="#1A2E1A" />
                 </AvatarContainer>
                 
                 {/* 2. REFERENCE DYNAMIC DATA */}
@@ -64,7 +76,7 @@ const UserProfile = () => {
                 {/*i'll fix this later bc im tired*/}
 
                 {/* My Account Section */}
-                <SectionHeader style={{ width: 322 }}>My Account</SectionHeader>
+                <SectionHeader>My Account</SectionHeader>
                 <SingleMenuItem activeOpacity={0.7}>
                     <IconBox color="#B4DEC0">
                         <Ionicons name="person" size={22} color="#1A2E1A" />
@@ -74,7 +86,7 @@ const UserProfile = () => {
                 </SingleMenuItem>
 
                 {/* General Section */}
-                <SectionHeader style={{ width: 322 }}>General</SectionHeader>
+                <SectionHeader>General</SectionHeader>
                 <MenuGroup>
                     <MenuItem activeOpacity={0.7}>
                         <IconBox color="#B4DEC0">
@@ -107,6 +119,8 @@ const UserProfile = () => {
                 </LogOutButton>
 
             </BasePage>
+            </ScrollView>
+            </SafeAreaView>
         </StyledContainer>
     );
 };

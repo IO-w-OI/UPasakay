@@ -2,51 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\DeviceToken;
 use App\Models\Notification;
 use App\Models\NotificationSchedule;
 use App\Models\Route;
+use App\Services\ExpoPushService;
 use Inertia\Inertia;
 
 class NotificationController extends Controller
 {
     public function index()
     {
-        $routes = Route::where('is_active', true)->pluck('name');
-
-        // Get real notification log from database, ordered newest first
-        $notificationLog = Notification::with('route')
-            ->orderBy('created_at', 'desc')
-            ->limit(50)
-            ->get()
-            ->map(function ($notification) {
-                return [
-                    'id' => $notification->id,
-                    'time' => $notification->created_at->format('h:i A'),
-                    'type' => $notification->type,
-                    'label' => ucfirst($notification->type),
-                    'target' => $notification->target,
-                    'status' => $notification->status,
-                    'date' => $notification->created_at->format('M d'),
-                    'title' => $notification->title,
-                    'message' => $notification->message,
-                ];
-            });
-
-        $scheduledNotifications = Notification::scheduled()
-            ->orderBy('scheduled_at', 'asc')
-            ->get()
-            ->map(function ($notification) {
-                return [
-                    'id' => $notification->id,
-                    'title' => $notification->title,
-                    'schedule' => $notification->scheduled_at->format('M d, Y h:i A'),
-                    'target' => $notification->target,
-                    'auto' => false,
-                    'active' => true,
-                    'type' => $notification->type,
-                    'status' => $notification->status,
-                ];
-            });
         // Get active routes for the form
         $routes = Route::where('is_active', true)
             ->orderBy('name')
@@ -59,6 +25,7 @@ class NotificationController extends Controller
             ->take(50)
             ->get()
             ->map(fn ($notification) => [
+                'id' => $notification->id,
                 'time' => $notification->getFormattedTime(),
                 'type' => $notification->type,
                 'label' => $notification->getTypeLabel(),
@@ -123,7 +90,7 @@ class NotificationController extends Controller
             ]);
         } else {
             // Send immediately
-            Notification::create([
+            $notification = Notification::create([
                 'title' => $validated['title'],
                 'message' => $validated['message'],
                 'type' => $validated['type'],
@@ -132,6 +99,16 @@ class NotificationController extends Controller
                 'status' => 'sent',
                 'sent_at' => now(),
             ]);
+
+            $tokens = DeviceToken::pluck('expo_token')->filter()->values()->all();
+            if (!empty($tokens)) {
+                (new ExpoPushService())->send(
+                    $tokens,
+                    $validated['title'],
+                    $validated['message'],
+                    ['type' => 'announcement', 'notification_id' => $notification->id]
+                );
+            }
         }
 
         return back()->with('success', 'Notification '.($validated['delivery_type'] === 'scheduled' ? 'scheduled' : 'sent').' successfully.');

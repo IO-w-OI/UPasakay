@@ -1,9 +1,12 @@
 import { Nunito_400Regular, Nunito_700Bold, useFonts } from '@expo-google-fonts/nunito';
+import { Ionicons, MaterialCommunityIcons, Octicons } from '@expo/vector-icons';
 import { router, Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
 
 import * as Notifications from 'expo-notifications';
+
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { TripProvider } from '../context/TripContext';
 import ActiveTripBanner from '../components/ActiveTripBanner';
@@ -25,9 +28,16 @@ Notifications.setNotificationHandler({
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
+  // Preload the icon fonts too — otherwise @expo/vector-icons tries to
+  // download them lazily at first render, which fails in dev (ExpoAsset
+  // download rejected) and shows empty icon boxes + an unhandled-promise
+  // error toast on navigation/logout.
   const [loaded, error] = useFonts({
     Nunito_400Regular,
     Nunito_700Bold,
+    ...Ionicons.font,
+    ...MaterialCommunityIcons.font,
+    ...Octicons.font,
   });
 
   // Restore any persisted login session before the navigator mounts so
@@ -75,19 +85,23 @@ export default function RootLayout() {
   }
 
   return (
-    <TripProvider>
-      <Stack
-        initialRouteName="index"
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: '#701929' },
-        }}
-      >
-        <Stack.Screen name="index" />
-        <Stack.Screen name="Signup" />
-        <Stack.Screen name="(tabs)" />
-      </Stack>
-      <ActiveTripBanner />
-    </TripProvider>
+    <SafeAreaProvider>
+      <TripProvider>
+        <Stack
+          initialRouteName="index"
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: '#701929' },
+          }}
+        >
+          <Stack.Screen name="index" />
+          <Stack.Screen name="Signup" />
+          <Stack.Screen name="ForgotPassword" />
+          <Stack.Screen name="ResetPassword" />
+          <Stack.Screen name="(tabs)" />
+        </Stack>
+        <ActiveTripBanner />
+      </TripProvider>
+    </SafeAreaProvider>
   );
 }

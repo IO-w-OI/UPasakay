@@ -20,7 +20,6 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
           const icons = {
             index: 'home-outline',
             UserRecents: 'clock-outline',
-            UserMap: 'map-outline',
             UserProfile: 'account-circle-outline',
           };
 
