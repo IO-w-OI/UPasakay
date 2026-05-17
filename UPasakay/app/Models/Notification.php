@@ -60,6 +60,38 @@ class Notification extends Model
             ->where('scheduled_at', '<=', now());
     }
 
+    public function getFormattedTime(): string
+    {
+        return ($this->sent_at ?? $this->created_at)->format('h:i A');
+    }
+
+    public function getFormattedDate(): string
+    {
+        $dt = $this->sent_at ?? $this->created_at;
+        if ($dt->isToday()) return 'Today';
+        if ($dt->isYesterday()) return 'Yesterday';
+        return $dt->format('M d');
+    }
+
+    public function getTypeLabel(): string
+    {
+        return match ($this->type) {
+            'availability' => 'Shuttle Availability',
+            'delay'        => 'Route Delay',
+            'change'       => 'Route Change',
+            'announcement' => 'Service Announcement',
+            'schedule'     => 'Schedule',
+            'alert'        => 'Alert',
+            default        => ucfirst($this->type),
+        };
+    }
+
+    public function getTargetLabel(): string
+    {
+        $route = $this->target_route ?? $this->target ?? 'all';
+        return $route === 'all' ? 'All Routes' : $route;
+    }
+
     public function markAsSent(): void
     {
         $this->update([
