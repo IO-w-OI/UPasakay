@@ -2,7 +2,14 @@ import Constants from 'expo-constants';
 import { LinearGradient } from 'expo-linear-gradient';
 import styled from 'styled-components/native';
 
+import { moderateScale } from '../utils/responsive';
+
 const StatusBarHeight = Constants.statusBarHeight;
+
+// Card width shared by the Profile menu cards / section headers.
+// Declared up here so SectionHeader can reference it (it used to crash:
+// SectionHeader was defined before CARD_WIDTH was declared).
+const CARD_WIDTH = '90%';
 
 // colors
 export const Colors = {
@@ -110,9 +117,9 @@ export const StyledButton = styled.TouchableOpacity`
     background-color: ${Colors.button_loginsignup};
     justify-content: center;
     align-items: center;
-    border-radius: 16px;  /* <--- ADD THIS (Adjust the number for more/less curve) */
+    border-radius: 16px;
     margin-vertical: 7px;
-    height: 49px;
+    height: ${moderateScale(52)}px;
 
     ${(props) => props.google == true && `
             background-color: ${Colors.base_page};
@@ -140,8 +147,8 @@ export const StyledButton = styled.TouchableOpacity`
 
 export const ButtonText = styled.Text`
     /* Default color for the standard Login button */
-    color: ${Colors.base_page}; 
-    font-size: 18px;
+    color: ${Colors.base_page};
+    font-size: ${moderateScale(17)}px;
     font-family: 'Nunito-SemiBold';
     text-align: center;
 
@@ -242,41 +249,27 @@ export const SmallTextLinkContent = styled.Text`
 
 export const Header = styled.Text`
     margin-top: 10px;
-    font-size: 30px;
+    font-size: ${moderateScale(28)}px;
     color: ${Colors.text_active};
     font-family: 'Nunito-Bold';
-
-    /* 1. Change width to auto so it only takes up as much space as the text */
-    width: auto;
-
-    /* 2. Force the component itself to the start of the flex container */
     align-self: flex-start;
-
-    /* 3. Explicitly set text-align to left */
     text-align: left;
-
-    /* 4. Use a negative margin to 'cheat' past any parent padding */
-    margin-left: -15px; 
 `;
 
 export const SubHeader = styled.Text`
-    margin-top: 10px;
-    margin-left: -15px; 
-    font-size: 20px;
+    margin-top: 8px;
+    font-size: ${moderateScale(18)}px;
     color: ${Colors.text_active};
-    text-align: left; 
+    text-align: left;
     font-family: 'Nunito-Bold';
-    
-    /* ADD THESE TWO LINES */
     align-self: flex-start;
-    width: 120%;
 `;
 
 //Recents Page Card Settings
 
 export const TripCard = styled.View`
-    width: 92%; 
-    height: 143px;
+    width: 92%;
+    min-height: ${moderateScale(143)}px;
     align-self: center;
     margin-bottom: 10px;
     
@@ -299,7 +292,7 @@ export const TripCard = styled.View`
 
 export const CardTop = styled.View`
     width: 100%;
-    height: 95px;
+    min-height: ${moderateScale(95)}px;
     background-color: #FEF3DC;
     /* 5. Keep these to match the parent */
     border-top-left-radius: 20px;
@@ -311,7 +304,7 @@ export const CardTop = styled.View`
 
 export const CardBottom = styled.TouchableOpacity`
     width: 100%;
-    height: 46px;
+    height: ${moderateScale(46)}px;
     background-color: #FEF3DC;
     border-bottom-left-radius: 20px;
     border-bottom-right-radius: 20px;
@@ -344,13 +337,13 @@ export const TripInfo = styled.View`
 `;
 
 export const TripTitle = styled.Text`
-    font-size: 17px;
+    font-size: ${moderateScale(16)}px;
     color: ${Colors.text_active};
     font-family: 'Nunito-Bold';
 `;
 
 export const TripDate = styled.Text`
-    font-size: 13px;
+    font-size: ${moderateScale(12)}px;
     color: ${Colors.text_active};
     margin-top: 8px;
     font-family: 'Nunito-Regular';
@@ -365,14 +358,14 @@ export const StatusPill = styled.View`
 
 export const StatusText = styled.Text`
     color: ${Colors.white};
-    font-size: 10px;
+    font-size: ${moderateScale(10)}px;
     font-family: 'Nunito-Bold';
 `;
 
 export const ParaUlitText = styled.Text`
     color: ${Colors.para_ulit};
     font-family: 'Nunito-Bold';
-    font-size: 14px;
+    font-size: ${moderateScale(14)}px;
 `;
 
 export const FloatingNavContainer = styled.View`
@@ -398,20 +391,20 @@ export const AvatarContainer = styled.View`
 
 export const UserName = styled.Text`
     font-family: 'Nunito-Bold';
-    font-size: 20px;
+    font-size: ${moderateScale(20)}px;
     color: #1A2E1A;
 `;
 
 export const UserEmail = styled.Text`
     font-family: 'Nunito-SemiBold';
-    font-size: 14px;
+    font-size: ${moderateScale(14)}px;
     color: #1A2E1A;
     text-decoration-line: underline;
 `;
 
 export const UserRole = styled.Text`
     font-family: 'Nunito-Regular';
-    font-size: 14px;
+    font-size: ${moderateScale(14)}px;
     color: #1A2E1A;
     margin-top: 4px;
     margin-bottom: 3px;
@@ -419,23 +412,21 @@ export const UserRole = styled.Text`
 `;
 
 export const SectionHeader = styled.Text`
-    /* CHANGE THIS: Match CARD_WIDTH so it starts exactly where the card starts */
-    width: ${CARD_WIDTH}; 
+    /* Match CARD_WIDTH so it starts exactly where the card starts */
+    width: ${CARD_WIDTH};
     align-self: center;
-    
+
     font-family: 'Nunito-Bold';
-    font-size: 20px;
+    font-size: ${moderateScale(19)}px;
     color: #1A2E1A;
     margin-bottom: 10px;
-    padding-left: 5px; /* Tiny nudge to match the text alignment in Figma */
+    padding-left: 5px;
 `;
 
-// Single Item Container
-const CARD_WIDTH = '90%';
-
+// Single Item Container (CARD_WIDTH is declared at the top of this file)
 export const SingleMenuItem = styled.TouchableOpacity`
-    width: ${CARD_WIDTH}; 
-    height: 70px;
+    width: ${CARD_WIDTH};
+    height: ${moderateScale(68)}px;
     background-color: #FFFFFF;
     /* CHANGE THIS: 20px is too sharp, 35px matches Figma's roundness */
     border-radius: 20px; 
@@ -476,10 +467,8 @@ export const MenuItem = styled.TouchableOpacity`
     flex-direction: row;
     align-items: center;
     
-    /* CHANGE ONLY THIS: From 18.5% to 70px */
-    /* This matches your SingleMenuItem height of 70px */
-    height: 70px; 
-    
+    height: ${moderateScale(68)}px;
+
     padding-horizontal: 20px;
     
     border-bottom-width: ${props => props.last ? '0px' : '1px'};
@@ -499,9 +488,9 @@ export const IconBox = styled.View`
 
 export const LogOutButton = styled.TouchableOpacity`
     /* 1. Force the width to match your cards */
-    width: 88%; 
-    height: 8%;
-    background-color: #8D1436; 
+    width: 88%;
+    height: ${moderateScale(54)}px;
+    background-color: #8D1436;
     border-radius: 20px;
     
     /* 2. This is the fix: it forces the button to center and respect the width */
@@ -544,13 +533,13 @@ export const StyledButton = styled.TouchableOpacity`
 export const MenuLabel = styled.Text`
     flex: 1;
     font-family: 'Nunito-SemiBold';
-    font-size: 16px;
+    font-size: ${moderateScale(15)}px;
     color: #1A2E1A;
 `;
 
 export const LogOutText = styled.Text`
-    color: ${Colors.base_page}; 
-    font-size: 18px;
+    color: ${Colors.base_page};
+    font-size: ${moderateScale(17)}px;
     font-family: 'Nunito-Bold';
     text-align: center;
 `;

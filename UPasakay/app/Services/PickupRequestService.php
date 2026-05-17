@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\DeviceToken;
+use App\Models\Driver;
 use App\Models\PickupRequest;
 use App\Models\ShuttleLocation;
 use App\Models\Stop;
@@ -10,6 +12,10 @@ use Illuminate\Validation\ValidationException;
 
 class PickupRequestService
 {
+    public function __construct(
+        private ExpoPushService $expoPush,
+    ) {}
+
     /**
      * Create a new pickup request for an authenticated user.
      * Prevents duplicate submissions for active bookings.
@@ -81,7 +87,36 @@ class PickupRequestService
             $pickupRequest->save();
         }
 
+        $this->notifyOnDutyDrivers($pickupRequest, $passenger);
+
         return $pickupRequest;
+    }
+
+    /**
+     * Push a "new pickup request" alert to every on-duty driver, alongside
+     * the existing Pusher channel listeners (not a replacement for them).
+     */
+    private function notifyOnDutyDrivers(PickupRequest $pickupRequest, $passenger): void
+    {
+        $driverUserIds = Driver::where('is_available', true)
+            ->whereNotNull('user_id')
+            ->pluck('user_id')
+            ->all();
+
+        $tokens = DeviceToken::expoTokensForUserIds($driverUserIds);
+
+        if (empty($tokens)) {
+            return;
+        }
+
+        $routeName = $pickupRequest->route?->name ?? 'a route';
+
+        $this->expoPush->send(
+            $tokens,
+            'New pickup request',
+            ($passenger->full_name ?? 'A passenger').' requested a pickup on '.$routeName.'.',
+            ['type' => 'pickup_request', 'pickup_request_id' => $pickupRequest->id],
+        );
     }
 
     private function calculateETA($driverLat, $driverLng, $passengerLat, $passengerLng): int

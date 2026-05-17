@@ -78,28 +78,28 @@ const Login = () => {
                         const result = await validateUser(values.email, values.password);
 
                         if (result.success) {
-                            const userEmail = values.email.toLowerCase();
-                            const userName = result.data?.user?.full_name;
+                            const userName = result.user?.full_name;
 
                             // Register this device for push (fire-and-forget;
                             // token is now in the session so apiClient can auth).
                             registerForPushNotifications();
 
                                 console.log("---------------- TOKEN RECOVERY ----------------");
-                                console.log("YOUR TOKEN IS:", result.data?.token); 
+                                console.log("YOUR TOKEN IS:", result.user?.token);
                                 console.log("------------------------------------------------");
 
                                 console.log("Login Success! Welcome:", userName);
 
 
-                            // 3. Domain-Based Routing (The Juan Logic)
-                            // Strict check: @upasakay.com = Driver | @up.edu.ph = Passenger
-                            if (userEmail.endsWith('@upasakay.com')) {
-                                console.log("Authorized Driver detected. Routing to Driver Dashboard...");
+                            // 3. Role-based routing — driven by the backend
+                            // auth payload (role: driver | passenger | admin),
+                            // not the email domain.
+                            if (result.user?.role === 'driver') {
+                                console.log("Driver detected. Routing to Driver Dashboard...");
                                 router.replace('/(tabs)/Drivers/DriverHome');
                             } else {
                                 console.log("Passenger detected. Routing to User Home...");
-                                router.replace('/(tabs)/Users/UserHome'); 
+                                router.replace('/(tabs)/Users/UserHome');
                             }
                         } else {
                             Alert.alert("Login Failed", result.message || "Invalid credentials.");
@@ -134,7 +134,13 @@ const Login = () => {
                             <StyledButton onPress={handleSubmit}>
                                 <ButtonText>Log In</ButtonText>
                             </StyledButton>
-                            
+
+                            <ExtraView>
+                                <TextLink onPress={() => router.push('/ForgotPassword')}>
+                                    <TextLinkContent>Forgot password?</TextLinkContent>
+                                </TextLink>
+                            </ExtraView>
+
                             <LineContainer>
                                 <Line />
                                 <OrText> OR </OrText>
