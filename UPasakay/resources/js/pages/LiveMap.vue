@@ -423,6 +423,7 @@ const shuttleMarkers = new Map<number, L.Marker>();
 // that hides a driver who lost internet (can't send an off-duty signal).
 const lastPingAt = new Map<number, number>();
 let staleWatchdog: ReturnType<typeof setInterval> | null = null;
+let refreshInterval: ReturnType<typeof setInterval> | null = null;
 const STALE_MS = 90_000;
 const otherMarkers: L.Marker[] = [];
 
@@ -569,6 +570,46 @@ watch(showAddStopForm, (active) => {
         map.getContainer().style.cursor = active ? 'crosshair' : '';
     }
 });
+
+// Sync localShuttles when an Inertia partial reload refreshes props.shuttles.
+// Merges fresh server data in-place so Pusher-applied changes aren't clobbered.
+watch(
+    () => props.shuttles,
+    (fresh) => {
+        // Update or add each shuttle from the server snapshot.
+        fresh.forEach((updated) => {
+            const existing = localShuttles.value.find(s => s.id === updated.id);
+            if (existing) {
+                Object.assign(existing, updated);
+            } else {
+                localShuttles.value.push({ ...updated });
+            }
+        });
+        // Remove shuttles that have been deleted from the database.
+        const freshIds = new Set(fresh.map(s => s.id));
+        localShuttles.value = localShuttles.value.filter(s => freshIds.has(s.id));
+        nextTick(() => syncMarkers());
+    },
+    { deep: true },
+);
+
+// Wire the Auto-refresh toggle to a real 10-second polling interval.
+// This is a Pusher fallback: if the WebSocket drops, the map still updates.
+watch(
+    autoRefresh,
+    (isOn) => {
+        if (refreshInterval) {
+            clearInterval(refreshInterval);
+            refreshInterval = null;
+        }
+        if (isOn) {
+            refreshInterval = setInterval(() => {
+                router.reload({ only: ['shuttles'] });
+            }, 10_000);
+        }
+    },
+    { immediate: true },
+);
 
 // Route data (imported from @/data/routeData)
 const routeStops: RouteConfig = liveMapRoutes;
@@ -773,6 +814,10 @@ onUnmounted(() => {
     if (staleWatchdog) {
         clearInterval(staleWatchdog);
         staleWatchdog = null;
+    }
+    if (refreshInterval) {
+        clearInterval(refreshInterval);
+        refreshInterval = null;
     }
     acceptedToast.value = null;
     try { echo.leave('shuttle-locations'); } catch {}
