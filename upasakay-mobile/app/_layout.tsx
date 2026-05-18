@@ -104,6 +104,7 @@ export default function RootLayout() {
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="DriverTrip" />
           <Stack.Screen name="UserScan" />
+          <Stack.Screen name="EditProfile" />
         </Stack>
         <ActiveTripBanner />
       </TripProvider>

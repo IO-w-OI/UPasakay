@@ -37,7 +37,17 @@
         "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.ACCESS_FINE_LOCATION",
         "CAMERA",
-        "android.permission.CAMERA"
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "FOREGROUND_SERVICE",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "CAMERA",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
       ]
     },
     "web": {
@@ -111,6 +121,12 @@
         "projectId": "0c3e19ef-6dd3-4f84-9ad1-5ac9fef89df8"
       }
     },
-    "owner": "usa-duha-tulo-upat"
+    "owner": "usa-duha-tulo-upat",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/0c3e19ef-6dd3-4f84-9ad1-5ac9fef89df8"
+    }
   }
 }
