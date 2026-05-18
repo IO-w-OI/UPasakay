@@ -1,0 +1,50 @@
+# Used by EAS instead of .gitignore to decide what to upload for cloud builds.
+# Mirrors .gitignore EXCEPT it does NOT ignore google-services.json, so the
+# Firebase *client* config ships to the build (app.json requires it).
+# The Firebase *admin* secret stays ignored below.
+
+# dependencies
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Metro
+.metro-health-check*
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# macOS
+.DS_Store
+*.pem
+
+# local env files
+.env*.local
+
+# typescript
+*.tsbuildinfo
+
+app-example
+
+# generated native folders (EAS prebuilds these in the cloud)
+/ios
+/android
+
+# Firebase / FCM — admin/service-account key is a SECRET; never upload it.
+upasakay-firebase-adminsdk-*.json
+GoogleService-Info.plist

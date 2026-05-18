@@ -54,7 +54,6 @@ class RideAccepted implements ShouldBroadcastNow
             'shuttle_number' => data_get($driver, 'shuttle.shuttle_code'),
             'status' => 'accepted',
             'eta_minutes' => $this->pickupRequest->eta_minutes,
-            'boarding_code' => $this->pickupRequest->boarding_code,
         ];
     }
 

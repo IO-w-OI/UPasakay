@@ -61,7 +61,9 @@ export default function RootLayout() {
       const data = response?.notification?.request?.content?.data;
       const path = routeForNotificationData(data);
       if (path) {
-        router.push(path as any);
+        // Forward the notification data (e.g. pickup_request_id) as route
+        // params so the target screen knows which ride it's about.
+        router.push(data ? ({ pathname: path, params: data } as any) : (path as any));
       }
     };
 
@@ -98,9 +100,10 @@ export default function RootLayout() {
           <Stack.Screen name="Signup" />
           <Stack.Screen name="ForgotPassword" />
           <Stack.Screen name="ResetPassword" />
+          <Stack.Screen name="Feedback" />
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="DriverTrip" />
-          <Stack.Screen name="DriverScan" />
+          <Stack.Screen name="UserScan" />
         </Stack>
         <ActiveTripBanner />
       </TripProvider>

@@ -3,11 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Models\Passenger;
+use App\Services\PassengerApprovalService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class PassengerApprovalController extends Controller
 {
+    public function __construct(
+        private PassengerApprovalService $approvals,
+    ) {}
+
     public function index(Request $request)
     {
         $counts = [
@@ -73,12 +78,7 @@ class PassengerApprovalController extends Controller
             'status' => 'required|string|in:pending,active,suspended,declined',
         ]);
 
-        $status = $validated['status'];
-
-        $passenger->update([
-            'passenger_status' => $status,
-            'reviewed_at' => $status === 'pending' ? null : now(),
-        ]);
+        $this->approvals->setStatus($passenger, $validated['status']);
 
         return back()->with('success', 'Passenger status updated.');
     }
@@ -91,11 +91,7 @@ class PassengerApprovalController extends Controller
             'status' => 'required|string|in:active,suspended,declined',
         ]);
 
-        Passenger::whereIn('id', $validated['ids'])->update([
-            'passenger_status' => $validated['status'],
-            'reviewed_at' => now(),
-            'updated_at' => now(),
-        ]);
+        $this->approvals->bulkSetStatus($validated['ids'], $validated['status']);
 
         return back()->with('success', 'Passenger statuses updated.');
     }

@@ -108,14 +108,24 @@ export const validateUser = async (email, password) => {
         if (response.ok && result.success) {
             const payload = result.data;
 
+            const role = payload.role || (payload.driver ? "driver" : "passenger");
+            const passengerStatus = payload.passenger?.passenger_status;
+            // Drivers/admins are never gated. A passenger is approved once an
+            // admin moves them to the "active" status; until then the app keeps
+            // them on the "Account Under Review" screen.
+            const approved = role !== "passenger" || passengerStatus === "active";
+
             await setCurrentUser({
                 id: payload.user?.id,
                 passenger_id: payload.passenger?.id,       // used for Pusher channel & pickup requests
                 driver_id: payload.driver?.id,             // used for the driver-{id} Pusher channel
-                role: payload.role || (payload.driver ? "driver" : "passenger"),
+                role,
                 full_name: payload.user?.full_name || payload.passenger?.full_name || payload.driver?.full_name || "User",
                 email: payload.user?.email,
                 passenger_type: payload.passenger?.passenger_type || "student",
+                passenger_status: passengerStatus,
+                verification_status: payload.passenger?.verification_status,
+                approved,                                   // gates navigation (Login.js / index.tsx)
                 token: result.token,                        // Sanctum token for API calls
             });
 
@@ -162,7 +172,7 @@ export const requestPasswordReset = async (email) => {
             return { success: true, message: data.message };
         }
         return { success: false, message: data.message || "Could not send reset code." };
-    } catch (error) {
+    } catch (_error) {
         return { success: false, message: "Network error. Check your connection." };
     }
 };
@@ -185,7 +195,7 @@ export const submitPasswordReset = async (email, code, password) => {
         }
         const firstError = data.errors ? Object.values(data.errors)[0]?.[0] : null;
         return { success: false, message: firstError || data.message || "Reset failed." };
-    } catch (error) {
+    } catch (_error) {
         return { success: false, message: "Network error. Check your connection." };
     }
 };

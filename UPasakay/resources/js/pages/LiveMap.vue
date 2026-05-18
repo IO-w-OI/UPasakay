@@ -419,7 +419,27 @@ const mapRef = ref<HTMLDivElement | null>(null);
 let map: L.Map | null = null;
 let tileLayer: L.TileLayer | null = null;
 const shuttleMarkers = new Map<number, L.Marker>();
+// Last time we heard a GPS ping per shuttle — drives the silence watchdog
+// that hides a driver who lost internet (can't send an off-duty signal).
+const lastPingAt = new Map<number, number>();
+let staleWatchdog: ReturnType<typeof setInterval> | null = null;
+const STALE_MS = 90_000;
 const otherMarkers: L.Marker[] = [];
+
+/** Pull a shuttle off the map and mark it offline in the side list. */
+function dropShuttleMarker(shuttleId: number) {
+    const marker = shuttleMarkers.get(shuttleId);
+    if (marker) {
+        marker.remove();
+        shuttleMarkers.delete(shuttleId);
+    }
+    const s = localShuttles.value.find(sh => sh.id === shuttleId);
+    if (s) {
+        s.status = 'offline';
+        s.latitude = null;
+        s.longitude = null;
+    }
+}
 const customStopMarkers = new Map<number, L.CircleMarker>();
 
 // Named polyline refs for geofenced custom-stop distance checks
@@ -511,10 +531,13 @@ const syncMarkers = () => {
     otherMarkers.forEach(m => m.remove());
     otherMarkers.length = 0;
 
-    filtered.value.forEach((s, i) => {
-        const lat = s.latitude ?? 10.3157 + (i * 0.004);
-        const lng = s.longitude ?? 123.8854 + (i * 0.005);
-        const shuttleMarker = L.marker([lat, lng], { icon: makeShuttleIcon(s.status), bubblingMouseEvents: false })
+    filtered.value.forEach((s) => {
+        // Offline shuttles (toggled off duty, or gone silent / stale) have
+        // no live position — don't draw a marker for them at all.
+        if (s.status === 'offline' || s.latitude == null || s.longitude == null) {
+            return;
+        }
+        const shuttleMarker = L.marker([s.latitude, s.longitude], { icon: makeShuttleIcon(s.status), bubblingMouseEvents: false })
             .bindPopup(`<div style="font-size:13px;"><b>${s.code}</b><br>Driver: ${s.driver}<br>Route: ${s.route}<br>Speed: ${s.speed} km/h<br>Status: ${s.status}</div>`)
             .addTo(map!);
         shuttleMarker.on('click', () => selectShuttle(s));
@@ -674,9 +697,17 @@ onMounted(() => {
                 ? localShuttles.value.find(s => s.id === shuttleId)
                 : localShuttles.value[0];
             if (!shuttle) return;
+
+            // A driver could ping then immediately toggle off — honour that.
+            if (data.status === 'offline') {
+                dropShuttleMarker(shuttle.id);
+                return;
+            }
+
+            lastPingAt.set(shuttle.id, Date.now());
             shuttle.latitude = data.latitude;
             shuttle.longitude = data.longitude;
-            if (data.status) shuttle.status = data.status;
+            shuttle.status = data.status ?? 'active';
             const marker = shuttleMarkers.get(shuttle.id);
             if (marker) {
                 applyShuttleMarkerMove(marker, data.latitude, data.longitude);
@@ -686,6 +717,16 @@ onMounted(() => {
                     .bindPopup(`<div style="font-size:13px;"><b>${shuttle.code}</b><br>Driver: ${shuttle.driver}<br>Route: ${shuttle.route}</div>`)
                     .addTo(map);
                 shuttleMarkers.set(shuttle.id, m);
+            }
+        });
+
+        // Pure status flip (driver toggled off/on duty, no new GPS fix).
+        channel.listen('.shuttle.status', (data: { id: number; status: string }) => {
+            if (data.status === 'offline') {
+                dropShuttleMarker(data.id);
+            } else {
+                const s = localShuttles.value.find(sh => sh.id === data.id);
+                if (s) s.status = data.status;
             }
         });
 
@@ -702,12 +743,36 @@ onMounted(() => {
             });
         });
     }
+
+    // Seed the watchdog so shuttles that were already active on page load
+    // still expire if their driver has since gone silent.
+    localShuttles.value.forEach(s => {
+        if (s.status !== 'offline') lastPingAt.set(s.id, Date.now());
+    });
+
+    // Every 30s, drop any shuttle we haven't heard from in STALE_MS — this
+    // is the only way to react to a driver who killed their phone's
+    // internet (no off-duty request can ever reach the server).
+    staleWatchdog = setInterval(() => {
+        const now = Date.now();
+        shuttleMarkers.forEach((_marker, id) => {
+            const seen = lastPingAt.get(id) ?? 0;
+            if (now - seen > STALE_MS) {
+                dropShuttleMarker(id);
+                lastPingAt.delete(id);
+            }
+        });
+    }, 30_000);
 });
 
 onUnmounted(() => {
     if (acceptedToastTimer) {
         clearTimeout(acceptedToastTimer);
         acceptedToastTimer = null;
+    }
+    if (staleWatchdog) {
+        clearInterval(staleWatchdog);
+        staleWatchdog = null;
     }
     acceptedToast.value = null;
     try { echo.leave('shuttle-locations'); } catch {}

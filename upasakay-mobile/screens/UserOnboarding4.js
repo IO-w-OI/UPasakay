@@ -10,11 +10,15 @@ import {
     ButtonText,
     StyledFormArea
 } from '../components/styles';
+import { logoutUser } from '../services/UserStore';
 
 const UserOnboarding4 = () => {
     const router = useRouter();
 
-    const handleReturnToLogin = () => {
+    // Clear the (still-pending) session first; otherwise index.tsx would just
+    // redirect a logged-in pending user straight back to this screen.
+    const handleReturnToLogin = async () => {
+        await logoutUser();
         router.replace('/');
     };
 

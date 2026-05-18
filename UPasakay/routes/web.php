@@ -49,6 +49,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('shuttles/{shuttle}/assign-driver', [ShuttleWebController::class, 'assignDriver'])->name('shuttles.assign-driver');
     Route::patch('shuttles/{shuttle}/assign-route', [ShuttleWebController::class, 'assignRoute'])->name('shuttles.assign-route');
     Route::patch('shuttles/{shuttle}/status', [ShuttleWebController::class, 'updateStatus'])->name('shuttles.update-status');
+    Route::patch('shuttles/{shuttle}/regenerate-boarding-code', [ShuttleWebController::class, 'regenerateBoardingCode'])->name('shuttles.regenerate-boarding-code');
     Route::delete('shuttles/{shuttle}', [ShuttleWebController::class, 'destroy'])->name('shuttles.destroy');
 
     // Pickup Requests

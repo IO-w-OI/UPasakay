@@ -10,9 +10,16 @@ import { currentUser } from '../services/UserStore';
 export default function Index() {
     if (currentUser?.token) {
         const isDriver = currentUser.role === 'driver';
-        return (
-            <Redirect href={isDriver ? '/(tabs)/Drivers/DriverHome' : '/(tabs)/Users/UserHome'} />
-        );
+        if (isDriver) {
+            return <Redirect href="/(tabs)/Drivers/DriverHome" />;
+        }
+        // Passengers awaiting admin approval stay on the "Account Under
+        // Review" screen. Checked with an explicit `=== false` so sessions
+        // saved before this field existed aren't bounced out.
+        if (currentUser.approved === false) {
+            return <Redirect href="/UserOnboarding4" />;
+        }
+        return <Redirect href="/(tabs)/Users/UserHome" />;
     }
 
     return <Login />;

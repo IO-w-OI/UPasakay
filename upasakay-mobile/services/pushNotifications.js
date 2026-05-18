@@ -91,10 +91,15 @@ export const routeForNotificationData = (data) => {
         case 'pickup_request':
             return '/(tabs)/Drivers/DriverHome';
         case 'ride_accepted':
-        case 'ride_completed':
             return '/UserBooking';
+        case 'ride_completed':
+            return '/Feedback';
         case 'announcement':
             return '/(tabs)/Users/UserHome';
+        case 'account_approved':
+            // The session still says "pending" until the next login, so send
+            // the tap to the login screen to refresh approval state.
+            return '/';
         default:
             return null;
     }

@@ -93,10 +93,15 @@ const Login = () => {
 
                             // 3. Role-based routing — driven by the backend
                             // auth payload (role: driver | passenger | admin),
-                            // not the email domain.
+                            // not the email domain. Passengers awaiting admin
+                            // approval are held on the "Account Under Review"
+                            // screen instead of the home screen.
                             if (result.user?.role === 'driver') {
                                 console.log("Driver detected. Routing to Driver Dashboard...");
                                 router.replace('/(tabs)/Drivers/DriverHome');
+                            } else if (!result.user?.approved) {
+                                console.log("Passenger pending approval. Routing to Account Under Review...");
+                                router.replace('/UserOnboarding4');
                             } else {
                                 console.log("Passenger detected. Routing to User Home...");
                                 router.replace('/(tabs)/Users/UserHome');

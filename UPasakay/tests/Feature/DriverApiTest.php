@@ -291,6 +291,24 @@ class DriverApiTest extends TestCase
         $this->assertSame(1, (int) $env['driver']->fresh()->is_available);
     }
 
+    public function test_toggling_duty_syncs_the_assigned_shuttle_status(): void
+    {
+        $env = $this->setupRouteWithDriver(capacity: 3);
+
+        // Off duty → shuttle goes offline so the web Live Map drops its marker.
+        $this->withHeaders($this->authHeaders($env['driverUser']))
+            ->patchJson('/api/driver/status', ['on_duty' => false])
+            ->assertOk();
+        $this->assertSame('offline', $env['shuttle']->fresh()->status);
+
+        // Back on duty → shuttle is active again.
+        $this->withHeaders($this->authHeaders($env['driverUser']))
+            ->patchJson('/api/driver/status', ['on_duty' => true])
+            ->assertOk();
+        $this->assertSame('active', $env['shuttle']->fresh()->status);
+        $this->assertNotNull($env['shuttle']->fresh()->last_seen_at);
+    }
+
     public function test_driver_status_requires_boolean(): void
     {
         $env = $this->setupRouteWithDriver(capacity: 3);
