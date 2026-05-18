@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\ShuttleController;
 use App\Http\Controllers\Api\ShuttleLocationController;
 use App\Http\Controllers\Api\StopController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\ProfileController;
 
 // Heroku keepalive / health (no DB) — use with cron-job.org every ~10 minutes
 Route::get('ping', fn () => response()->json([
@@ -93,4 +94,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('pickup-requests/{pickupRequest}/board', [DriverApiController::class, 'board']);
     Route::patch('pickup-requests/{pickupRequest}/no-show', [DriverApiController::class, 'noShow']);
     Route::patch('pickup-requests/{pickupRequest}/decline', [DriverApiController::class, 'decline']);
+
+    //Edit Profile for both drivers and passengers (shared endpoint)
+    Route::get('profile', [ProfileController::class, 'show']);
+    Route::patch('profile', [ProfileController::class, 'update']);
 });
