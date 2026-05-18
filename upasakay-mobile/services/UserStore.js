@@ -148,7 +148,50 @@ export const setCurrentUser = async (user) => {
 };
 
 /**
- * 5. LOGOUT LOGIC
+ * 5. GOOGLE SIGN-IN
+ * Exchanges a Google ID token for a backend Sanctum token.
+ */
+export const googleSignIn = async (idToken) => {
+    try {
+        const response = await fetch(`${API_URL}/auth/google`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ id_token: idToken }),
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+            const payload = result.data;
+            const role = payload.role || (payload.driver ? 'driver' : 'passenger');
+            const passengerStatus = payload.passenger?.passenger_status;
+            const approved = role !== 'passenger' || passengerStatus === 'active';
+
+            await setCurrentUser({
+                id: payload.user?.id,
+                passenger_id: payload.passenger?.id,
+                driver_id: payload.driver?.id,
+                role,
+                full_name: payload.user?.full_name || payload.passenger?.full_name || payload.driver?.full_name || 'User',
+                email: payload.user?.email,
+                passenger_type: payload.passenger?.passenger_type || 'student',
+                passenger_status: passengerStatus,
+                verification_status: payload.passenger?.verification_status,
+                approved,
+                token: result.token,
+            });
+
+            return { success: true, user: currentUser };
+        }
+
+        return { success: false, message: result.message || 'Google sign-in failed.' };
+    } catch (_error) {
+        return { success: false, message: 'Network error. Check your connection.' };
+    }
+};
+
+/**
+ * 6. LOGOUT LOGIC
  * Clears the in-memory session and the persisted copy.
  */
 export const logoutUser = async () => {

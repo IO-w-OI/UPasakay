@@ -26,6 +26,7 @@ Route::get('ping', fn () => response()->json([
 // Public auth routes
 Route::post('register', [AuthController::class, 'register']);
 Route::post('login', [AuthController::class, 'login']);
+Route::post('auth/google', [AuthController::class, 'googleAuth']);
 Route::post('admin/register', [AdminAuthController::class, 'register']);
 Route::post('password/forgot', [AuthController::class, 'forgotPassword']);
 Route::post('password/reset', [AuthController::class, 'resetPassword']);

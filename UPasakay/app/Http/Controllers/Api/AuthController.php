@@ -13,6 +13,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -258,6 +259,102 @@ class AuthController extends Controller
             'success' => true,
             'message' => 'Password has been reset. Please log in with your new password.',
         ], 200);
+    }
+
+    public function googleAuth(Request $request): JsonResponse
+    {
+        $request->validate(['id_token' => 'required|string']);
+
+        // Verify the ID token with Google's tokeninfo endpoint.
+        // This checks the signature, expiry, and returns the user's claims.
+        $googleResponse = Http::get('https://oauth2.googleapis.com/tokeninfo', [
+            'id_token' => $request->id_token,
+        ]);
+
+        if ($googleResponse->failed()) {
+            return response()->json(['success' => false, 'message' => 'Invalid Google token.'], 401);
+        }
+
+        $claims = $googleResponse->json();
+        $email = $claims['email'] ?? null;
+        $emailVerified = ($claims['email_verified'] ?? 'false') === 'true';
+
+        if (! $email || ! $emailVerified) {
+            return response()->json(['success' => false, 'message' => 'Google email not verified.'], 401);
+        }
+
+        // Domain restriction: only UP and UPasakay accounts.
+        if (! preg_match('/^[^@]+@(up\.edu\.ph|upasakay\.com)$/', $email)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only @up.edu.ph and @upasakay.com accounts are allowed.',
+            ], 403);
+        }
+
+        $fullName = $claims['name'] ?? explode('@', $email)[0];
+
+        // Existing passenger account.
+        $passenger = Passenger::where('email', $email)->first();
+        if ($passenger) {
+            $passenger->tokens()->delete();
+            $token = $passenger->createToken('api-token')->plainTextToken;
+            $linkedUser = $passenger->user;
+            $payload = $this->buildAuthPayload($linkedUser ?? $passenger, $passenger, $token);
+
+            return response()->json([
+                'success' => true, 'message' => 'Login successful',
+                'data' => $payload, 'passenger' => $payload['passenger'],
+                'onboarding' => $payload['onboarding'], 'token' => $payload['token'],
+            ]);
+        }
+
+        // Existing user (driver / admin).
+        $user = User::where('email', $email)->first();
+        if ($user) {
+            $user->tokens()->delete();
+            $token = $user->createToken('mobile-app')->plainTextToken;
+            $payload = $this->buildAuthPayload($user, $user->passenger, $token);
+
+            return response()->json([
+                'success' => true, 'message' => 'Login successful',
+                'data' => $payload, 'passenger' => $payload['passenger'],
+                'onboarding' => $payload['onboarding'], 'token' => $payload['token'],
+            ]);
+        }
+
+        // New user — auto-register as pending passenger.
+        $newUser = null;
+        $newPassenger = null;
+
+        DB::transaction(function () use ($email, $fullName, &$newUser, &$newPassenger) {
+            $newUser = User::create([
+                'name'              => $fullName,
+                'email'             => $email,
+                'password_hash'     => Hash::make(Str::random(32)),
+                'email_verified_at' => now(),
+            ]);
+
+            $newPassenger = Passenger::create([
+                'user_id'             => $newUser->id,
+                'full_name'           => $fullName,
+                'email'               => $email,
+                'password_hash'       => Hash::make(Str::random(32)),
+                'passenger_number'    => $this->generatePassengerNumber(),
+                'passenger_type'      => 'student',
+                'passenger_status'    => 'pending',
+                'verification_status' => 'pending',
+            ]);
+        });
+
+        $token = $newUser->createToken('mobile-app')->plainTextToken;
+        $payload = $this->buildAuthPayload($newUser, $newPassenger, $token);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Account created. Please wait for admin approval.',
+            'data' => $payload, 'passenger' => $payload['passenger'],
+            'onboarding' => $payload['onboarding'], 'token' => $payload['token'],
+        ], 201);
     }
 
     private function generatePassengerNumber(): string

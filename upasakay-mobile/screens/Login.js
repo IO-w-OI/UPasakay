@@ -1,12 +1,13 @@
+import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
 import { Ionicons, Octicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Formik } from 'formik';
 import { useState } from 'react';
-import { Alert, View } from 'react-native';
+import { Alert, Image, Text, View } from 'react-native';
 
 // Import the Service
-import { validateUser } from '../services/UserStore';
+import { validateUser, googleSignIn } from '../services/UserStore';
 import { registerForPushNotifications } from '../services/pushNotifications';
 
 import {
@@ -14,7 +15,6 @@ import {
     Colors,
     ExtraText,
     ExtraView,
-    GoogleLogo,
     InnerContainer,
     LeftIcon,
     Line,
@@ -54,9 +54,42 @@ const MyTextInput = ({ label, icon, isPassword, hidePassword, setHidePassword, .
     );
 };
 
+const routeAfterAuth = (user, router) => {
+    if (user?.role === 'driver') {
+        router.replace('/(tabs)/Drivers/DriverHome');
+    } else if (!user?.approved) {
+        router.replace('/UserOnboarding4');
+    } else {
+        router.replace('/(tabs)/Users/UserHome');
+    }
+};
+
 const Login = () => {
-    const router = useRouter(); 
+    const router = useRouter();
     const [hidePassword, setHidePassword] = useState(true);
+
+    const handleGoogleSignIn = async () => {
+        try {
+            await GoogleSignin.hasPlayServices();
+            const userInfo = await GoogleSignin.signIn();
+            const idToken = userInfo.data?.idToken;
+            if (!idToken) {
+                Alert.alert('Google Sign-In Failed', 'No ID token received.');
+                return;
+            }
+            const result = await googleSignIn(idToken);
+            if (result.success) {
+                registerForPushNotifications();
+                routeAfterAuth(result.user, router);
+            } else {
+                Alert.alert('Sign-In Failed', result.message || 'Google sign-in failed.');
+            }
+        } catch (error) {
+            if (error.code === statusCodes.SIGN_IN_CANCELLED) return;
+            if (error.code === statusCodes.IN_PROGRESS) return;
+            Alert.alert('Google Sign-In Error', error.message || 'Something went wrong.');
+        }
+    };
 
     return (
         <StyledContainer>
@@ -78,34 +111,8 @@ const Login = () => {
                         const result = await validateUser(values.email, values.password);
 
                         if (result.success) {
-                            const userName = result.user?.full_name;
-
-                            // Register this device for push (fire-and-forget;
-                            // token is now in the session so apiClient can auth).
                             registerForPushNotifications();
-
-                                console.log("---------------- TOKEN RECOVERY ----------------");
-                                console.log("YOUR TOKEN IS:", result.user?.token);
-                                console.log("------------------------------------------------");
-
-                                console.log("Login Success! Welcome:", userName);
-
-
-                            // 3. Role-based routing — driven by the backend
-                            // auth payload (role: driver | passenger | admin),
-                            // not the email domain. Passengers awaiting admin
-                            // approval are held on the "Account Under Review"
-                            // screen instead of the home screen.
-                            if (result.user?.role === 'driver') {
-                                console.log("Driver detected. Routing to Driver Dashboard...");
-                                router.replace('/(tabs)/Drivers/DriverHome');
-                            } else if (!result.user?.approved) {
-                                console.log("Passenger pending approval. Routing to Account Under Review...");
-                                router.replace('/UserOnboarding4');
-                            } else {
-                                console.log("Passenger detected. Routing to User Home...");
-                                router.replace('/(tabs)/Users/UserHome');
-                            }
+                            routeAfterAuth(result.user, router);
                         } else {
                             Alert.alert("Login Failed", result.message || "Invalid credentials.");
                         }
@@ -140,22 +147,29 @@ const Login = () => {
                                 <ButtonText>Log In</ButtonText>
                             </StyledButton>
 
-                            <ExtraView>
-                                <TextLink onPress={() => router.push('/ForgotPassword')}>
-                                    <TextLinkContent>Forgot password?</TextLinkContent>
-                                </TextLink>
-                            </ExtraView>
-
                             <LineContainer>
                                 <Line />
                                 <OrText> OR </OrText>
                                 <Line />
                             </LineContainer>
 
-                            <StyledButton google={true}>
-                                <GoogleLogo source={require('../assets/images/google-logo.png')} /> 
-                                <ButtonText google={true}>Log In with Google</ButtonText>
+                            <StyledButton
+                                onPress={handleGoogleSignIn}
+                                style={{ backgroundColor: '#fff', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                            >
+                                <Image
+                                    source={require('../assets/images/google-logo.png')}
+                                    style={{ width: 20, height: 20 }}
+                                    resizeMode="contain"
+                                />
+                                <ButtonText style={{ color: '#333' }}>Log In with Google</ButtonText>
                             </StyledButton>
+
+                            <ExtraView>
+                                <TextLink onPress={() => router.push('/ForgotPassword')}>
+                                    <TextLinkContent>Forgot password?</TextLinkContent>
+                                </TextLink>
+                            </ExtraView>
 
                             <ExtraView>
                                 <ExtraText>Don&apos;t have an account already? </ExtraText>

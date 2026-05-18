@@ -56,9 +56,9 @@ class ProfileController extends Controller
         ]);
 
         if ($driver) {
-            // Update driver
             if (isset($validated['full_name'])) {
                 $driver->update(['full_name' => $validated['full_name']]);
+                $user->update(['name' => $validated['full_name']]);
             }
             if (!empty($validated['password'])) {
                 $user->update(['password_hash' => $validated['password']]);
@@ -79,6 +79,7 @@ class ProfileController extends Controller
 
         if (isset($validated['full_name']) && $passenger) {
             $passenger->update(['full_name' => $validated['full_name']]);
+            $user->update(['name' => $validated['full_name']]);
         }
         if (!empty($validated['password'])) {
             $user->update(['password_hash' => $validated['password']]);
