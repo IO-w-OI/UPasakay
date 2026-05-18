@@ -96,6 +96,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('pickup-requests/{pickupRequest}/decline', [DriverApiController::class, 'decline']);
 
     //Edit Profile for both drivers and passengers (shared endpoint)
+    use App\Http\Controllers\Api\ProfileController;
     Route::get('profile', [ProfileController::class, 'show']);
     Route::patch('profile', [ProfileController::class, 'update']);
 });
