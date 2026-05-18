@@ -184,6 +184,17 @@ export const googleSignIn = async (idToken) => {
             return { success: true, user: currentUser };
         }
 
+        // No app account linked to this Google account — caller handles redirect to sign-up.
+        if (result.code === 'account_not_found') {
+            return {
+                success: false,
+                code: 'account_not_found',
+                googleEmail: result.google_email,
+                googleName: result.google_name,
+                message: result.message,
+            };
+        }
+
         return { success: false, message: result.message || 'Google sign-in failed.' };
     } catch (_error) {
         return { success: false, message: 'Network error. Check your connection.' };

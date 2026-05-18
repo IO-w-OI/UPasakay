@@ -15,7 +15,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
@@ -283,14 +282,6 @@ class AuthController extends Controller
             return response()->json(['success' => false, 'message' => 'Google email not verified.'], 401);
         }
 
-        // Domain restriction: only UP and UPasakay accounts.
-        if (! preg_match('/^[^@]+@(up\.edu\.ph|upasakay\.com)$/', $email)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Only @up.edu.ph and @upasakay.com accounts are allowed.',
-            ], 403);
-        }
-
         $fullName = $claims['name'] ?? explode('@', $email)[0];
 
         // Existing passenger account.
@@ -322,39 +313,14 @@ class AuthController extends Controller
             ]);
         }
 
-        // New user — auto-register as pending passenger.
-        $newUser = null;
-        $newPassenger = null;
-
-        DB::transaction(function () use ($email, $fullName, &$newUser, &$newPassenger) {
-            $newUser = User::create([
-                'name'              => $fullName,
-                'email'             => $email,
-                'password_hash'     => Hash::make(Str::random(32)),
-                'email_verified_at' => now(),
-            ]);
-
-            $newPassenger = Passenger::create([
-                'user_id'             => $newUser->id,
-                'full_name'           => $fullName,
-                'email'               => $email,
-                'password_hash'       => Hash::make(Str::random(32)),
-                'passenger_number'    => $this->generatePassengerNumber(),
-                'passenger_type'      => 'student',
-                'passenger_status'    => 'pending',
-                'verification_status' => 'pending',
-            ]);
-        });
-
-        $token = $newUser->createToken('mobile-app')->plainTextToken;
-        $payload = $this->buildAuthPayload($newUser, $newPassenger, $token);
-
+        // No account found — tell the mobile app so it can redirect to sign-up.
         return response()->json([
-            'success' => true,
-            'message' => 'Account created. Please wait for admin approval.',
-            'data' => $payload, 'passenger' => $payload['passenger'],
-            'onboarding' => $payload['onboarding'], 'token' => $payload['token'],
-        ], 201);
+            'success'      => false,
+            'code'         => 'account_not_found',
+            'message'      => 'No account is linked to this Google account. Please sign up first.',
+            'google_email' => $email,
+            'google_name'  => $fullName,
+        ], 404);
     }
 
     private function generatePassengerNumber(): string

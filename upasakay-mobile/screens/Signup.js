@@ -1,5 +1,5 @@
 import { Ionicons, Octicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Formik } from 'formik';
 import { useState } from 'react';
@@ -72,6 +72,8 @@ const MyTextInput = ({ icon, isPassword, hidePassword, setHidePassword, error, t
 
 const Signup = () => {
     const router = useRouter();
+    const { prefill_email, prefill_name } = useLocalSearchParams();
+    const fromGoogle = !!prefill_email;
     const [hidePassword, setHidePassword] = useState(true);
     const [hideConfirmPassword, setHideConfirmPassword] = useState(true);
     const [formError, setFormError] = useState('');
@@ -159,10 +161,10 @@ const Signup = () => {
 
                         <Formik
                             initialValues={{
-                                email: '',
+                                email: prefill_email || '',
                                 password: '',
                                 confirmPassword: '',
-                                full_name: '',
+                                full_name: prefill_name || '',
                                 phone: '',
                                 role: '',
                                 department_office: '',
@@ -201,6 +203,11 @@ const Signup = () => {
                                         </View>
                                     ) : null}
 
+                                    {fromGoogle && (
+                                        <Text style={{ color: Colors.text_idle, fontSize: 12, marginBottom: 4, marginLeft: 6 }}>
+                                            Email pre-filled from your Google account
+                                        </Text>
+                                    )}
                                     <MyTextInput
                                         icon="mail"
                                         placeholder="Enter your email address"
@@ -210,8 +217,10 @@ const Signup = () => {
                                         value={values.email}
                                         keyboardType="email-address"
                                         autoCapitalize="none"
+                                        editable={!fromGoogle}
                                         error={errors.email}
                                         touched={touched.email}
+                                        style={fromGoogle ? { opacity: 0.6 } : {}}
                                     />
 
                                     <MyTextInput
@@ -279,8 +288,10 @@ const Signup = () => {
                                         onChangeText={handleChange('full_name')}
                                         onBlur={handleBlur('full_name')}
                                         value={values.full_name}
+                                        editable={!fromGoogle}
                                         error={errors.full_name}
                                         touched={touched.full_name}
+                                        style={fromGoogle ? { opacity: 0.6 } : {}}
                                     />
 
                                     <MyTextInput

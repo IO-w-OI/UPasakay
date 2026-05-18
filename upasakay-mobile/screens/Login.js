@@ -81,6 +81,24 @@ const Login = () => {
             if (result.success) {
                 registerForPushNotifications();
                 routeAfterAuth(result.user, router);
+            } else if (result.code === 'account_not_found') {
+                Alert.alert(
+                    'No Account Found',
+                    `No UPasakay account is linked to ${result.googleEmail}.\n\nWould you like to sign up?`,
+                    [
+                        { text: 'Cancel', style: 'cancel' },
+                        {
+                            text: 'Sign Up',
+                            onPress: () => router.push({
+                                pathname: '/Signup',
+                                params: {
+                                    prefill_email: result.googleEmail,
+                                    prefill_name: result.googleName,
+                                },
+                            }),
+                        },
+                    ]
+                );
             } else {
                 Alert.alert('Sign-In Failed', result.message || 'Google sign-in failed.');
             }
@@ -100,14 +118,6 @@ const Login = () => {
                 <Formik
                     initialValues={{ email: '', password: '' }}
                     onSubmit={async (values) => {
-                        // 1. Domain Validation
-                        const upEmailRegex = /^[a-zA-Z0-9._%+-]+@(up\.edu\.ph|upasakay\.com)$/;
-                        if (!upEmailRegex.test(values.email)) {
-                            Alert.alert("Invalid Email", "Please use @up.edu.ph or @upasakay.com.");
-                            return;
-                        }
-
-                        // 2. API Call
                         const result = await validateUser(values.email, values.password);
 
                         if (result.success) {
