@@ -54,7 +54,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Pickup Requests
     Route::get('pickup-requests', [PickupRequestController::class, 'index'])->name('pickup-requests.index');
-    Route::patch('pickup-requests/{pickupRequest}/assign', [PickupRequestController::class, 'assign'])->name('pickup-requests.assign');
 
     // Passenger approvals
     Route::get('passengers', [PassengerApprovalController::class, 'index'])->name('passengers.index');

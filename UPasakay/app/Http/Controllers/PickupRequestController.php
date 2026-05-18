@@ -2,14 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Driver;
 use App\Models\PickupRequest;
 use App\Models\Route;
-use App\Services\DriverAssignmentService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use InvalidArgumentException;
 
 class PickupRequestController extends Controller
 {
@@ -60,24 +57,16 @@ class PickupRequestController extends Controller
                 'created_at' => $r->created_at ? Carbon::parse($r->created_at)->format('M j, Y h:i A') : null,
                 'completed_at' => $r->completed_at ? Carbon::parse($r->completed_at)->format('M j, Y h:i A') : null,
                 'eta' => '~4 minutes',
-                'latitude' => null,
-                'longitude' => null,
+                'latitude' => $r->pickupStop?->latitude,
+                'longitude' => $r->pickupStop?->longitude,
             ];
         });
 
         $routes = Route::where('is_active', true)->pluck('name');
-        $availableDrivers = Driver::whereIn('driver_status', ['active', 'idle'])
-            ->orderBy('full_name')
-            ->get()
-            ->map(fn ($d) => [
-                'id' => $d->id,
-                'name' => $d->full_name,
-            ]);
 
         return Inertia::render('PickupRequests/Index', [
             'requests' => $requests,
             'routes' => $routes,
-            'availableDrivers' => $availableDrivers,
             'filters' => $request->only(['search', 'route', 'status', 'date']),
             'stats' => [
                 'total' => $totalToday,
@@ -88,22 +77,4 @@ class PickupRequestController extends Controller
         ]);
     }
 
-    public function assign(Request $request, PickupRequest $pickupRequest, DriverAssignmentService $assignmentService)
-    {
-        $validated = $request->validate([
-            'driver_id' => 'required|integer|exists:drivers,id',
-        ]);
-
-        try {
-            $assignmentService->assignToPickupRequest(
-                $validated['driver_id'],
-                $pickupRequest,
-                'active',
-            );
-        } catch (InvalidArgumentException $exception) {
-            return back()->with('error', $exception->getMessage());
-        }
-
-        return back()->with('success', 'Shuttle assigned successfully.');
-    }
 }
