@@ -87,6 +87,7 @@ const DriverProfile = () => {
 
                 {/* My Account */}
                 <SectionHeader style={{ width: 322 }}>My Account</SectionHeader>
+                <SingleMenuItem activeOpacity={0.7} onPress={() => router.push('/EditProfile')}>
                     <IconBox color="#B4DEC0">
                         <Ionicons name="person" size={22} color="#1A2E1A" />
                     </IconBox>
