@@ -1,6 +1,6 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
-import { router, useFocusEffect } from 'expo-router';
+import { router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
     ActivityIndicator,
@@ -226,19 +226,11 @@ const DriverTrip = () => {
     }, []);
 
     useEffect(() => {
+        loadFeed();
         startSharing().catch(() => {});
         return () => { stopSharing(); };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-
-    // Reload whenever the screen regains focus (e.g. returning from the QR
-    // scanner) so a just-confirmed boarding shows immediately. Also covers
-    // the initial mount.
-    useFocusEffect(
-        useCallback(() => {
-            loadFeed();
-        }, [loadFeed]),
-    );
 
     // Real-time: refresh queue/counts on new bookings or ride-accepted events.
     useEffect(() => {
@@ -513,27 +505,6 @@ const DriverTrip = () => {
                                                             {p.status !== 'in_progress' && (
                                                                 <View style={styles.paxActions}>
                                                                     <TouchableOpacity
-                                                                        style={[styles.actionBtn, styles.scanBtn]}
-                                                                        onPress={() =>
-                                                                            router.push({
-                                                                                pathname: '/DriverScan',
-                                                                                params: {
-                                                                                    requestId: p.id,
-                                                                                    passenger: p.passenger,
-                                                                                },
-                                                                            })
-                                                                        }
-                                                                    >
-                                                                        <Ionicons
-                                                                            name="qr-code"
-                                                                            size={18}
-                                                                            color="#fff"
-                                                                        />
-                                                                        <Text style={styles.actionText}>
-                                                                            Scan QR
-                                                                        </Text>
-                                                                    </TouchableOpacity>
-                                                                    <TouchableOpacity
                                                                         style={[styles.actionBtn, styles.boardBtn]}
                                                                         disabled={actingId === p.id}
                                                                         onPress={() =>
@@ -698,7 +669,6 @@ const styles = StyleSheet.create({
         flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4,
         paddingVertical: 11, paddingHorizontal: 14, borderRadius: 12,
     },
-    scanBtn: { backgroundColor: '#1565C0', flex: 1 },
     boardBtn: { backgroundColor: '#2E7D32', flex: 1 },
     noShowBtn: { backgroundColor: '#FFE0B2', flex: 1 },
     declineBtn: { backgroundColor: '#C62828', width: 48 },

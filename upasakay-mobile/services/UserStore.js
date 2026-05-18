@@ -172,7 +172,7 @@ export const requestPasswordReset = async (email) => {
             return { success: true, message: data.message };
         }
         return { success: false, message: data.message || "Could not send reset code." };
-    } catch (error) {
+    } catch (_error) {
         return { success: false, message: "Network error. Check your connection." };
     }
 };
@@ -195,7 +195,7 @@ export const submitPasswordReset = async (email, code, password) => {
         }
         const firstError = data.errors ? Object.values(data.errors)[0]?.[0] : null;
         return { success: false, message: firstError || data.message || "Reset failed." };
-    } catch (error) {
+    } catch (_error) {
         return { success: false, message: "Network error. Check your connection." };
     }
 };

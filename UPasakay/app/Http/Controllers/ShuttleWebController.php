@@ -16,9 +16,26 @@ class ShuttleWebController extends Controller
             'capacity'     => 'required|integer|min:1|max:100',
         ]);
 
-        Shuttle::create(array_merge($validated, ['status' => 'idle', 'is_active' => false]));
+        Shuttle::create(array_merge($validated, [
+            'status' => 'idle',
+            'is_active' => false,
+            'boarding_code' => Shuttle::generateUniqueBoardingCode(),
+        ]));
 
         return back()->with('success', 'Shuttle created successfully.');
+    }
+
+    /**
+     * Ad-hoc manual regeneration of the static boarding code printed on the
+     * shuttle (admin-triggered only — there is no scheduled rotation). The
+     * previously printed code stops working, so the new one must be reprinted
+     * and posted on the shuttle.
+     */
+    public function regenerateBoardingCode(Shuttle $shuttle)
+    {
+        $shuttle->update(['boarding_code' => Shuttle::generateUniqueBoardingCode()]);
+
+        return back()->with('success', 'Boarding code regenerated. Print and post the new code on the shuttle.');
     }
 
     public function update(Request $request, Shuttle $shuttle)

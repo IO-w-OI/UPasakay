@@ -91,8 +91,9 @@ export const routeForNotificationData = (data) => {
         case 'pickup_request':
             return '/(tabs)/Drivers/DriverHome';
         case 'ride_accepted':
-        case 'ride_completed':
             return '/UserBooking';
+        case 'ride_completed':
+            return '/Feedback';
         case 'announcement':
             return '/(tabs)/Users/UserHome';
         case 'account_approved':

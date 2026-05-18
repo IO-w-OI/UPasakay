@@ -11,6 +11,7 @@ class Shuttle extends Model
 
     protected $fillable = [
         'shuttle_code',
+        'boarding_code',
         'shuttle_type',
         'plate_number',
         'capacity',
@@ -39,5 +40,23 @@ class Shuttle extends Model
     public function driver()
     {
         return $this->belongsTo(Driver::class);
+    }
+
+    /**
+     * Collision-free uppercase 6-character boarding code (no ambiguous
+     * 0/O/1/I) — short enough to print large and type by hand.
+     */
+    public static function generateUniqueBoardingCode(): string
+    {
+        $alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+
+        do {
+            $code = '';
+            for ($i = 0; $i < 6; $i++) {
+                $code .= $alphabet[random_int(0, strlen($alphabet) - 1)];
+            }
+        } while (static::where('boarding_code', $code)->exists());
+
+        return $code;
     }
 }

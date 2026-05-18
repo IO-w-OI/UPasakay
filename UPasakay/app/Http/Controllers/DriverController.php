@@ -99,6 +99,7 @@ class DriverController extends Controller
         $shuttles = Shuttle::with(['route', 'driver'])->orderBy('shuttle_code')->get()->map(fn ($s) => [
             'id' => $s->id,
             'shuttle_code' => $s->shuttle_code,
+            'boarding_code' => $s->boarding_code,
             'shuttle_type' => $s->shuttle_type ?? 'van',
             'plate_number' => $s->plate_number,
             'capacity' => $s->capacity,

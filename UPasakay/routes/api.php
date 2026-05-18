@@ -74,6 +74,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('drivers', DriverController::class);
     Route::apiResource('pickup-requests', PickupRequestController::class)
         ->middleware('ensure.passenger.approved');
+    // Passenger self-confirms boarding by scanning/typing the code on the
+    // shuttle (verified against the assigned shuttle + a GPS proximity check).
+    Route::post('pickup-requests/{pickupRequest}/confirm-boarding', [PickupRequestController::class, 'confirmBoarding'])
+        ->middleware('ensure.passenger.approved');
+    // Passenger rates a completed ride (1–5 + optional comment).
+    Route::post('pickup-requests/{pickupRequest}/feedback', [PickupRequestController::class, 'feedback'])
+        ->middleware('ensure.passenger.approved');
     Route::apiResource('driver-assignments', DriverAssignmentController::class);
     Route::apiResource('shuttle-locations', ShuttleLocationController::class);
     Route::post('driver/location', [ShuttleLocationController::class, 'storeFromDriver']);
@@ -84,7 +91,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('driver/queue', [DriverApiController::class, 'queue']);
     Route::get('driver/notifications', [DriverApiController::class, 'notifications']);
     Route::patch('pickup-requests/{pickupRequest}/board', [DriverApiController::class, 'board']);
-    Route::post('pickup-requests/{pickupRequest}/confirm-boarding', [DriverApiController::class, 'confirmBoarding']);
     Route::patch('pickup-requests/{pickupRequest}/no-show', [DriverApiController::class, 'noShow']);
     Route::patch('pickup-requests/{pickupRequest}/decline', [DriverApiController::class, 'decline']);
 });

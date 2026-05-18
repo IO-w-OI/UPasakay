@@ -22,7 +22,8 @@ interface DriverItem {
     is_online: boolean; total_pickups: number;
 }
 interface ShuttleItem {
-    id: number; shuttle_code: string; shuttle_type: string; plate_number: string;
+    id: number; shuttle_code: string; boarding_code: string | null;
+    shuttle_type: string; plate_number: string;
     capacity: number; status: string; route: string; route_id: number | null;
     driver: string; driver_id: number | null; is_active: boolean;
 }
@@ -259,6 +260,14 @@ const openShuttleEdit = (s: ShuttleItem) => {
 const submitShuttleEdit = () => {
     if (!editingShuttle.value) return;
     shuttleEditForm.patch(`/shuttles/${editingShuttle.value.id}`, {
+        onSuccess: () => { showShuttleEditModal.value = false; editingShuttle.value = null; },
+    });
+};
+const regenerateBoardingCode = () => {
+    if (!editingShuttle.value) return;
+    if (!confirm('Regenerate the boarding code? The previously printed code will stop working — you must print and post the new one on the shuttle.')) return;
+    router.patch(`/shuttles/${editingShuttle.value.id}/regenerate-boarding-code`, {}, {
+        preserveScroll: true,
         onSuccess: () => { showShuttleEditModal.value = false; editingShuttle.value = null; },
     });
 };
@@ -1048,6 +1057,22 @@ const lastActiveClass = (d: DriverItem) => d.is_online ? 'text-green-600 dark:te
                             <option value="offline">Offline</option>
                             <option value="maintenance">Maintenance</option>
                         </select>
+                    </div>
+                    <hr class="border-border/50" />
+                    <div>
+                        <label class="mb-1 block text-sm font-medium text-foreground">Boarding Code</label>
+                        <p class="mb-2 text-xs text-muted-foreground">
+                            Print this and post it inside the shuttle. Passengers scan/type it to confirm boarding.
+                        </p>
+                        <div class="flex items-center gap-3">
+                            <span class="flex-1 rounded-lg border border-border/70 bg-muted/40 px-3 py-2 text-center text-lg font-bold tracking-[0.3em] text-foreground">
+                                {{ editingShuttle?.boarding_code || '— none —' }}
+                            </span>
+                            <button type="button" @click="regenerateBoardingCode"
+                                class="rounded-lg border border-border/70 px-3 py-2 text-sm font-medium text-foreground hover:bg-accent">
+                                Regenerate
+                            </button>
+                        </div>
                     </div>
                     <hr class="border-border/50" />
                     <div class="flex justify-end gap-3">
