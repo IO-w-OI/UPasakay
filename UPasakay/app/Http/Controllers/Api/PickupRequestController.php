@@ -45,16 +45,21 @@ class PickupRequestController extends Controller
         // Validate passenger status and check for duplicates
         try {
             $pickupRequest = $this->pickupRequestService->createPickupRequest($user, $validated);
-
             return response()->json($pickupRequest, 201);
         } catch (ValidationException $e) {
             return response()->json([
                 'message' => 'Validation failed',
                 'errors' => $e->errors(),
             ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Server error',
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ], 500);
         }
     }
-
     public function show(PickupRequest $pickupRequest)
     {
         return response()->json(
