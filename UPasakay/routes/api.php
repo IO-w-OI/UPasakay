@@ -69,6 +69,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('verification', [PassengerProfileController::class, 'verification']);
     });
 
+    Route::get('routes/{route}/shuttles', [RouteController::class, 'shuttles']);
     Route::apiResource('routes', RouteController::class);
     Route::apiResource('stops', StopController::class);
     Route::apiResource('shuttles', ShuttleController::class);
