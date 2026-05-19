@@ -67,7 +67,7 @@ class PickupRequestController extends Controller
                 'message' => 'Validation failed',
                 'errors' => $e->errors(),
             ], 422);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return response()->json([
                 'message' => 'Server error',
                 'error' => $e->getMessage(),

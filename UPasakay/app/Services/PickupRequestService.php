@@ -89,13 +89,15 @@ class PickupRequestService
 
         if ($latestLocation) {
             $pickupStop = Stop::find($data['pickup_stop_id']);
-            $pickupRequest->eta_minutes = $this->calculateETA(
-                $latestLocation->latitude,
-                $latestLocation->longitude,
-                $pickupStop->latitude,
-                $pickupStop->longitude
-            );
-            $pickupRequest->save();
+            if ($pickupStop) {
+                $pickupRequest->eta_minutes = $this->calculateETA(
+                    $latestLocation->latitude,
+                    $latestLocation->longitude,
+                    $pickupStop->latitude,
+                    $pickupStop->longitude
+                );
+                $pickupRequest->save();
+            }
         }
 
         $pickupRequest->load('pickupStop');

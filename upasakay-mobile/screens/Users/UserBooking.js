@@ -420,7 +420,7 @@ const UserMapScreen = () => {
     if (!ok) {
       LayoutAnimation.configureNext(SnappyAnim);
       setStatus('searching');
-      Alert.alert('Request failed', data?.message || 'Could not send Para request. Please try again.');
+      Alert.alert('Request failed', data?.error ?? data?.message ?? 'Could not send Para request. Please try again.');
       return;
     }
 
