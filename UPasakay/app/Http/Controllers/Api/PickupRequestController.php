@@ -18,7 +18,8 @@ class PickupRequestController extends Controller
 {
     /**
      * How close (metres) the passenger must be to the shuttle's last
-     * reported GPS position for a boarding confirmation to be accepted.
+     * reported GPS p
+     * osition for a boarding confirmation to be accepted.
      */
     private const BOARDING_RADIUS_METERS = 60;
 
@@ -53,9 +54,15 @@ class PickupRequestController extends Controller
         $user = $request->user();
 
         if (! $user) {
-            return response()->json([
-                'message' => 'Unauthenticated',
-            ], 401);
+            return response()->json(['message' => 'Unauthenticated'], 401);
+        }
+
+        // Mobile tokens authenticate as Passenger — resolve to the parent User
+        if ($user instanceof \App\Models\Passenger) {
+            $user = $user->user;
+            if (! $user) {
+                return response()->json(['message' => 'User account not found.'], 422);
+            }
         }
 
         // Validate passenger status and check for duplicates
