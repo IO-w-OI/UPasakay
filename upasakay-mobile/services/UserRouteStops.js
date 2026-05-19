@@ -17,10 +17,10 @@
   }
 };
 */
-
 export const ROUTE_STOPS = [
-  { id: 1, name: "JY Square Mall", lat: 10.3345, lng: 123.9042 },
-  { id: 2, name: "IT Park Terminal", lat: 10.3298, lng: 123.9061 },
-  { id: 3, name: "Lahug Elementary", lat: 10.3312, lng: 123.9015 },
-  { id: 4, name: "Capitol Site", lat: 10.3176, lng: 123.8907 },
+  { id: 51, name: "UP Cebu Lahug", lat: 10.3381, lng: 123.9116, route_id: 34 },
+  { id: 46, name: "Guadalupe (Jollibee)", lat: 10.3298, lng: 123.9061, route_id: 34 },
+  { id: 47, name: "Capitol (Metrobank)", lat: 10.3176, lng: 123.8907, route_id: 34 },
+  { id: 48, name: "UP Cebu (Oblation Sq.)", lat: 10.3345, lng: 123.9042, route_id: 34 },
+  { id: 49, name: "SM Consolacion", lat: 10.3312, lng: 123.9015, route_id: 34 },
 ];

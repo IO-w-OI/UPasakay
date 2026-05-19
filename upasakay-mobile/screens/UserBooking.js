@@ -6,7 +6,11 @@ import { router } from 'expo-router';
 import * as Notifications from 'expo-notifications';
 
 // IMPORT DUMMY COORDINATES
-import { ROUTE_STOPS } from './services/UserRouteStops';
+import { ROUTE_STOPS } from '../services/UserRouteStops';
+//Replacing dummy coordinates with actual GPS is on the roadmap, but it is a bit of work and we want to prioritize other features for the MVP. The dummy coordinates are based on real locations around UP Cebu, but they are not exact and do not reflect actual bus routes. They are just meant to provide a more realistic experience when testing the booking flow without needing to physically move around campus.
+import { currentUser, API_URL } from '../services/UserStore';
+const [bookingData, setBookingData] = useState(null);
+
 
 const { width } = Dimensions.get('window');
 
@@ -194,12 +198,50 @@ const UserMapScreen = () => {
     }
   };
 
-  const handleParaPress = () => {
-    LayoutAnimation.configureNext(SnappyAnim);
-    setStatus('booking');
-    // Start bus from UPC (10.3381, 123.9116) to User
-    webViewRef.current?.injectJavaScript(`window.startBusTrip(10.3381, 123.9116, ${currentCoords.lat}, ${currentCoords.lng}, 'PICKUP');`);
-  };
+  const handleParaPress = async () => {
+    // Find nearest stop to current coordinates
+    const nearestStop = ROUTE_STOPS.reduce((prev, curr) => {
+        const prevDist = Math.abs(prev.lat - currentCoords.lat) + Math.abs(prev.lng - currentCoords.lng);
+        const currDist = Math.abs(curr.lat - currentCoords.lat) + Math.abs(curr.lng - currentCoords.lng);
+        return currDist < prevDist ? curr : prev;
+    });
+
+    // Default dropoff is UP Cebu Oblation
+    const dropoffStop = ROUTE_STOPS.find(s => s.id === 48);
+
+    try {
+        const response = await fetch(`${API_URL}/pickup-requests`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${currentUser?.token}`,
+            },
+            body: JSON.stringify({
+                route_id: nearestStop.route_id,
+                pickup_stop_id: nearestStop.id,
+                dropoff_stop_id: dropoffStop.id,
+            }),
+        });
+
+        const result = await response.json();
+        console.log('Booking result:', result);
+
+        if (response.ok) {
+            setBookingData(result);
+            LayoutAnimation.configureNext(SnappyAnim);
+            setStatus('booking');
+            webViewRef.current?.injectJavaScript(
+                `window.startBusTrip(10.3381, 123.9116, ${currentCoords.lat}, ${currentCoords.lng}, 'PICKUP');`
+            );
+        } else {
+            alert(result.message || 'Booking failed. Please try again.');
+        }
+    } catch (error) {
+        console.error('Booking error:', error);
+        alert('Network error. Please check your connection.');
+    }
+};
 
   const handleCancel = () => {
     clearMap();
@@ -270,16 +312,26 @@ const UserMapScreen = () => {
           <View style={styles.waitingContent}>
             <View style={styles.row}>
                <View>
-                 <Text style={styles.arriveTitle}>Arriving by 6:05AM</Text>
-                 <Text style={styles.arriveSub}>Traveling from UP Cebu...</Text>
+                 <Text style={styles.arriveTitle}>
+                    {bookingData?.eta_minutes 
+                        ? `${bookingData.eta_minutes} mins away` 
+                        : 'On the way'}
+                 </Text>
+                 <Text style={styles.arriveSub}>
+                    {bookingData?.route?.name || 'UP Cebu Bus Route'}
+                 </Text>
                </View>
                <Ionicons name="bus" size={24} color="#1A2E1A"/>
             </View>
             <View style={styles.driverSection}>
               <Image source={{ uri: 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=100' }} style={styles.avatar} />
               <View>
-                <Text style={styles.dName}>Sanford Marin Vinuya</Text>
-                <Text style={styles.dRoute}>UP Cebu Bus Route</Text>
+                <Text style={styles.dName}>
+                    {bookingData?.assignment?.driver?.full_name || 'Driver assigned'}
+                </Text>
+                <Text style={styles.dRoute}>
+                    {bookingData?.route?.name || 'UP Cebu Bus Route'}
+                </Text>
               </View>
             </View>
             <TouchableOpacity style={styles.cancelBtn} onPress={handleCancel}>
@@ -287,7 +339,7 @@ const UserMapScreen = () => {
             </TouchableOpacity>
           </View>
         )}
-
+        
         {status === 'in_transit' && (
           <View style={styles.waitingContent}>
             <View style={styles.row}>
