@@ -14,32 +14,48 @@ class PickupRequestController extends Controller
     {
         $today = Carbon::today();
 
-        // Stats
-        $totalToday = PickupRequest::whereDate('created_at', $today)->count();
-        $pendingToday = PickupRequest::whereDate('created_at', $today)->where('status', 'pending')->count();
-        $completedToday = PickupRequest::whereDate('created_at', $today)->where('status', 'completed')->count();
-        $cancelledToday = PickupRequest::whereDate('created_at', $today)->where('status', 'cancelled')->count();
+        // Filters shared by the table and the stat cards (everything except
+        // the status filter — the per-status cards each scope their own
+        // status, so applying it here would zero out the other cards).
+        $applyScope = function ($q) use ($request, $today) {
+            if ($request->filled('search')) {
+                $search = $request->search;
+                $q->where(function ($qq) use ($search) {
+                    $qq->whereHas('user', fn ($u) => $u->where('email', 'like', "%$search%"))
+                        ->orWhereHas('user.passenger', fn ($p) => $p->where('passenger_number', 'like', "%$search%"));
+                });
+            }
 
-        $query = PickupRequest::with(['user', 'route', 'pickupStop', 'dropoffStop', 'assignment.driver']);
+            if ($request->filled('route') && $request->route !== 'All') {
+                $q->whereHas('route', fn ($r) => $r->where('name', $request->route));
+            }
 
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->whereHas('user', fn ($u) => $u->where('email', 'like', "%$search%"))
-                    ->orWhereHas('user.passenger', fn ($p) => $p->where('passenger_number', 'like', "%$search%"));
-            });
-        }
+            if ($request->filled('date') && $request->date === 'today') {
+                $q->whereDate('created_at', $today);
+            }
 
-        if ($request->filled('route') && $request->route !== 'All') {
-            $query->whereHas('route', fn ($q) => $q->where('name', $request->route));
-        }
+            return $q;
+        };
+
+        // Stat cards: counts within the active scope, broken down by status,
+        // so the figures track whatever the admin has filtered to.
+        $scoped = fn () => $applyScope(PickupRequest::query());
+
+        $stats = [
+            'total' => $scoped()->count(),
+            'pending' => $scoped()->where('status', 'pending')->count(),
+            'accepted' => $scoped()->where('status', 'accepted')->count(),
+            'in_progress' => $scoped()->where('status', 'in_progress')->count(),
+            'completed' => $scoped()->where('status', 'completed')->count(),
+            'cancelled' => $scoped()->where('status', 'cancelled')->count(),
+        ];
+
+        $query = $applyScope(
+            PickupRequest::with(['user', 'route', 'pickupStop', 'dropoffStop', 'assignment.driver'])
+        );
 
         if ($request->filled('status') && $request->status !== 'All') {
             $query->where('status', strtolower($request->status));
-        }
-
-        if ($request->filled('date') && $request->date === 'today') {
-            $query->whereDate('created_at', $today);
         }
 
         $requests = $query->latest()->paginate(25)->withQueryString();

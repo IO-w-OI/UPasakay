@@ -2,7 +2,7 @@
 import { Head, Link, router } from '@inertiajs/vue3';
 import * as L from 'leaflet';
 import { Search, Download, ChevronRight, MapPin, Eye, Check, X, Map } from 'lucide-vue-next';
-import { ref, nextTick, onMounted, onUnmounted } from 'vue';
+import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { dashboard } from '@/routes';
 import { type BreadcrumbItem } from '@/types';
@@ -26,7 +26,10 @@ const props = defineProps<{
     };
     routes: string[];
     filters: { search?: string; route?: string; status?: string; date?: string };
-    stats: { total: number; pending: number; completed: number; cancelled: number };
+    stats: {
+        total: number; pending: number; accepted: number;
+        in_progress: number; completed: number; cancelled: number;
+    };
 }>();
 
 // ── Filters ────────────────────────────────────────────────────────────────
@@ -114,12 +117,18 @@ const statusIcon = (s: string) =>
 const routeBadge = (r: string) =>
     ({ South: 'bg-green-500/15 text-green-600 dark:text-green-400', North: 'bg-blue-500/15 text-blue-600 dark:text-blue-400', 'Cebu City': 'bg-orange-500/15 text-orange-600 dark:text-orange-400' }[r] ?? 'bg-muted text-muted-foreground');
 
-const statCards = [
-    { label: 'Total Today',  key: 'total',     color: 'text-foreground' },
-    { label: 'Pending',      key: 'pending',   color: 'text-yellow-600 dark:text-yellow-400' },
-    { label: 'Completed',    key: 'completed', color: 'text-green-600 dark:text-green-400' },
-    { label: 'Cancelled',    key: 'cancelled', color: 'text-red-600 dark:text-red-400' },
-] as const;
+// "Today" only while the date filter is on Today; otherwise it reflects the
+// full filtered scope, so the label shouldn't lie.
+const totalLabel = computed(() => (dateFilter.value === 'today' ? 'Total Today' : 'Total'));
+
+const statCards = computed(() => [
+    { label: totalLabel.value, key: 'total',       color: 'text-foreground' },
+    { label: 'Pending',        key: 'pending',     color: 'text-yellow-600 dark:text-yellow-400' },
+    { label: 'Accepted',       key: 'accepted',    color: 'text-blue-600 dark:text-blue-400' },
+    { label: 'In Progress',    key: 'in_progress', color: 'text-indigo-600 dark:text-indigo-400' },
+    { label: 'Completed',      key: 'completed',   color: 'text-green-600 dark:text-green-400' },
+    { label: 'Cancelled',      key: 'cancelled',   color: 'text-red-600 dark:text-red-400' },
+] as const);
 </script>
 
 <template>
@@ -138,7 +147,7 @@ const statCards = [
             </div>
 
             <!-- Stat cards -->
-            <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
                 <div v-for="card in statCards" :key="card.key"
                     class="rounded-2xl border border-border/70 bg-card p-5 shadow-sm shadow-black/5 dark:shadow-black/20 text-center">
                     <p class="text-3xl font-bold" :class="card.color">{{ stats[card.key] }}</p>
