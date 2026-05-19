@@ -10,6 +10,7 @@ use App\Http\Controllers\PassengerApprovalController;
 use App\Http\Controllers\PickupRequestController;
 use App\Http\Controllers\ShuttleWebController;
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -54,7 +55,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Pickup Requests
     Route::get('pickup-requests', [PickupRequestController::class, 'index'])->name('pickup-requests.index');
-    Route::patch('pickup-requests/{pickupRequest}/assign', [PickupRequestController::class, 'assign'])->name('pickup-requests.assign');
 
     // Passenger approvals
     Route::get('passengers', [PassengerApprovalController::class, 'index'])->name('passengers.index');

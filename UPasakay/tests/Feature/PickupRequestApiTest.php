@@ -2,9 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Models\Driver;
 use App\Models\Passenger;
 use App\Models\PickupRequest;
 use App\Models\Route;
+use App\Models\Shuttle;
 use App\Models\Stop;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -44,10 +46,14 @@ class PickupRequestApiTest extends TestCase
         return ['Authorization' => "Bearer {$token}"];
     }
 
+    private int $routeSeq = 0;
+
     private function setupTestRoute(): array
     {
+        $this->routeSeq++;
+
         $route = Route::create([
-            'name' => 'Test Route',
+            'name' => 'Test Route '.$this->routeSeq,
             'start_location' => 'Start Point',
             'end_location' => 'End Point',
             'description' => 'A test route',
@@ -67,6 +73,35 @@ class PickupRequestApiTest extends TestCase
             'latitude' => 10.3200,
             'longitude' => 123.8900,
             'sequence' => 2,
+        ]);
+
+        // Bookings now require an on-duty driver + active shuttle on the route
+        // (PickupRequestService rejects routes with none). Capacity 0 keeps new
+        // requests in 'pending' — these tests assert request-creation and
+        // duplicate-booking behaviour, not capacity-gated auto-accept.
+        $driverUser = User::create([
+            'name' => 'Route Driver '.$this->routeSeq,
+            'email' => "route-driver{$this->routeSeq}@example.com",
+            'password_hash' => 'password123',
+        ]);
+
+        $driver = Driver::create([
+            'user_id' => $driverUser->id,
+            'full_name' => 'Route Driver '.$this->routeSeq,
+            'license_number' => 'LIC-R'.$this->routeSeq,
+            'is_available' => true,
+            'driver_status' => 'active',
+        ]);
+
+        Shuttle::create([
+            'shuttle_code' => 'SH-R'.$this->routeSeq,
+            'shuttle_type' => 'van',
+            'plate_number' => 'PLT-R'.$this->routeSeq,
+            'capacity' => 0,
+            'is_active' => true,
+            'status' => 'active',
+            'route_id' => $route->id,
+            'driver_id' => $driver->id,
         ]);
 
         return [

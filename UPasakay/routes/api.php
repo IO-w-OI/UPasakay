@@ -26,6 +26,7 @@ Route::get('ping', fn () => response()->json([
 // Public auth routes
 Route::post('register', [AuthController::class, 'register']);
 Route::post('login', [AuthController::class, 'login']);
+Route::post('auth/google', [AuthController::class, 'googleAuth']);
 Route::post('admin/register', [AdminAuthController::class, 'register']);
 Route::post('password/forgot', [AuthController::class, 'forgotPassword']);
 Route::post('password/reset', [AuthController::class, 'resetPassword']);
@@ -68,6 +69,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('verification', [PassengerProfileController::class, 'verification']);
     });
 
+    Route::get('routes/{route}/shuttles', [RouteController::class, 'shuttles']);
     Route::apiResource('routes', RouteController::class);
     Route::apiResource('stops', StopController::class);
     Route::apiResource('shuttles', ShuttleController::class);

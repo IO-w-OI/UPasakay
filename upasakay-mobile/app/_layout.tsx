@@ -10,6 +10,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { TripProvider } from '../context/TripContext';
 import ActiveTripBanner from '../components/ActiveTripBanner';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { currentUser, restoreSession } from '../services/UserStore';
 import { registerForPushNotifications, routeForNotificationData } from '../services/pushNotifications';
 
@@ -45,6 +46,11 @@ export default function RootLayout() {
   const [sessionChecked, setSessionChecked] = useState(false);
 
   useEffect(() => {
+    GoogleSignin.configure({
+      webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+      offlineAccess: false,
+    });
+
     restoreSession()
       .then((user) => {
         // Re-register for push if a session was restored (token may have rotated).

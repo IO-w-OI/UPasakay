@@ -54,7 +54,14 @@ export const affiliationsForRole = (role = '') =>
 export const signupSchema = Yup.object().shape({
     email: Yup.string()
         .required('Email is required.')
-        .matches(upEmailRegex, 'Please use your official @up.edu.ph email address.'),
+        .email('Please enter a valid email address.')
+        .when('role', {
+            // Student / Faculty must use the UP institutional email.
+            // Employee / Other (and unselected) may use any valid email.
+            is: (role) => role && !['Employee', 'Other'].includes(role),
+            then: (schema) =>
+                schema.matches(upEmailRegex, 'Students and faculty must use their @up.edu.ph email address.'),
+        }),
     password: Yup.string()
         .required('Password is required.')
         .test('password-rules', 'Password does not meet all requirements.', (value) =>

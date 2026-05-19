@@ -55,6 +55,14 @@ class PickupRequestService
             ]);
         }
 
+        // Reject the request if no driver is currently on duty for the chosen route
+        $shuttle = $this->activeShuttleForRoute($data['route_id']);
+        if (! $shuttle || ! $shuttle->driver_id) {
+            throw ValidationException::withMessages([
+                'route_id' => 'No driver is currently on duty for this route. Please try again later.',
+            ]);
+        }
+
         // Check for duplicate active booking
         $existingActiveBooking = PickupRequest::where('user_id', $user->id)
             ->where('route_id', $data['route_id'])
@@ -225,8 +233,8 @@ class PickupRequestService
     }
 
     /**
-     * Write a driver-facing notification log entry and push it to on-duty
-     * drivers. Reuses the existing Notification model + Expo push pipeline.
+     * Write a driver-facing notification log entry and push it to the
+     * on-duty driver of the request's route.
      */
     public function logDriverNotification(PickupRequest $pickupRequest, string $message): void
     {
@@ -240,10 +248,17 @@ class PickupRequestService
             'sent_at' => now(),
         ]);
 
-        $driverUserIds = Driver::where('is_available', true)
-            ->whereNotNull('user_id')
-            ->pluck('user_id')
-            ->all();
+        $driverUserIds = [];
+        $shuttle = $this->activeShuttleForRoute($pickupRequest->route_id);
+        if ($shuttle?->driver_id) {
+            $driver = Driver::where('id', $shuttle->driver_id)
+                ->where('is_available', true)
+                ->whereNotNull('user_id')
+                ->first();
+            if ($driver) {
+                $driverUserIds = [$driver->user_id];
+            }
+        }
 
         $tokens = DeviceToken::expoTokensForUserIds($driverUserIds);
         if (! empty($tokens)) {
@@ -257,18 +272,25 @@ class PickupRequestService
     }
 
     /**
-     * Push a "new pickup request" alert to every on-duty driver, alongside
-     * the existing Pusher channel listeners (not a replacement for them).
+     * Push a "new pickup request" alert to the on-duty driver of the request's route.
      */
     private function notifyOnDutyDrivers(PickupRequest $pickupRequest, $passenger): void
     {
-        $driverUserIds = Driver::where('is_available', true)
+        $shuttle = $this->activeShuttleForRoute($pickupRequest->route_id);
+        if (! $shuttle || ! $shuttle->driver_id) {
+            return;
+        }
+
+        $driver = Driver::where('id', $shuttle->driver_id)
+            ->where('is_available', true)
             ->whereNotNull('user_id')
-            ->pluck('user_id')
-            ->all();
+            ->first();
 
-        $tokens = DeviceToken::expoTokensForUserIds($driverUserIds);
+        if (! $driver) {
+            return;
+        }
 
+        $tokens = DeviceToken::expoTokensForUserIds([$driver->user_id]);
         if (empty($tokens)) {
             return;
         }

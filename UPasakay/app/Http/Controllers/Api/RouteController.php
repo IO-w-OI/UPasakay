@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Route;
+use App\Models\Shuttle;
+use App\Models\ShuttleLocation;
 use Illuminate\Http\Request;
 
 class RouteController extends Controller
@@ -11,6 +13,42 @@ class RouteController extends Controller
     public function index()
     {
         return response()->json(Route::with('stops')->get());
+    }
+
+    /**
+     * Live positions of the active shuttle(s) on this route, for the
+     * passenger map. Returns only shuttles that have reported a GPS
+     * location; the mobile client polls this and also listens on the
+     * `shuttle-locations` Pusher channel for between-poll updates.
+     */
+    public function shuttles(Route $route)
+    {
+        $shuttles = Shuttle::where('route_id', $route->id)
+            ->where('status', 'active')
+            ->get()
+            ->map(function (Shuttle $shuttle) {
+                $loc = ShuttleLocation::where('shuttle_id', $shuttle->id)
+                    ->latest('recorded_at')
+                    ->first();
+
+                if (! $loc) {
+                    return null;
+                }
+
+                return [
+                    'id' => $shuttle->id,
+                    'shuttle_code' => $shuttle->shuttle_code,
+                    'status' => $shuttle->status,
+                    'latitude' => (float) $loc->latitude,
+                    'longitude' => (float) $loc->longitude,
+                    'speed_kmh' => $loc->speed_kmh !== null ? (float) $loc->speed_kmh : null,
+                    'recorded_at' => $loc->recorded_at,
+                ];
+            })
+            ->filter()
+            ->values();
+
+        return response()->json($shuttles);
     }
 
     public function store(Request $request)

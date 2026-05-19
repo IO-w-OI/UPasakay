@@ -1,6 +1,7 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useCallback, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native';
 
 import { apiPost } from '../../services/apiClient';
@@ -26,6 +27,11 @@ import {
 } from '../../components/styles';
 
 const DriverProfile = () => {
+    const [user, setUser] = useState(currentUser);
+
+    useFocusEffect(useCallback(() => {
+        setUser({ ...currentUser });
+    }, []));
 
     const doLogout = async () => {
         // Best-effort server-side cleanup while the token is still valid:
@@ -81,8 +87,8 @@ const DriverProfile = () => {
                     <MaterialCommunityIcons name="account-circle" size={85} color="#1A2E1A" />
                 </AvatarContainer>
 
-                <UserName>{currentUser?.full_name || 'Driver'}</UserName>
-                <UserEmail>{currentUser?.email || '—'}</UserEmail>
+                <UserName>{user?.full_name || 'Driver'}</UserName>
+                <UserEmail>{user?.email || '—'}</UserEmail>
                 <UserRole>Driver</UserRole>
 
                 {/* My Account */}

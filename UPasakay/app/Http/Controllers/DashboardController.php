@@ -102,7 +102,10 @@ class DashboardController extends Controller
                 'timestamp' => Carbon::parse($p->created_at)->timestamp,
             ]);
 
-        $needsAttention = $pendingPickupAttention
+        // Use a base collection: Eloquent\Collection::map() stays an
+        // Eloquent collection when the source is empty, and its merge()
+        // calls getKey() on each item — fatal when items are arrays.
+        $needsAttention = collect($pendingPickupAttention)
             ->merge($pendingPassengerAttention)
             ->sortByDesc('timestamp')
             ->take(8)

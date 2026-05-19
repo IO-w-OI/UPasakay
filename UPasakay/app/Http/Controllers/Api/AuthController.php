@@ -13,8 +13,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
@@ -258,6 +258,69 @@ class AuthController extends Controller
             'success' => true,
             'message' => 'Password has been reset. Please log in with your new password.',
         ], 200);
+    }
+
+    public function googleAuth(Request $request): JsonResponse
+    {
+        $request->validate(['id_token' => 'required|string']);
+
+        // Verify the ID token with Google's tokeninfo endpoint.
+        // This checks the signature, expiry, and returns the user's claims.
+        $googleResponse = Http::get('https://oauth2.googleapis.com/tokeninfo', [
+            'id_token' => $request->id_token,
+        ]);
+
+        if ($googleResponse->failed()) {
+            return response()->json(['success' => false, 'message' => 'Invalid Google token.'], 401);
+        }
+
+        $claims = $googleResponse->json();
+        $email = $claims['email'] ?? null;
+        $emailVerified = ($claims['email_verified'] ?? 'false') === 'true';
+
+        if (! $email || ! $emailVerified) {
+            return response()->json(['success' => false, 'message' => 'Google email not verified.'], 401);
+        }
+
+        $fullName = $claims['name'] ?? explode('@', $email)[0];
+
+        // Existing passenger account.
+        $passenger = Passenger::where('email', $email)->first();
+        if ($passenger) {
+            $passenger->tokens()->delete();
+            $token = $passenger->createToken('api-token')->plainTextToken;
+            $linkedUser = $passenger->user;
+            $payload = $this->buildAuthPayload($linkedUser ?? $passenger, $passenger, $token);
+
+            return response()->json([
+                'success' => true, 'message' => 'Login successful',
+                'data' => $payload, 'passenger' => $payload['passenger'],
+                'onboarding' => $payload['onboarding'], 'token' => $payload['token'],
+            ]);
+        }
+
+        // Existing user (driver / admin).
+        $user = User::where('email', $email)->first();
+        if ($user) {
+            $user->tokens()->delete();
+            $token = $user->createToken('mobile-app')->plainTextToken;
+            $payload = $this->buildAuthPayload($user, $user->passenger, $token);
+
+            return response()->json([
+                'success' => true, 'message' => 'Login successful',
+                'data' => $payload, 'passenger' => $payload['passenger'],
+                'onboarding' => $payload['onboarding'], 'token' => $payload['token'],
+            ]);
+        }
+
+        // No account found — tell the mobile app so it can redirect to sign-up.
+        return response()->json([
+            'success'      => false,
+            'code'         => 'account_not_found',
+            'message'      => 'No account is linked to this Google account. Please sign up first.',
+            'google_email' => $email,
+            'google_name'  => $fullName,
+        ], 404);
     }
 
     private function generatePassengerNumber(): string

@@ -25,7 +25,6 @@ const props = defineProps<{
         links: Array<{ url: string | null; label: string; active: boolean }>;
     };
     routes: string[];
-    availableDrivers: Array<{ id: number; name: string }>;
     filters: { search?: string; route?: string; status?: string; date?: string };
     stats: { total: number; pending: number; completed: number; cancelled: number };
 }>();
@@ -97,29 +96,12 @@ onUnmounted(() => {
     }
 });
 
-const showAssignModal = ref(false);
-const assigningRequestId = ref<number | null>(null);
-const assignDriverId = ref<number | ''>('');
-const openAssignModal = (requestId: number) => {
-    assigningRequestId.value = requestId;
-    assignDriverId.value = '';
-    showAssignModal.value = true;
-};
-const submitAssign = () => {
-    if (!assigningRequestId.value || !assignDriverId.value) return;
-
-    router.patch(
-        `/pickup-requests/${assigningRequestId.value}/assign`,
-        { driver_id: Number(assignDriverId.value) },
-        {
-            preserveScroll: true,
-            onSuccess: () => {
-                showAssignModal.value = false;
-                assigningRequestId.value = null;
-                assignDriverId.value = '';
-            },
-        },
-    );
+// ── Locate: expand row and scroll to the map ──────────────────────────────
+const locateRequest = (id: number) => {
+    if (expanded.value !== id) toggleExpand(id);
+    nextTick(() => {
+        document.getElementById(`req-map-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
 };
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -242,17 +224,18 @@ const statCards = [
                                     <td class="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">{{ r.completed_at ?? '—' }}</td>
                                     <td class="px-4 py-3">
                                         <div class="flex items-center gap-1" @click.stop>
-                                            <button
-                                                v-if="r.status === 'pending' || r.status === 'accepted'"
-                                                class="rounded-lg bg-[#8B0000] px-2.5 py-1 text-xs font-semibold text-white hover:bg-[#700000]"
-                                                @click="openAssignModal(r.id)"
-                                            >
-                                                Assign Shuttle
-                                            </button>
-                                            <button class="rounded-lg border border-border/70 px-2.5 py-1 text-xs font-medium text-muted-foreground hover:bg-accent">
+                                            <button class="rounded-lg border border-border/70 px-2.5 py-1 text-xs font-medium text-muted-foreground hover:bg-accent"
+                                                @click="toggleExpand(r.id)">
                                                 <Eye class="inline h-3 w-3 mr-0.5" /> View
                                             </button>
-                                            <button class="rounded-lg border border-border/70 px-2.5 py-1 text-xs font-medium text-muted-foreground hover:bg-accent">
+                                            <button
+                                                class="rounded-lg border px-2.5 py-1 text-xs font-medium hover:bg-accent"
+                                                :class="r.latitude && r.longitude
+                                                    ? 'border-blue-500/40 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10'
+                                                    : 'border-border/70 text-muted-foreground/50 cursor-not-allowed'"
+                                                :disabled="!r.latitude || !r.longitude"
+                                                @click="r.latitude && r.longitude && locateRequest(r.id)"
+                                            >
                                                 <MapPin class="inline h-3 w-3 mr-0.5" /> Locate
                                             </button>
                                         </div>
@@ -265,8 +248,9 @@ const statCards = [
                                         <div class="rounded-xl border border-border/70 bg-card p-5 shadow-sm shadow-black/5 dark:shadow-black/20">
                                             <div class="mb-3 flex items-center justify-between">
                                                 <h3 class="font-semibold text-foreground">REQUEST #{{ r.id }}</h3>
-                                                <span class="rounded-full px-3 py-1 text-xs font-medium capitalize" :class="statusColor(r.status)">
-                                                    Status: {{ statusIcon(r.status) }} {{ r.status }}
+                                                <span class="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium capitalize" :class="statusColor(r.status)">
+                                                    <component :is="statusIcon(r.status)" class="h-3 w-3" />
+                                                    {{ r.status }}
                                                 </span>
                                             </div>
                                             <div class="grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
@@ -321,29 +305,4 @@ const statCards = [
         </div>
     </AppLayout>
 
-    <Teleport to="body">
-        <div v-if="showAssignModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" @click.self="showAssignModal = false">
-            <div class="w-full max-w-md rounded-2xl border border-border/70 bg-card p-5 shadow-xl">
-                <h2 class="text-base font-semibold text-foreground">Assign Shuttle to Request</h2>
-                <p class="mt-1 text-sm text-muted-foreground">Pick an available driver for this pickup request.</p>
-
-                <div class="mt-4 space-y-2">
-                    <label class="text-sm font-medium text-foreground">Driver</label>
-                    <select v-model="assignDriverId" class="w-full rounded-lg border border-border/70 bg-card px-3 py-2 text-sm text-foreground focus:outline-none">
-                        <option value="">Select a driver...</option>
-                        <option v-for="driver in availableDrivers" :key="driver.id" :value="driver.id">{{ driver.name }}</option>
-                    </select>
-                </div>
-
-                <div class="mt-5 flex justify-end gap-2">
-                    <button type="button" class="rounded-lg border border-border/70 px-3 py-2 text-sm text-muted-foreground hover:bg-accent" @click="showAssignModal = false">
-                        Cancel
-                    </button>
-                    <button type="button" class="rounded-lg bg-[#8B0000] px-3 py-2 text-sm font-semibold text-white hover:bg-[#700000] disabled:opacity-50" :disabled="!assignDriverId" @click="submitAssign">
-                        Assign Now
-                    </button>
-                </div>
-            </div>
-        </div>
-    </Teleport>
 </template>

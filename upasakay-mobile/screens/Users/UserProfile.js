@@ -1,12 +1,12 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useCallback, useState } from 'react';
 import { Alert, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { moderateScale, NAV_CLEARANCE } from '../../utils/responsive';
 
-// 1. IMPORT THE CURRENT USER DATA
 import { currentUser, logoutUser } from '../../services/UserStore';
 
 import {
@@ -28,6 +28,13 @@ import {
 } from '../../components/styles';
 
 const UserProfile = () => {
+    const [user, setUser] = useState(currentUser);
+
+    // Re-read currentUser every time this tab comes back into focus
+    // (e.g. after returning from EditProfile).
+    useFocusEffect(useCallback(() => {
+        setUser({ ...currentUser });
+    }, []));
 
     // --- LOGOUT LOGIC ---
     const handleLogout = () => {
@@ -69,9 +76,9 @@ const UserProfile = () => {
                 
                 {/* 2. REFERENCE DYNAMIC DATA */}
                 {/* We use ?. to prevent crashing if currentUser is temporarily null */}
-                <UserName>{currentUser?.full_name || "User Name"}</UserName>
-                <UserEmail>{currentUser?.email || "email@up.edu.ph"}</UserEmail>
-                <UserRole>{currentUser?.passenger_type || "Passenger Type"}</UserRole>
+                <UserName>{user?.full_name || "User Name"}</UserName>
+                <UserEmail>{user?.email || "email@up.edu.ph"}</UserEmail>
+                <UserRole>{user?.passenger_type || "Passenger Type"}</UserRole>
                 {/*<UserRole>{currentUser?.department || currentUser?.department_office || "Affiliation"} </UserRole>*/}
                 {/*i'll fix this later bc im tired*/}
 

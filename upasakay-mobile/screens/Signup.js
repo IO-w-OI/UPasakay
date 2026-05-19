@@ -1,13 +1,14 @@
 import { Ionicons, Octicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Formik } from 'formik';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
+import { Image, KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { SelectList } from 'react-native-dropdown-select-list';
 
-import { addUser, setCurrentUser } from '../services/UserStore';
+import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
+import { addUser, googleSignIn, setCurrentUser } from '../services/UserStore';
 import { affiliationsForRole, PASSWORD_RULES, ROLES, signupSchema } from '../utils/validation';
 import { moderateScale } from '../utils/responsive';
 
@@ -16,7 +17,6 @@ import {
     Colors,
     ExtraSmallText,
     ExtraText,
-    GoogleLogo,
     LeftIcon,
     Line,
     LineContainer,
@@ -72,9 +72,33 @@ const MyTextInput = ({ icon, isPassword, hidePassword, setHidePassword, error, t
 
 const Signup = () => {
     const router = useRouter();
+    const { prefill_email, prefill_name } = useLocalSearchParams();
+    const fromGoogle = !!prefill_email;
     const [hidePassword, setHidePassword] = useState(true);
     const [hideConfirmPassword, setHideConfirmPassword] = useState(true);
     const [formError, setFormError] = useState('');
+
+    const handleGoogleSignUp = async () => {
+        try {
+            await GoogleSignin.hasPlayServices();
+            const userInfo = await GoogleSignin.signIn();
+            const idToken = userInfo.data?.idToken;
+            if (!idToken) {
+                setFormError('No ID token received from Google.');
+                return;
+            }
+            const result = await googleSignIn(idToken);
+            if (result.success) {
+                router.replace('/UserOnboarding4');
+            } else {
+                setFormError(result.message || 'Google sign-up failed.');
+            }
+        } catch (error) {
+            if (error.code === statusCodes.SIGN_IN_CANCELLED) return;
+            if (error.code === statusCodes.IN_PROGRESS) return;
+            setFormError(error.message || 'Something went wrong with Google sign-in.');
+        }
+    };
 
     const handleRegister = async (values, { setSubmitting }) => {
         setFormError('');
@@ -137,10 +161,10 @@ const Signup = () => {
 
                         <Formik
                             initialValues={{
-                                email: '',
+                                email: prefill_email || '',
                                 password: '',
                                 confirmPassword: '',
-                                full_name: '',
+                                full_name: prefill_name || '',
                                 phone: '',
                                 role: '',
                                 department_office: '',
@@ -179,6 +203,11 @@ const Signup = () => {
                                         </View>
                                     ) : null}
 
+                                    {fromGoogle && (
+                                        <Text style={{ color: Colors.text_idle, fontSize: 12, marginBottom: 4, marginLeft: 6 }}>
+                                            Email pre-filled from your Google account
+                                        </Text>
+                                    )}
                                     <MyTextInput
                                         icon="mail"
                                         placeholder="Enter your email address"
@@ -188,8 +217,10 @@ const Signup = () => {
                                         value={values.email}
                                         keyboardType="email-address"
                                         autoCapitalize="none"
+                                        editable={!fromGoogle}
                                         error={errors.email}
                                         touched={touched.email}
+                                        style={fromGoogle ? { opacity: 0.6 } : {}}
                                     />
 
                                     <MyTextInput
@@ -257,8 +288,10 @@ const Signup = () => {
                                         onChangeText={handleChange('full_name')}
                                         onBlur={handleBlur('full_name')}
                                         value={values.full_name}
+                                        editable={!fromGoogle}
                                         error={errors.full_name}
                                         touched={touched.full_name}
+                                        style={fromGoogle ? { opacity: 0.6 } : {}}
                                     />
 
                                     <MyTextInput
@@ -350,9 +383,16 @@ const Signup = () => {
                                         <Line />
                                     </LineContainer>
 
-                                    <StyledButton google>
-                                        <GoogleLogo source={require('../assets/images/google-logo.png')} />
-                                        <ButtonText google>Sign Up with Google</ButtonText>
+                                    <StyledButton
+                                        onPress={handleGoogleSignUp}
+                                        style={{ backgroundColor: '#fff', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                                    >
+                                        <Image
+                                            source={require('../assets/images/google-logo.png')}
+                                            style={{ width: 20, height: 20 }}
+                                            resizeMode="contain"
+                                        />
+                                        <ButtonText style={{ color: '#333' }}>Sign Up with Google</ButtonText>
                                     </StyledButton>
 
                                     <View

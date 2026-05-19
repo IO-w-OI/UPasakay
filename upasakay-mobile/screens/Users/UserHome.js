@@ -1,8 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, Image, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Colors, StyledContainer } from '../../components/styles';
@@ -43,13 +43,26 @@ const UserHome = () => {
     const router = useRouter();
     const [routes, setRoutes] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
+    const [firstName, setFirstName] = useState(
+        currentUser?.full_name ? currentUser.full_name.split(' ')[0] : 'User'
+    );
 
-    useEffect(() => {
-        apiGet('routes').then(({ ok, data }) => {
-            if (ok && Array.isArray(data)) setRoutes(data);
-            setLoading(false);
-        });
+    const fetchRoutes = useCallback(async (isPullRefresh = false) => {
+        if (isPullRefresh) setRefreshing(true);
+        const { ok, data } = await apiGet('routes');
+        if (ok && Array.isArray(data)) setRoutes(data);
+        setLoading(false);
+        setRefreshing(false);
     }, []);
+
+    useEffect(() => { fetchRoutes(); }, [fetchRoutes]);
+
+    // Refresh routes and re-read name whenever this tab regains focus.
+    useFocusEffect(useCallback(() => {
+        setFirstName(currentUser?.full_name ? currentUser.full_name.split(' ')[0] : 'User');
+        fetchRoutes();
+    }, [fetchRoutes]));
 
     const handleBusSelection = (route) => {
         if (!route.is_active) return;
@@ -59,8 +72,6 @@ const UserHome = () => {
         });
     };
 
-    const firstName = currentUser?.full_name ? currentUser.full_name.split(' ')[0] : 'User';
-
     return (
         <StyledContainer style={{ padding: 0, paddingTop: 0 }} colors={[Colors.base_page, Colors.base_page]}>
             <StatusBar style="dark" />
@@ -68,6 +79,14 @@ const UserHome = () => {
                 <ScrollView
                     showsVerticalScrollIndicator={false}
                     contentContainerStyle={{ paddingHorizontal: scale(20), paddingBottom: NAV_CLEARANCE }}
+                    refreshControl={
+                        <RefreshControl
+                            refreshing={refreshing}
+                            onRefresh={() => fetchRoutes(true)}
+                            tintColor={Colors.golden_brown}
+                            colors={[Colors.golden_brown]}
+                        />
+                    }
                 >
                     <Image
                         source={require('../../assets/images/UPasakayBig.png')}
