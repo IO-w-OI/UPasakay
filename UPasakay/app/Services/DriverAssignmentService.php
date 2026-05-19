@@ -66,7 +66,11 @@ class DriverAssignmentService
             ])
             ->findOrFail($pickupRequest->id);
 
-        broadcast(new RideAccepted($pickupRequestForNotify));
+        try {
+            broadcast(new RideAccepted($pickupRequestForNotify));
+        } catch (\Throwable $e) {
+            \Log::error('RideAccepted broadcast failed: ' . $e->getMessage());
+        }
 
         $tokens = DeviceToken::expoTokensForUser($pickupRequestForNotify->user);
         if (! empty($tokens)) {
@@ -75,16 +79,24 @@ class DriverAssignmentService
                 ? "Your driver is on the way — about {$eta} min away."
                 : 'Your driver is on the way.';
 
-            $this->expoPush->send(
-                $tokens,
-                'Driver assigned',
-                $body,
-                ['type' => 'ride_accepted', 'pickup_request_id' => $pickupRequestForNotify->id],
-            );
+            try {
+                $this->expoPush->send(
+                    $tokens,
+                    'Driver assigned',
+                    $body,
+                    ['type' => 'ride_accepted', 'pickup_request_id' => $pickupRequestForNotify->id],
+                );
+            } catch (\Throwable $e) {
+                \Log::error('Driver assigned push failed: ' . $e->getMessage());
+            }
         }
 
         if ($pickupRequestForNotify->user?->email) {
-            Mail::to($pickupRequestForNotify->user->email)->send(new BookingConfirmed($pickupRequestForNotify));
+            try {
+                Mail::to($pickupRequestForNotify->user->email)->send(new BookingConfirmed($pickupRequestForNotify));
+            } catch (\Throwable $e) {
+                \Log::error('BookingConfirmed mail failed: ' . $e->getMessage());
+            }
         }
 
         return $assignment;
