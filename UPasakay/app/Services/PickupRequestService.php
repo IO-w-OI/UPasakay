@@ -102,22 +102,34 @@ class PickupRequestService
 
         $pickupRequest->load('pickupStop');
 
-        $this->notifyOnDutyDrivers($pickupRequest, $passenger);
+        try {
+            $this->notifyOnDutyDrivers($pickupRequest, $passenger);
+        } catch (\Throwable $e) {
+            \Log::error('notifyOnDutyDrivers failed: ' . $e->getMessage());
+        }
 
         // Capacity-gated auto-accept: if the route's active shuttle still has
         // free seats, accept immediately and assign its driver. Otherwise the
         // request waits in the route queue (status stays 'pending').
-        $this->placeInQueue($pickupRequest);
+        try {
+            $this->placeInQueue($pickupRequest);
+        } catch (\Throwable $e) {
+            \Log::error('placeInQueue failed: ' . $e->getMessage());
+        }
 
-        $this->logDriverNotification(
-            $pickupRequest,
-            ($passenger->full_name ?? 'A passenger').' is waiting at '
-                .($pickupRequest->pickupStop?->name ?? 'a stop')
-                .($pickupRequest->pickupStop?->sequence !== null
-                    ? ' (Stop '.((int) $pickupRequest->pickupStop->sequence + 1).')'
-                    : '')
-                .'.'
-        );
+        try {
+            $this->logDriverNotification(
+                $pickupRequest,
+                ($passenger->full_name ?? 'A passenger').' is waiting at '
+                    .($pickupRequest->pickupStop?->name ?? 'a stop')
+                    .($pickupRequest->pickupStop?->sequence !== null
+                        ? ' (Stop '.((int) $pickupRequest->pickupStop->sequence + 1).')'
+                        : '')
+                    .'.'
+            );
+        } catch (\Throwable $e) {
+            \Log::error('logDriverNotification failed: ' . $e->getMessage());
+        }
 
         return $pickupRequest->fresh();
     }
