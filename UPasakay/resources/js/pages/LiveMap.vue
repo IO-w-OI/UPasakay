@@ -593,8 +593,10 @@ watch(
     { deep: true },
 );
 
-// Wire the Auto-refresh toggle to a real 10-second polling interval.
+// Wire the Auto-refresh toggle to a 30-second polling interval.
 // This is a Pusher fallback: if the WebSocket drops, the map still updates.
+// Pusher is the primary real-time channel, so this only needs to be a
+// safety net — keep it infrequent to avoid hammering the DB on Heroku.
 watch(
     autoRefresh,
     (isOn) => {
@@ -605,7 +607,7 @@ watch(
         if (isOn) {
             refreshInterval = setInterval(() => {
                 router.reload({ only: ['shuttles'] });
-            }, 10_000);
+            }, 30_000);
         }
     },
     { immediate: true },

@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Models\Passenger;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -60,8 +61,12 @@ class HandleInertiaRequests extends Middleware
                 'role' => $role,
             ],
             'approval' => [
-                'pendingPassengers' => $request->user()
-                    ? Passenger::where('passenger_status', 'pending')->count()
+                'pendingPassengers' => $user?->admin
+                    ? Cache::remember(
+                        'pending_passengers_count',
+                        now()->addSeconds(30),
+                        fn () => Passenger::where('passenger_status', 'pending')->count()
+                    )
                     : 0,
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
