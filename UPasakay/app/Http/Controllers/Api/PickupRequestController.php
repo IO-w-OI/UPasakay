@@ -68,6 +68,7 @@ class PickupRequestController extends Controller
                 'errors' => $e->errors(),
             ], 422);
         } catch (\Throwable $e) {
+            error_log('[PickupRequest] ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
             return response()->json([
                 'message' => 'Server error',
                 'error' => $e->getMessage(),
