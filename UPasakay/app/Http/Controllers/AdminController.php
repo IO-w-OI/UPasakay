@@ -44,8 +44,8 @@ class AdminController extends Controller
                 'email' => $admin->user->email,
                 'access_level' => $admin->access_level,
                 'access_level_label' => $admin->access_level === 2 ? 'Super Admin' : 'Admin',
-                'created_at' => $admin->created_at->format('Y-m-d H:i'),
-                'updated_at' => $admin->updated_at->format('Y-m-d H:i'),
+                'created_at' => $admin->created_at->copy()->timezone('Asia/Manila')->format('Y-m-d H:i'),
+                'updated_at' => $admin->updated_at->copy()->timezone('Asia/Manila')->format('Y-m-d H:i'),
             ];
         });
 

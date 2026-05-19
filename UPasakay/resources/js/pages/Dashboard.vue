@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import * as L from 'leaflet';
 import {
     BarChart2,
@@ -62,6 +62,11 @@ const props = defineProps<{
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Dashboard', href: dashboard().url },
 ];
+
+// ── Live auto-refresh (mirrors PickupRequests/Index.vue) ──────────────────
+const liveUpdatesActive = ref(true);
+const lastUpdated = ref(new Date());
+let refreshTimer: ReturnType<typeof setInterval> | null = null;
 
 const miniMapRef = ref<HTMLDivElement | null>(null);
 let miniMap: L.Map | null = null;
@@ -178,6 +183,21 @@ onMounted(() => {
         // Draw routes (async)
         drawRoutes(miniMap);
     });
+
+    // Poll the dynamic dashboard data so counts, lists, the "Needs
+    // Attention" feed, pickups-per-route and the mini map stay current
+    // without a manual refresh.
+    refreshTimer = setInterval(() => {
+        if (!liveUpdatesActive.value) return;
+        router.reload({
+            only: ['stats', 'shuttles', 'pickupsPerRoute', 'maxPickups', 'needsAttention', 'pendingRequests'],
+            preserveScroll: true,
+            onFinish: () => {
+                lastUpdated.value = new Date();
+                syncMarkers();
+            },
+        } as any);
+    }, 25000);
 });
 
 onUnmounted(() => {
@@ -193,6 +213,11 @@ onUnmounted(() => {
     miniTileLayer = null;
     miniMap?.remove();
     miniMap = null;
+
+    if (refreshTimer) {
+        clearInterval(refreshTimer);
+        refreshTimer = null;
+    }
 });
 
 const statusColor = (status: string) =>
@@ -226,6 +251,14 @@ const attentionIcon = (icon: string) => attentionIconMap[icon] ?? Pin;
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="space-y-5 p-6">
+            <div class="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-300">
+                <span class="relative flex h-2.5 w-2.5">
+                    <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+                    <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
+                </span>
+                Live updates active • {{ lastUpdated.toLocaleTimeString() }}
+            </div>
+
             <div class="grid grid-cols-2 gap-4 xl:grid-cols-5">
                 <div class="rounded-2xl border border-border/70 bg-card p-5 shadow-sm shadow-black/5 dark:shadow-black/20">
                     <div class="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-500/12 text-indigo-500 dark:bg-indigo-500/18 dark:text-indigo-300">

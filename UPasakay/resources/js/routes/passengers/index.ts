@@ -79,7 +79,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     index.form = indexForm
 /**
 * @see \App\Http\Controllers\PassengerApprovalController::index
- * @see app/Http/Controllers/PassengerApprovalController.php:11
+ * @see app/Http/Controllers/PassengerApprovalController.php:16
  * @route '/passengers'
  */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -94,7 +94,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\PassengerApprovalController::index
- * @see app/Http/Controllers/PassengerApprovalController.php:11
+ * @see app/Http/Controllers/PassengerApprovalController.php:16
  * @route '/passengers'
  */
 index.url = (options?: RouteQueryOptions) => {
@@ -103,7 +103,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\PassengerApprovalController::index
- * @see app/Http/Controllers/PassengerApprovalController.php:11
+ * @see app/Http/Controllers/PassengerApprovalController.php:16
  * @route '/passengers'
  */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -112,7 +112,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\PassengerApprovalController::index
- * @see app/Http/Controllers/PassengerApprovalController.php:11
+ * @see app/Http/Controllers/PassengerApprovalController.php:16
  * @route '/passengers'
  */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -122,7 +122,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\PassengerApprovalController::index
- * @see app/Http/Controllers/PassengerApprovalController.php:11
+ * @see app/Http/Controllers/PassengerApprovalController.php:16
  * @route '/passengers'
  */
     const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -132,7 +132,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\PassengerApprovalController::index
- * @see app/Http/Controllers/PassengerApprovalController.php:11
+ * @see app/Http/Controllers/PassengerApprovalController.php:16
  * @route '/passengers'
  */
         indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -141,7 +141,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\PassengerApprovalController::index
- * @see app/Http/Controllers/PassengerApprovalController.php:11
+ * @see app/Http/Controllers/PassengerApprovalController.php:16
  * @route '/passengers'
  */
         indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -500,7 +500,7 @@ destroy.delete = (args: { passenger: string | number } | [passenger: string | nu
     destroy.form = destroyForm
 /**
 * @see \App\Http\Controllers\PassengerApprovalController::updateStatus
- * @see app/Http/Controllers/PassengerApprovalController.php:70
+ * @see app/Http/Controllers/PassengerApprovalController.php:75
  * @route '/passengers/{passenger}/status'
  */
 export const updateStatus = (args: { passenger: number | { id: number } } | [passenger: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -515,7 +515,7 @@ updateStatus.definition = {
 
 /**
 * @see \App\Http\Controllers\PassengerApprovalController::updateStatus
- * @see app/Http/Controllers/PassengerApprovalController.php:70
+ * @see app/Http/Controllers/PassengerApprovalController.php:75
  * @route '/passengers/{passenger}/status'
  */
 updateStatus.url = (args: { passenger: number | { id: number } } | [passenger: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -548,7 +548,7 @@ updateStatus.url = (args: { passenger: number | { id: number } } | [passenger: n
 
 /**
 * @see \App\Http\Controllers\PassengerApprovalController::updateStatus
- * @see app/Http/Controllers/PassengerApprovalController.php:70
+ * @see app/Http/Controllers/PassengerApprovalController.php:75
  * @route '/passengers/{passenger}/status'
  */
 updateStatus.patch = (args: { passenger: number | { id: number } } | [passenger: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -558,7 +558,7 @@ updateStatus.patch = (args: { passenger: number | { id: number } } | [passenger:
 
     /**
 * @see \App\Http\Controllers\PassengerApprovalController::updateStatus
- * @see app/Http/Controllers/PassengerApprovalController.php:70
+ * @see app/Http/Controllers/PassengerApprovalController.php:75
  * @route '/passengers/{passenger}/status'
  */
     const updateStatusForm = (args: { passenger: number | { id: number } } | [passenger: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -573,7 +573,7 @@ updateStatus.patch = (args: { passenger: number | { id: number } } | [passenger:
 
             /**
 * @see \App\Http\Controllers\PassengerApprovalController::updateStatus
- * @see app/Http/Controllers/PassengerApprovalController.php:70
+ * @see app/Http/Controllers/PassengerApprovalController.php:75
  * @route '/passengers/{passenger}/status'
  */
         updateStatusForm.patch = (args: { passenger: number | { id: number } } | [passenger: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

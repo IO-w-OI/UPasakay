@@ -79,7 +79,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     index.form = indexForm
 /**
 * @see \App\Http\Controllers\LiveMapController::store
- * @see app/Http/Controllers/LiveMapController.php:107
+ * @see app/Http/Controllers/LiveMapController.php:117
  * @route '/live-map/stops'
  */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -94,7 +94,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\LiveMapController::store
- * @see app/Http/Controllers/LiveMapController.php:107
+ * @see app/Http/Controllers/LiveMapController.php:117
  * @route '/live-map/stops'
  */
 store.url = (options?: RouteQueryOptions) => {
@@ -103,7 +103,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\LiveMapController::store
- * @see app/Http/Controllers/LiveMapController.php:107
+ * @see app/Http/Controllers/LiveMapController.php:117
  * @route '/live-map/stops'
  */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -113,7 +113,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\LiveMapController::store
- * @see app/Http/Controllers/LiveMapController.php:107
+ * @see app/Http/Controllers/LiveMapController.php:117
  * @route '/live-map/stops'
  */
     const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -123,7 +123,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\LiveMapController::store
- * @see app/Http/Controllers/LiveMapController.php:107
+ * @see app/Http/Controllers/LiveMapController.php:117
  * @route '/live-map/stops'
  */
         storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -134,7 +134,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     store.form = storeForm
 /**
 * @see \App\Http\Controllers\LiveMapController::update
- * @see app/Http/Controllers/LiveMapController.php:131
+ * @see app/Http/Controllers/LiveMapController.php:141
  * @route '/live-map/stops/{stop}'
  */
 export const update = (args: { stop: number | { id: number } } | [stop: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -149,7 +149,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\LiveMapController::update
- * @see app/Http/Controllers/LiveMapController.php:131
+ * @see app/Http/Controllers/LiveMapController.php:141
  * @route '/live-map/stops/{stop}'
  */
 update.url = (args: { stop: number | { id: number } } | [stop: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -182,7 +182,7 @@ update.url = (args: { stop: number | { id: number } } | [stop: number | { id: nu
 
 /**
 * @see \App\Http\Controllers\LiveMapController::update
- * @see app/Http/Controllers/LiveMapController.php:131
+ * @see app/Http/Controllers/LiveMapController.php:141
  * @route '/live-map/stops/{stop}'
  */
 update.patch = (args: { stop: number | { id: number } } | [stop: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -192,7 +192,7 @@ update.patch = (args: { stop: number | { id: number } } | [stop: number | { id: 
 
     /**
 * @see \App\Http\Controllers\LiveMapController::update
- * @see app/Http/Controllers/LiveMapController.php:131
+ * @see app/Http/Controllers/LiveMapController.php:141
  * @route '/live-map/stops/{stop}'
  */
     const updateForm = (args: { stop: number | { id: number } } | [stop: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -207,7 +207,7 @@ update.patch = (args: { stop: number | { id: number } } | [stop: number | { id: 
 
             /**
 * @see \App\Http\Controllers\LiveMapController::update
- * @see app/Http/Controllers/LiveMapController.php:131
+ * @see app/Http/Controllers/LiveMapController.php:141
  * @route '/live-map/stops/{stop}'
  */
         updateForm.patch = (args: { stop: number | { id: number } } | [stop: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -223,7 +223,7 @@ update.patch = (args: { stop: number | { id: number } } | [stop: number | { id: 
     update.form = updateForm
 /**
 * @see \App\Http\Controllers\LiveMapController::destroy
- * @see app/Http/Controllers/LiveMapController.php:142
+ * @see app/Http/Controllers/LiveMapController.php:152
  * @route '/live-map/stops/{stop}'
  */
 export const destroy = (args: { stop: number | { id: number } } | [stop: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -238,7 +238,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\LiveMapController::destroy
- * @see app/Http/Controllers/LiveMapController.php:142
+ * @see app/Http/Controllers/LiveMapController.php:152
  * @route '/live-map/stops/{stop}'
  */
 destroy.url = (args: { stop: number | { id: number } } | [stop: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -271,7 +271,7 @@ destroy.url = (args: { stop: number | { id: number } } | [stop: number | { id: n
 
 /**
 * @see \App\Http\Controllers\LiveMapController::destroy
- * @see app/Http/Controllers/LiveMapController.php:142
+ * @see app/Http/Controllers/LiveMapController.php:152
  * @route '/live-map/stops/{stop}'
  */
 destroy.delete = (args: { stop: number | { id: number } } | [stop: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -281,7 +281,7 @@ destroy.delete = (args: { stop: number | { id: number } } | [stop: number | { id
 
     /**
 * @see \App\Http\Controllers\LiveMapController::destroy
- * @see app/Http/Controllers/LiveMapController.php:142
+ * @see app/Http/Controllers/LiveMapController.php:152
  * @route '/live-map/stops/{stop}'
  */
     const destroyForm = (args: { stop: number | { id: number } } | [stop: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -296,7 +296,7 @@ destroy.delete = (args: { stop: number | { id: number } } | [stop: number | { id
 
             /**
 * @see \App\Http\Controllers\LiveMapController::destroy
- * @see app/Http/Controllers/LiveMapController.php:142
+ * @see app/Http/Controllers/LiveMapController.php:152
  * @route '/live-map/stops/{stop}'
  */
         destroyForm.delete = (args: { stop: number | { id: number } } | [stop: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

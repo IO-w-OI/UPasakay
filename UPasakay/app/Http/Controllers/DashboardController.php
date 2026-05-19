@@ -25,15 +25,24 @@ class DashboardController extends Controller
         $shuttles = Shuttle::with(['route', 'driver'])
             ->orderBy('shuttle_code')
             ->get()
-            ->map(fn ($s) => [
-                'shuttle_code' => $s->shuttle_code,
-                'driver' => $s->driver?->full_name ?? '—',
-                'route' => $s->route?->name ?? '—',
-                'status' => $s->status,
-                'last_seen' => $s->last_seen_at
-                    ? $s->last_seen_at->diffForHumans(null, true).' ago'
-                    : '—',
-            ]);
+            ->map(function ($s) {
+                // Latest GPS ping so the mini map plots the real position.
+                $loc = $s->locations()->latest('recorded_at')->first();
+
+                return [
+                    'id' => $s->id,
+                    'shuttle_code' => $s->shuttle_code,
+                    'driver' => $s->driver?->full_name ?? '—',
+                    'route' => $s->route?->name ?? '—',
+                    'status' => $s->status,
+                    'latitude' => $loc ? (float) $loc->latitude : null,
+                    'longitude' => $loc ? (float) $loc->longitude : null,
+                    'speed' => $loc && $loc->speed_kmh !== null ? (float) $loc->speed_kmh : null,
+                    'last_seen' => $s->last_seen_at
+                        ? $s->last_seen_at->diffForHumans(null, true).' ago'
+                        : '—',
+                ];
+            });
 
         // ── Pickups per route ─────────────────────────────────────────────────
         $pickupsPerRoute = Route::withCount([
@@ -63,7 +72,7 @@ class DashboardController extends Controller
             ->map(fn ($activity) => [
                 'icon' => $activity->icon,
                 'text' => $activity->description,
-                'time' => Carbon::parse($activity->created_at)->format('h:i A'),
+                'time' => Carbon::parse($activity->created_at)->timezone('Asia/Manila')->format('h:i A'),
             ]);
 
         $notifications = collect([

@@ -59,7 +59,7 @@ class PassengerApprovalController extends Controller
                 'department' => $passenger->department,
                 'passenger_type' => $passenger->passenger_type,
                 'status' => $passenger->passenger_status,
-                'registered_at' => optional($passenger->created_at)->format('M d, Y h:i A'),
+                'registered_at' => $passenger->created_at?->copy()->timezone('Asia/Manila')->format('M d, Y h:i A'),
                 'proof_document_path' => $passenger->proof_document_path,
             ];
         });

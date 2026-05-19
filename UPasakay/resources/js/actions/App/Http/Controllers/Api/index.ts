@@ -12,6 +12,7 @@ import PickupRequestController from './PickupRequestController'
 import DriverAssignmentController from './DriverAssignmentController'
 import ShuttleLocationController from './ShuttleLocationController'
 import DriverApiController from './DriverApiController'
+import ProfileController from './ProfileController'
 const Api = {
     AuthController: Object.assign(AuthController, AuthController),
 AdminAuthController: Object.assign(AdminAuthController, AdminAuthController),
@@ -27,6 +28,7 @@ PickupRequestController: Object.assign(PickupRequestController, PickupRequestCon
 DriverAssignmentController: Object.assign(DriverAssignmentController, DriverAssignmentController),
 ShuttleLocationController: Object.assign(ShuttleLocationController, ShuttleLocationController),
 DriverApiController: Object.assign(DriverApiController, DriverApiController),
+ProfileController: Object.assign(ProfileController, ProfileController),
 }
 
 export default Api

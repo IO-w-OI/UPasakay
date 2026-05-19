@@ -66,7 +66,7 @@ class FeedbackController extends Controller
                     'comment' => $r->comment ?? '',
                     'route' => $r->route?->name ?? '—',
                     'status' => 'boarded',
-                    'date' => Carbon::parse($r->created_at)->format('M j'),
+                    'date' => Carbon::parse($r->created_at)->timezone('Asia/Manila')->format('M j'),
                     'replied' => (bool) ($r->replied ?? false),
                 ];
             })->all();

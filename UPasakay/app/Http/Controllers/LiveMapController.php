@@ -76,7 +76,7 @@ class LiveMapController extends Controller
                 'passenger' => $r->user?->name ?? '—',
                 'route' => $r->route?->name ?? '—',
                 'stop' => $r->pickupStop?->name ?? '—',
-                'time' => Carbon::parse($r->created_at)->format('h:i A'),
+                'time' => Carbon::parse($r->created_at)->timezone('Asia/Manila')->format('h:i A'),
             ]);
 
         $routes = Route::query()

@@ -134,7 +134,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     store.form = storeForm
 /**
 * @see \App\Http\Controllers\Api\ShuttleLocationController::show
- * @see app/Http/Controllers/Api/ShuttleLocationController.php:120
+ * @see app/Http/Controllers/Api/ShuttleLocationController.php:129
  * @route '/api/shuttle-locations/{shuttle_location}'
  */
 export const show = (args: { shuttle_location: string | number } | [shuttle_location: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -149,7 +149,7 @@ show.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\ShuttleLocationController::show
- * @see app/Http/Controllers/Api/ShuttleLocationController.php:120
+ * @see app/Http/Controllers/Api/ShuttleLocationController.php:129
  * @route '/api/shuttle-locations/{shuttle_location}'
  */
 show.url = (args: { shuttle_location: string | number } | [shuttle_location: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -177,7 +177,7 @@ show.url = (args: { shuttle_location: string | number } | [shuttle_location: str
 
 /**
 * @see \App\Http\Controllers\Api\ShuttleLocationController::show
- * @see app/Http/Controllers/Api/ShuttleLocationController.php:120
+ * @see app/Http/Controllers/Api/ShuttleLocationController.php:129
  * @route '/api/shuttle-locations/{shuttle_location}'
  */
 show.get = (args: { shuttle_location: string | number } | [shuttle_location: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -186,7 +186,7 @@ show.get = (args: { shuttle_location: string | number } | [shuttle_location: str
 })
 /**
 * @see \App\Http\Controllers\Api\ShuttleLocationController::show
- * @see app/Http/Controllers/Api/ShuttleLocationController.php:120
+ * @see app/Http/Controllers/Api/ShuttleLocationController.php:129
  * @route '/api/shuttle-locations/{shuttle_location}'
  */
 show.head = (args: { shuttle_location: string | number } | [shuttle_location: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -196,7 +196,7 @@ show.head = (args: { shuttle_location: string | number } | [shuttle_location: st
 
     /**
 * @see \App\Http\Controllers\Api\ShuttleLocationController::show
- * @see app/Http/Controllers/Api/ShuttleLocationController.php:120
+ * @see app/Http/Controllers/Api/ShuttleLocationController.php:129
  * @route '/api/shuttle-locations/{shuttle_location}'
  */
     const showForm = (args: { shuttle_location: string | number } | [shuttle_location: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -206,7 +206,7 @@ show.head = (args: { shuttle_location: string | number } | [shuttle_location: st
 
             /**
 * @see \App\Http\Controllers\Api\ShuttleLocationController::show
- * @see app/Http/Controllers/Api/ShuttleLocationController.php:120
+ * @see app/Http/Controllers/Api/ShuttleLocationController.php:129
  * @route '/api/shuttle-locations/{shuttle_location}'
  */
         showForm.get = (args: { shuttle_location: string | number } | [shuttle_location: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -215,7 +215,7 @@ show.head = (args: { shuttle_location: string | number } | [shuttle_location: st
         })
             /**
 * @see \App\Http\Controllers\Api\ShuttleLocationController::show
- * @see app/Http/Controllers/Api/ShuttleLocationController.php:120
+ * @see app/Http/Controllers/Api/ShuttleLocationController.php:129
  * @route '/api/shuttle-locations/{shuttle_location}'
  */
         showForm.head = (args: { shuttle_location: string | number } | [shuttle_location: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -231,7 +231,7 @@ show.head = (args: { shuttle_location: string | number } | [shuttle_location: st
     show.form = showForm
 /**
 * @see \App\Http\Controllers\Api\ShuttleLocationController::update
- * @see app/Http/Controllers/Api/ShuttleLocationController.php:125
+ * @see app/Http/Controllers/Api/ShuttleLocationController.php:134
  * @route '/api/shuttle-locations/{shuttle_location}'
  */
 export const update = (args: { shuttle_location: string | number } | [shuttle_location: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -246,7 +246,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\ShuttleLocationController::update
- * @see app/Http/Controllers/Api/ShuttleLocationController.php:125
+ * @see app/Http/Controllers/Api/ShuttleLocationController.php:134
  * @route '/api/shuttle-locations/{shuttle_location}'
  */
 update.url = (args: { shuttle_location: string | number } | [shuttle_location: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -274,7 +274,7 @@ update.url = (args: { shuttle_location: string | number } | [shuttle_location: s
 
 /**
 * @see \App\Http\Controllers\Api\ShuttleLocationController::update
- * @see app/Http/Controllers/Api/ShuttleLocationController.php:125
+ * @see app/Http/Controllers/Api/ShuttleLocationController.php:134
  * @route '/api/shuttle-locations/{shuttle_location}'
  */
 update.put = (args: { shuttle_location: string | number } | [shuttle_location: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -283,7 +283,7 @@ update.put = (args: { shuttle_location: string | number } | [shuttle_location: s
 })
 /**
 * @see \App\Http\Controllers\Api\ShuttleLocationController::update
- * @see app/Http/Controllers/Api/ShuttleLocationController.php:125
+ * @see app/Http/Controllers/Api/ShuttleLocationController.php:134
  * @route '/api/shuttle-locations/{shuttle_location}'
  */
 update.patch = (args: { shuttle_location: string | number } | [shuttle_location: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -293,7 +293,7 @@ update.patch = (args: { shuttle_location: string | number } | [shuttle_location:
 
     /**
 * @see \App\Http\Controllers\Api\ShuttleLocationController::update
- * @see app/Http/Controllers/Api/ShuttleLocationController.php:125
+ * @see app/Http/Controllers/Api/ShuttleLocationController.php:134
  * @route '/api/shuttle-locations/{shuttle_location}'
  */
     const updateForm = (args: { shuttle_location: string | number } | [shuttle_location: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -308,7 +308,7 @@ update.patch = (args: { shuttle_location: string | number } | [shuttle_location:
 
             /**
 * @see \App\Http\Controllers\Api\ShuttleLocationController::update
- * @see app/Http/Controllers/Api/ShuttleLocationController.php:125
+ * @see app/Http/Controllers/Api/ShuttleLocationController.php:134
  * @route '/api/shuttle-locations/{shuttle_location}'
  */
         updateForm.put = (args: { shuttle_location: string | number } | [shuttle_location: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -322,7 +322,7 @@ update.patch = (args: { shuttle_location: string | number } | [shuttle_location:
         })
             /**
 * @see \App\Http\Controllers\Api\ShuttleLocationController::update
- * @see app/Http/Controllers/Api/ShuttleLocationController.php:125
+ * @see app/Http/Controllers/Api/ShuttleLocationController.php:134
  * @route '/api/shuttle-locations/{shuttle_location}'
  */
         updateForm.patch = (args: { shuttle_location: string | number } | [shuttle_location: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -338,7 +338,7 @@ update.patch = (args: { shuttle_location: string | number } | [shuttle_location:
     update.form = updateForm
 /**
 * @see \App\Http\Controllers\Api\ShuttleLocationController::destroy
- * @see app/Http/Controllers/Api/ShuttleLocationController.php:138
+ * @see app/Http/Controllers/Api/ShuttleLocationController.php:147
  * @route '/api/shuttle-locations/{shuttle_location}'
  */
 export const destroy = (args: { shuttle_location: string | number } | [shuttle_location: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -353,7 +353,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\ShuttleLocationController::destroy
- * @see app/Http/Controllers/Api/ShuttleLocationController.php:138
+ * @see app/Http/Controllers/Api/ShuttleLocationController.php:147
  * @route '/api/shuttle-locations/{shuttle_location}'
  */
 destroy.url = (args: { shuttle_location: string | number } | [shuttle_location: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -381,7 +381,7 @@ destroy.url = (args: { shuttle_location: string | number } | [shuttle_location: 
 
 /**
 * @see \App\Http\Controllers\Api\ShuttleLocationController::destroy
- * @see app/Http/Controllers/Api/ShuttleLocationController.php:138
+ * @see app/Http/Controllers/Api/ShuttleLocationController.php:147
  * @route '/api/shuttle-locations/{shuttle_location}'
  */
 destroy.delete = (args: { shuttle_location: string | number } | [shuttle_location: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -391,7 +391,7 @@ destroy.delete = (args: { shuttle_location: string | number } | [shuttle_locatio
 
     /**
 * @see \App\Http\Controllers\Api\ShuttleLocationController::destroy
- * @see app/Http/Controllers/Api/ShuttleLocationController.php:138
+ * @see app/Http/Controllers/Api/ShuttleLocationController.php:147
  * @route '/api/shuttle-locations/{shuttle_location}'
  */
     const destroyForm = (args: { shuttle_location: string | number } | [shuttle_location: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -406,7 +406,7 @@ destroy.delete = (args: { shuttle_location: string | number } | [shuttle_locatio
 
             /**
 * @see \App\Http\Controllers\Api\ShuttleLocationController::destroy
- * @see app/Http/Controllers/Api/ShuttleLocationController.php:138
+ * @see app/Http/Controllers/Api/ShuttleLocationController.php:147
  * @route '/api/shuttle-locations/{shuttle_location}'
  */
         destroyForm.delete = (args: { shuttle_location: string | number } | [shuttle_location: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

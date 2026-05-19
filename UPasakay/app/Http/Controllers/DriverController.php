@@ -151,14 +151,14 @@ class DriverController extends Controller
             ->take(20)
             ->get()
             ->map(fn ($a) => [
-                'date' => Carbon::parse($a->created_at)->format('M j'),
+                'date' => Carbon::parse($a->created_at)->timezone('Asia/Manila')->format('M j'),
                 'event' => match ($a->pickupRequest?->status ?? 'unknown') {
                     'completed' => 'Pickup completed',
                     'cancelled' => 'Pickup cancelled',
                     default => 'Pickup assigned',
                 },
                 'route' => $a->pickupRequest?->route?->name ?? '—',
-                'time' => Carbon::parse($a->created_at)->format('h:i A'),
+                'time' => Carbon::parse($a->created_at)->timezone('Asia/Manila')->format('h:i A'),
             ]);
 
         return Inertia::render('Drivers/Show', [
@@ -173,7 +173,7 @@ class DriverController extends Controller
                 'shuttle_id' => $shuttle?->id,
                 'email' => $driver->user?->email ?? '—',
                 'last_login' => $driver->user?->updated_at
-                    ? Carbon::parse($driver->user->updated_at)->format('M j, Y h:i A')
+                    ? Carbon::parse($driver->user->updated_at)->timezone('Asia/Manila')->format('M j, Y h:i A')
                     : '—',
                 'total_sessions' => $totalSessions,
                 'total_pickups' => $totalPickups,
