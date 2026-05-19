@@ -418,6 +418,7 @@ const UserMapScreen = () => {
     });
 
     if (!ok) {
+      console.log('[Para] error response:', JSON.stringify(data));
       LayoutAnimation.configureNext(SnappyAnim);
       setStatus('searching');
       Alert.alert('Request failed', data?.error ?? data?.message ?? 'Could not send Para request. Please try again.');
