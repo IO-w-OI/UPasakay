@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { StyleSheet, View, TextInput, TouchableOpacity, Text, Image, LayoutAnimation, Platform, UIManager, Dimensions } from 'react-native';
+import { StyleSheet, View, TextInput, TouchableOpacity, Text, Image, LayoutAnimation, Platform, UIManager, Dimensions, Alert } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -9,7 +9,7 @@ import { currentUser } from '../../services/UserStore';
 import * as Notifications from 'expo-notifications';
 import { useTrip } from '../../context/TripContext';
 import { ROUTE_STOPS } from '../../services/UserRouteStops';
-import { apiGet } from '../../services/apiClient';
+import { apiGet, apiPost } from '../../services/apiClient';
 
 const { width } = Dimensions.get('window');
 
@@ -57,6 +57,10 @@ const UserMapScreen = () => {
   const [mapLoaded, setMapLoaded] = useState(false);
   const [routeStops, setRouteStops] = useState([]);
   const [routeColor, setRouteColor] = useState('#f97316');
+  const [selectedStopId, setSelectedStopId] = useState(null);
+  const [dropoffSearchText, setDropoffSearchText] = useState('');
+  const [dropoffAddress, setDropoffAddress] = useState('');
+  const [dropoffStopId, setDropoffStopId] = useState(null);
 
   // ── Pusher real-time subscriptions ────────────────────────────────────────
   useEffect(() => {
@@ -83,6 +87,13 @@ const UserMapScreen = () => {
         eta: data.eta_minutes,
       });
       setPickupRequestId(data.pickup_request_id ?? null);
+      setActiveTrip({
+        driverName: data.driver_name,
+        etaText: data.eta_minutes ? `${data.eta_minutes} min` : 'On the way',
+        distanceText: 'Arriving Soon',
+        avatarUri: data.avatar_uri ?? 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=100',
+        route: data.route_name ?? 'UP Cebu Bus Route',
+      });
       LayoutAnimation.configureNext(SnappyAnim);
       setStatus('booking');
       Notifications.scheduleNotificationAsync({
@@ -130,7 +141,7 @@ const UserMapScreen = () => {
       pusher.unsubscribe(`passenger-${passengerId}`);
       pusher.disconnect();
     };
-  }, []);
+  }, [setActiveTrip]);
   // ──────────────────────────────────────────────────────────────────────────
 
   // Fetch stops for the selected route
@@ -311,19 +322,47 @@ const UserMapScreen = () => {
     const q = searchText.trim();
     if (!q) return;
     setPickupAddress('Searching...');
-    
+
     const dummyHit = ROUTE_STOPS.find(stop => stop.name.toLowerCase().includes(q.toLowerCase()));
-    
+
     if (dummyHit) {
       setCurrentCoords({ lat: dummyHit.lat, lng: dummyHit.lng });
       setPickupAddress(dummyHit.name);
       webViewRef.current?.injectJavaScript(`window.panTo(${dummyHit.lat}, ${dummyHit.lng}); true;`);
+      // Match against API-loaded stops to get the real backend stop ID
+      const apiStop = routeStops.find(s =>
+        s.name.toLowerCase().includes(dummyHit.name.toLowerCase()) ||
+        dummyHit.name.toLowerCase().includes(s.name.toLowerCase())
+      );
+      setSelectedStopId(apiStop?.id ?? null);
+      setDropoffStopId(null);
+      setDropoffAddress('');
+      setDropoffSearchText('');
     } else {
       const hit = await forwardGeocode(q);
       if (!hit) { setPickupAddress('No results for "' + q + '"'); return; }
       setCurrentCoords({ lat: hit.lat, lng: hit.lng });
       setPickupAddress(hit.label);
       webViewRef.current?.injectJavaScript(`window.panTo(${hit.lat}, ${hit.lng}); true;`);
+      setSelectedStopId(null);
+      setDropoffStopId(null);
+      setDropoffAddress('');
+      setDropoffSearchText('');
+    }
+  };
+
+  const handleDropoffSearchSubmit = () => {
+    const q = dropoffSearchText.trim();
+    if (!q) return;
+    const match = routeStops.find(s =>
+      s.is_active && s.name.toLowerCase().includes(q.toLowerCase())
+    );
+    if (match) {
+      setDropoffAddress(match.name);
+      setDropoffStopId(match.id);
+    } else {
+      setDropoffAddress('No stops matching "' + q + '"');
+      setDropoffStopId(null);
     }
   };
 
@@ -349,18 +388,43 @@ const UserMapScreen = () => {
     }
   };
 
-  const handleParaPress = () => {
+  const upcStop = routeStops.find(s => {
+    const n = s.name.toLowerCase();
+    return (n.includes('up') && n.includes('cebu')) || n.includes('upc');
+  });
+  const isPickupUPC = Boolean(selectedStopId && upcStop && selectedStopId === upcStop.id);
+  const effectiveDropoffStopId = isPickupUPC ? dropoffStopId : (upcStop?.id ?? null);
+
+  const handleParaPress = async () => {
+    if (!selectedStopId) {
+      Alert.alert('Select a stop', 'Search for a bus stop before requesting a pickup.');
+      return;
+    }
+    if (!effectiveDropoffStopId) {
+      Alert.alert(
+        isPickupUPC ? 'Select a drop-off stop' : 'Route error',
+        isPickupUPC ? 'Search for the stop you want to be dropped off at.' : 'No UP Cebu stop found for this route.'
+      );
+      return;
+    }
+
     LayoutAnimation.configureNext(SnappyAnim);
     setStatus('booking');
 
-    setActiveTrip({
-      driverName: "Sanford Marin Vinuya",
-      etaText: "6:05 AM",
-      distanceText: "Arriving Soon",
-      avatarUri: 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=100',
-      route: "UP Cebu Bus Route"
+    const { ok, data } = await apiPost('pickup-requests', {
+      route_id: routeId,
+      pickup_stop_id: selectedStopId,
+      dropoff_stop_id: effectiveDropoffStopId,
     });
 
+    if (!ok) {
+      LayoutAnimation.configureNext(SnappyAnim);
+      setStatus('searching');
+      Alert.alert('Request failed', data?.message || 'Could not send Para request. Please try again.');
+      return;
+    }
+
+    setPickupRequestId(data.id);
     webViewRef.current?.injectJavaScript(`window.startBusFromUPC(${currentCoords.lat}, ${currentCoords.lng});`);
   };
 
@@ -438,7 +502,35 @@ const UserMapScreen = () => {
               <View style={styles.greenDot}><Ionicons name="location" size={14} color="white" /></View>
               <Text style={styles.addressText} numberOfLines={1}>{pickupAddress}</Text>
             </View>
-            <TouchableOpacity style={styles.paraBtn} onPress={handleParaPress}>
+            {isPickupUPC && (
+              <>
+                <Text style={[styles.cardHeader, { marginTop: 10, fontSize: 16 }]}>Drop-off Stop</Text>
+                <View style={styles.dropoffSearchRow}>
+                  <TextInput
+                    style={[styles.dropoffInput, { fontFamily: 'Nunito-Regular' }]}
+                    placeholder="Search drop-off stop..."
+                    value={dropoffSearchText}
+                    onChangeText={setDropoffSearchText}
+                    onSubmitEditing={handleDropoffSearchSubmit}
+                    returnKeyType="search"
+                  />
+                  <TouchableOpacity onPress={handleDropoffSearchSubmit}>
+                    <Ionicons name="search" size={20} color="#1A2E1A" />
+                  </TouchableOpacity>
+                </View>
+                {dropoffAddress ? (
+                  <View style={[styles.inputBox, { marginTop: 8 }]}>
+                    <View style={styles.greenDot}><Ionicons name="location" size={14} color="white" /></View>
+                    <Text style={styles.addressText} numberOfLines={1}>{dropoffAddress}</Text>
+                  </View>
+                ) : null}
+              </>
+            )}
+            <TouchableOpacity
+              style={[styles.paraBtn, { marginTop: 15 }, !effectiveDropoffStopId && { opacity: 0.5 }]}
+              onPress={handleParaPress}
+              disabled={!selectedStopId || !effectiveDropoffStopId}
+            >
               <Text style={styles.paraText}>Para!</Text>
             </TouchableOpacity>
           </>
@@ -553,6 +645,8 @@ const styles = StyleSheet.create({
   modalAvatar: { width: 60, height: 60, borderRadius: 30, marginRight: 15 },
   boardBtn: { flexDirection: 'row', gap: 8, backgroundColor: '#FFB82E', height: 55, borderRadius: 30, justifyContent: 'center', alignItems: 'center', marginBottom: 14, elevation: 3 },
   boardBtnText: { fontSize: 17, color: '#1A2E1A', fontFamily: 'Nunito-Black' },
+  dropoffSearchRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', paddingHorizontal: 15, paddingVertical: 10, borderRadius: 30, borderWidth: 1, borderColor: '#1A2E1A', marginBottom: 4 },
+  dropoffInput: { flex: 1, marginRight: 8, fontSize: 15 },
   onboardBox: { alignItems: 'center', paddingVertical: 30 },
   onboardTitle: { fontSize: 22, color: '#1A2E1A', fontFamily: 'Nunito-Bold', marginTop: 10 },
   onboardSub: { fontSize: 14, color: '#666', fontFamily: 'Nunito-Regular', marginTop: 4 },
