@@ -84,12 +84,7 @@ class PickupRequestController extends Controller
             'requests' => $requests,
             'routes' => $routes,
             'filters' => $request->only(['search', 'route', 'status', 'date']),
-            'stats' => [
-                'total' => $totalToday,
-                'pending' => $pendingToday,
-                'completed' => $completedToday,
-                'cancelled' => $cancelledToday,
-            ],
+            'stats' => $stats,
         ]);
     }
 
