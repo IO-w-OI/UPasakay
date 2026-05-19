@@ -32,6 +32,11 @@ class Shuttle extends Model
         return $this->hasMany(ShuttleLocation::class);
     }
 
+    public function latestLocation()
+    {
+        return $this->hasOne(ShuttleLocation::class)->latestOfMany('recorded_at');
+    }
+
     public function route()
     {
         return $this->belongsTo(Route::class);

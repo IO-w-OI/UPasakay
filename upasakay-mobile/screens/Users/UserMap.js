@@ -15,7 +15,8 @@ import {
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 
-import { apiGet, apiPost } from '../../services/apiClient';
+import { apiDelete, apiGet, apiPost } from '../../services/apiClient';
+import { currentUser } from '../../services/UserStore';
 import { moderateScale, scale } from '../../utils/responsive';
 
 const PUSHER_KEY = process.env.EXPO_PUBLIC_PUSHER_KEY ?? 'f21efd02988d084b7b35';
@@ -162,6 +163,21 @@ const leafletHTML = `
     window.highlightStop = function(lat, lng) {
       map.setView([lat, lng], 16, { animate: true });
     };
+
+    // While waiting for the driver, keep both the passenger and the live
+    // (moving) shuttle on screen so the bus is always visible approaching.
+    window.fitUserAndShuttles = function() {
+      var pts = [];
+      if (userMarker) pts.push(userMarker.getLatLng());
+      Object.keys(shuttleMarkers).forEach(function(k) {
+        pts.push(shuttleMarkers[k].getLatLng());
+      });
+      if (pts.length === 1) {
+        map.setView(pts[0], 16, { animate: true });
+      } else if (pts.length > 1) {
+        map.fitBounds(L.latLngBounds(pts), { padding: [90, 90], maxZoom: 16 });
+      }
+    };
   </script>
 </body>
 </html>
@@ -181,6 +197,18 @@ const UserMap = () => {
   const [selecting, setSelecting] = useState('pickup'); // 'pickup' | 'dropoff'
   const [paraLoading, setParaLoading] = useState(false);
   const [shuttleOnline, setShuttleOnline] = useState(false);
+
+  // Booking lifecycle: 'book' (choosing stops) → 'waiting' (driver coming,
+  // live shuttle on the map) → 'onboard' (boarded). Reset on completion.
+  const [phase, setPhase] = useState('book');
+  const [pickupRequestId, setPickupRequestId] = useState(null);
+  const [driverInfo, setDriverInfo] = useState(null); // { name, shuttle, eta }
+  const phaseRef = useRef('book');
+  useEffect(() => {
+    phaseRef.current = phase;
+  }, [phase]);
+
+  const passengerId = currentUser?.passenger_id ?? currentUser?.id ?? null;
 
   // ── 1. GPS permission + auto-center ────────────────────────────────────────
   const locateUser = useCallback(async (pan = true) => {
@@ -237,7 +265,9 @@ const UserMap = () => {
       );
     });
     webRef.current?.injectJavaScript(
-      `window.syncShuttles(${JSON.stringify(ids)}); true;`
+      `window.syncShuttles(${JSON.stringify(ids)});` +
+        (phaseRef.current === 'waiting' ? ' window.fitUserAndShuttles();' : '') +
+        ' true;'
     );
   }, [routeId]);
 
@@ -254,15 +284,43 @@ const UserMap = () => {
     try {
       pusher = new Pusher(PUSHER_KEY, { cluster: PUSHER_CLUSTER, forceTLS: true });
       pusherRef.current = pusher;
-      const ch = pusher.subscribe('shuttle-locations');
-      ch.bind('location.updated', (payload) => {
+
+      // Live shuttle GPS — moves the bus marker as the driver drives.
+      const locCh = pusher.subscribe('shuttle-locations');
+      locCh.bind('location.updated', (payload) => {
         if (!payload?.id) return;
         // Only move shuttles we know belong to this route.
         if (!trackedShuttleIds.current.has(payload.id)) return;
         webRef.current?.injectJavaScript(
-          `window.upsertShuttle(${payload.id}, ${payload.latitude}, ${payload.longitude}); true;`
+          `window.upsertShuttle(${payload.id}, ${payload.latitude}, ${payload.longitude});` +
+            (phaseRef.current === 'waiting' ? ' window.fitUserAndShuttles();' : '') +
+            ' true;'
         );
       });
+
+      // Passenger-specific channel: driver assigned / boarded / ride done.
+      if (passengerId != null) {
+        const paxCh = pusher.subscribe(`passenger-${passengerId}`);
+
+        paxCh.bind('ride.accepted', (data) => {
+          setDriverInfo({
+            name: data?.driver_name ?? 'Your driver',
+            shuttle: data?.shuttle_number ?? null,
+            eta: data?.eta_minutes ?? null,
+          });
+          if (data?.pickup_request_id) setPickupRequestId(data.pickup_request_id);
+          setPhase('waiting');
+          webRef.current?.injectJavaScript('window.fitUserAndShuttles(); true;');
+        });
+
+        paxCh.bind('passenger.boarded', () => setPhase('onboard'));
+
+        paxCh.bind('ride.completed', () => {
+          setPhase('book');
+          setDriverInfo(null);
+          setPickupRequestId(null);
+        });
+      }
     } catch (e) {
       console.warn('[Pusher] init error', e);
     }
@@ -272,7 +330,7 @@ const UserMap = () => {
         pusherRef.current = null;
       } catch {}
     };
-  }, [mapLoaded]);
+  }, [mapLoaded, passengerId]);
 
   // ── 5. Handle messages from Leaflet ───────────────────────────────────────
   const handleMessage = (event) => {
@@ -333,17 +391,19 @@ const UserMap = () => {
       });
 
       if (ok) {
-        const eta = data?.eta_minutes;
         const accepted = data?.status === 'accepted' || data?.status === 'in_progress';
-        Alert.alert(
-          'Ride Requested!',
-          (accepted
-            ? 'A shuttle is on the way.'
-            : "You're in the queue — the driver will be notified.") +
-            (eta ? `\n\nEstimated arrival: ~${eta} min.` : '') +
-            `\n\nPick-up: ${pickupStop.name}\nDrop-off: ${dropoffStop.name}`,
-          [{ text: 'OK' }]
-        );
+        setPickupRequestId(data?.id ?? null);
+        // Driver name arrives on the `ride.accepted` broadcast; seed ETA now
+        // if the request was auto-accepted so the card isn't blank.
+        setDriverInfo(accepted ? { name: null, shuttle: null, eta: data?.eta_minutes ?? null } : null);
+        if (data?.status === 'in_progress') {
+          setPhase('onboard');
+        } else {
+          setPhase('waiting');
+          // Frame the passenger + the live shuttle so the bus is visible
+          // moving toward the pick-up while they wait.
+          webRef.current?.injectJavaScript('window.fitUserAndShuttles(); true;');
+        }
         return;
       }
 
@@ -357,6 +417,21 @@ const UserMap = () => {
       Alert.alert('Ride Not Requested', message);
     } finally {
       setParaLoading(false);
+    }
+  };
+
+  // Best-effort cancel: drop the pending request server-side so it doesn't
+  // linger, then return to stop selection. (Mirrors the prior UX — if the
+  // delete fails we still reset locally rather than trap the user.)
+  const handleCancelWait = () => {
+    if (pickupRequestId) {
+      apiDelete(`pickup-requests/${pickupRequestId}`).catch(() => {});
+    }
+    setPhase('book');
+    setDriverInfo(null);
+    setPickupRequestId(null);
+    if (routeStops.length > 0) {
+      webRef.current?.injectJavaScript('window.fitUserAndShuttles(); true;');
     }
   };
 
@@ -405,61 +480,126 @@ const UserMap = () => {
         </BlurView>
       </TouchableOpacity>
 
-      {/* Bottom booking card */}
+      {/* Bottom card — booking → waiting (live shuttle) → onboard */}
       <View style={styles.card}>
-        <Text style={styles.routeLabel}>{busName ?? 'Bus Route'}</Text>
-        <Text style={styles.cardTitle}>Book a Ride</Text>
+        {phase === 'book' && (
+          <>
+            <Text style={styles.routeLabel}>{busName ?? 'Bus Route'}</Text>
+            <Text style={styles.cardTitle}>Book a Ride</Text>
 
-        {/* Pick-up slot */}
-        <TouchableOpacity
-          activeOpacity={0.85}
-          onPress={() => selectSlot('pickup')}
-          style={[styles.stopRow, selecting === 'pickup' && styles.stopRowActive]}
-        >
-          <View style={[styles.stopDot, { backgroundColor: pickupStop ? '#22c55e' : '#ccc' }]} />
-          <View style={{ flex: 1 }}>
-            <Text style={styles.slotLabel}>PICK-UP</Text>
-            <Text
-              style={[styles.stopName, !pickupStop && styles.stopPlaceholder]}
-              numberOfLines={1}
+            {/* Pick-up slot */}
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={() => selectSlot('pickup')}
+              style={[styles.stopRow, selecting === 'pickup' && styles.stopRowActive]}
             >
-              {pickupStop ? pickupStop.name : 'Tap a stop on the map'}
-            </Text>
-          </View>
-          {pickupStop && <Text style={styles.stopSeq}>#{pickupStop.sequence}</Text>}
-        </TouchableOpacity>
+              <View style={[styles.stopDot, { backgroundColor: pickupStop ? '#22c55e' : '#ccc' }]} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.slotLabel}>PICK-UP</Text>
+                <Text
+                  style={[styles.stopName, !pickupStop && styles.stopPlaceholder]}
+                  numberOfLines={1}
+                >
+                  {pickupStop ? pickupStop.name : 'Tap a stop on the map'}
+                </Text>
+              </View>
+              {pickupStop && <Text style={styles.stopSeq}>#{pickupStop.sequence}</Text>}
+            </TouchableOpacity>
 
-        {/* Drop-off slot */}
-        <TouchableOpacity
-          activeOpacity={0.85}
-          onPress={() => selectSlot('dropoff')}
-          style={[styles.stopRow, selecting === 'dropoff' && styles.stopRowActive]}
-        >
-          <View style={[styles.stopDot, { backgroundColor: dropoffStop ? '#ef4444' : '#ccc' }]} />
-          <View style={{ flex: 1 }}>
-            <Text style={styles.slotLabel}>DROP-OFF</Text>
-            <Text
-              style={[styles.stopName, !dropoffStop && styles.stopPlaceholder]}
-              numberOfLines={1}
+            {/* Drop-off slot */}
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={() => selectSlot('dropoff')}
+              style={[styles.stopRow, selecting === 'dropoff' && styles.stopRowActive]}
             >
-              {dropoffStop ? dropoffStop.name : 'Tap a stop on the map'}
-            </Text>
-          </View>
-          {dropoffStop && <Text style={styles.stopSeq}>#{dropoffStop.sequence}</Text>}
-        </TouchableOpacity>
+              <View style={[styles.stopDot, { backgroundColor: dropoffStop ? '#ef4444' : '#ccc' }]} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.slotLabel}>DROP-OFF</Text>
+                <Text
+                  style={[styles.stopName, !dropoffStop && styles.stopPlaceholder]}
+                  numberOfLines={1}
+                >
+                  {dropoffStop ? dropoffStop.name : 'Tap a stop on the map'}
+                </Text>
+              </View>
+              {dropoffStop && <Text style={styles.stopSeq}>#{dropoffStop.sequence}</Text>}
+            </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.paraBtn, (!canBook || paraLoading) && styles.paraBtnLoading]}
-          onPress={handlePara}
-          disabled={!canBook || paraLoading}
-          activeOpacity={0.85}
-        >
-          {paraLoading ? (
-            <ActivityIndicator color="#1A2E1A" />
-          ) : (
-            <Text style={styles.paraText}>Para!</Text>
-          )}
-        </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.paraBtn, (!canBook || paraLoading) && styles.paraBtnLoading]}
+              onPress={handlePara}
+              disabled={!canBook || paraLoading}
+              activeOpacity={0.85}
+            >
+              {paraLoading ? (
+                <ActivityIndicator color="#1A2E1A" />
+              ) : (
+                <Text style={styles.paraText}>Para!</Text>
+              )}
+            </TouchableOpacity>
+          </>
+        )}
+
+        {phase === 'waiting' && (
+          <>
+            <View style={styles.waitHeader}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.waitTitle}>
+                  {driverInfo?.eta != null
+                    ? `Arriving in ~${driverInfo.eta} min`
+                    : driverInfo
+                      ? 'Your shuttle is on the way'
+                      : 'Finding your driver…'}
+                </Text>
+                <Text style={styles.waitSub}>
+                  {driverInfo
+                    ? 'Watch the bus move on the map above.'
+                    : "You're in the queue — the driver will be notified."}
+                </Text>
+              </View>
+              {!driverInfo && <ActivityIndicator color="#1A2E1A" />}
+            </View>
+
+            <View style={styles.driverRow}>
+              <View style={styles.driverAvatar}>
+                <Ionicons name="person" size={22} color="#1A2E1A" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.driverName}>
+                  {driverInfo?.name ?? 'Awaiting acceptance…'}
+                </Text>
+                <Text style={styles.driverMeta}>
+                  {driverInfo?.shuttle ? `Shuttle ${driverInfo.shuttle}` : (busName ?? 'Bus Route')}
+                </Text>
+              </View>
+            </View>
+
+            {pickupRequestId && (
+              <TouchableOpacity
+                style={styles.boardBtn}
+                onPress={() =>
+                  router.push({ pathname: '/UserScan', params: { requestId: String(pickupRequestId) } })
+                }
+                activeOpacity={0.85}
+              >
+                <Ionicons name="qr-code-outline" size={20} color="#1A2E1A" />
+                <Text style={styles.boardBtnText}>{"I'm on the bus — scan to board"}</Text>
+              </TouchableOpacity>
+            )}
+
+            <TouchableOpacity style={styles.cancelBtn} onPress={handleCancelWait} activeOpacity={0.85}>
+              <Text style={styles.cancelText}>Cancel</Text>
+            </TouchableOpacity>
+          </>
+        )}
+
+        {phase === 'onboard' && (
+          <View style={styles.onboardBox}>
+            <Ionicons name="checkmark-circle" size={46} color="#1A7F37" />
+            <Text style={styles.onboardTitle}>{"You're on board"}</Text>
+            <Text style={styles.onboardSub}>Enjoy your ride with UPasakay!</Text>
+          </View>
+        )}
       </View>
     </View>
   );
@@ -627,6 +767,103 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(20),
     color: '#1A2E1A',
     fontFamily: 'Nunito-Black',
+  },
+
+  // ── Waiting / onboard states ──────────────────────────────────────────────
+  waitHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  waitTitle: {
+    fontSize: moderateScale(20),
+    fontFamily: 'Nunito-Bold',
+    color: '#1A2E1A',
+  },
+  waitSub: {
+    fontSize: moderateScale(13),
+    fontFamily: 'Nunito-Regular',
+    color: '#666',
+    marginTop: 2,
+  },
+  driverRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    padding: moderateScale(12),
+    borderRadius: 18,
+    borderWidth: 1.5,
+    borderColor: '#E2E8E2',
+    marginTop: moderateScale(14),
+    marginBottom: moderateScale(14),
+  },
+  driverAvatar: {
+    width: moderateScale(42),
+    height: moderateScale(42),
+    borderRadius: moderateScale(21),
+    backgroundColor: '#D4E6D5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  driverName: {
+    fontSize: moderateScale(16),
+    fontFamily: 'Nunito-Bold',
+    color: '#1A2E1A',
+  },
+  driverMeta: {
+    fontSize: moderateScale(13),
+    fontFamily: 'Nunito-Regular',
+    color: '#666',
+    marginTop: 1,
+  },
+  boardBtn: {
+    flexDirection: 'row',
+    gap: 8,
+    backgroundColor: '#FFB82E',
+    height: moderateScale(54),
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: moderateScale(10),
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+  },
+  boardBtnText: {
+    fontSize: moderateScale(16),
+    color: '#1A2E1A',
+    fontFamily: 'Nunito-Black',
+  },
+  cancelBtn: {
+    backgroundColor: '#8B211E',
+    height: moderateScale(50),
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cancelText: {
+    color: '#fff',
+    fontSize: moderateScale(16),
+    fontFamily: 'Nunito-Black',
+  },
+  onboardBox: {
+    alignItems: 'center',
+    paddingVertical: moderateScale(26),
+  },
+  onboardTitle: {
+    fontSize: moderateScale(20),
+    fontFamily: 'Nunito-Bold',
+    color: '#1A2E1A',
+    marginTop: 8,
+  },
+  onboardSub: {
+    fontSize: moderateScale(13),
+    fontFamily: 'Nunito-Regular',
+    color: '#666',
+    marginTop: 3,
   },
 });
 

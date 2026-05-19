@@ -9,6 +9,7 @@ use App\Models\PickupRequest;
 use App\Models\Route;
 use App\Models\Shuttle;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Schema;
 use Inertia\Inertia;
 
 class DashboardController extends Controller
@@ -21,13 +22,25 @@ class DashboardController extends Controller
         $pendingRequests = PickupRequest::where('status', 'pending')->count();
         $pendingApprovals = Passenger::where('passenger_status', 'pending')->count();
 
+        // Real average passenger rating for today (replaces the old
+        // hardcoded "4.2 / 5"). 'N/A' until something is rated today.
+        $avgFeedback = 'N/A';
+        if (Schema::hasColumn((new PickupRequest())->getTable(), 'rating')) {
+            $ratingToday = PickupRequest::whereNotNull('rating')
+                ->whereDate('created_at', today())
+                ->avg('rating');
+            if ($ratingToday !== null) {
+                $avgFeedback = round((float) $ratingToday, 1).' / 5';
+            }
+        }
+
         // ── Shuttle status overview ───────────────────────────────────────────
-        $shuttles = Shuttle::with(['route', 'driver'])
+        $shuttles = Shuttle::with(['route', 'driver', 'latestLocation'])
             ->orderBy('shuttle_code')
             ->get()
             ->map(function ($s) {
                 // Latest GPS ping so the mini map plots the real position.
-                $loc = $s->locations()->latest('recorded_at')->first();
+                $loc = $s->latestLocation;
 
                 return [
                     'id' => $s->id,
@@ -127,7 +140,7 @@ class DashboardController extends Controller
                 'driversOnline' => $driversOnline,
                 'pendingRequests' => $pendingRequests,
                 'pendingApprovals' => $pendingApprovals,
-                'avgFeedback' => '4.2 / 5',
+                'avgFeedback' => $avgFeedback,
             ],
             'shuttles' => $shuttles,
             'pickupsPerRoute' => $pickupsPerRoute,

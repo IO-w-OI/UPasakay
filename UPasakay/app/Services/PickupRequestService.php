@@ -55,6 +55,30 @@ class PickupRequestService
             ]);
         }
 
+        // Both stops must belong to the chosen route. The request validation
+        // only checks the stop ids exist in `stops` — without this guard a
+        // passenger could mix a pick-up/drop-off from a different route into
+        // one request (it would then show up wrongly in the Requests tab).
+        $pickupOnRoute = Stop::where('id', $data['pickup_stop_id'])
+            ->where('route_id', $data['route_id'])
+            ->exists();
+
+        if (! $pickupOnRoute) {
+            throw ValidationException::withMessages([
+                'pickup_stop_id' => 'The selected pick-up stop is not on this route.',
+            ]);
+        }
+
+        $dropoffOnRoute = Stop::where('id', $data['dropoff_stop_id'])
+            ->where('route_id', $data['route_id'])
+            ->exists();
+
+        if (! $dropoffOnRoute) {
+            throw ValidationException::withMessages([
+                'dropoff_stop_id' => 'The selected drop-off stop is not on this route.',
+            ]);
+        }
+
         // Reject the request if no driver is currently on duty for the chosen route
         $shuttle = $this->activeShuttleForRoute($data['route_id']);
         if (! $shuttle || ! $shuttle->driver_id) {
