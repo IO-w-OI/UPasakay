@@ -13,6 +13,12 @@ class ProfileController extends Controller
     public function show(Request $request): JsonResponse
     {
         $user = $request->user();
+        if ($user instanceof Passenger) {
+            $user = $user->user;
+            if (! $user) {
+                return response()->json(['message' => 'User account not found.'], 422);
+            }
+        }
         $driver = Driver::where('user_id', $user->getKey())->first();
 
         if ($driver) {
@@ -48,6 +54,12 @@ class ProfileController extends Controller
     public function update(Request $request): JsonResponse
     {
         $user = $request->user();
+        if ($user instanceof Passenger) {
+            $user = $user->user;
+            if (! $user) {
+                return response()->json(['message' => 'User account not found.'], 422);
+            }
+        }
         $driver = Driver::where('user_id', $user->getKey())->first();
 
         $validated = $request->validate([
