@@ -15,7 +15,8 @@
         "NSLocationWhenInUseUsageDescription": "UPasakay needs your location to show you where the nearest bus is.",
         "NSLocationAlwaysUsageDescription": "UPasakay needs background location to track the bus and update your ETA.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "UPasakay needs your location to provide real-time bus tracking and driver routing.",
-        "NSCameraUsageDescription": "UPasakay needs camera access so drivers can scan passenger boarding QR codes."
+        "NSCameraUsageDescription": "UPasakay needs camera access so drivers can scan passenger boarding QR codes.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -30,15 +31,6 @@
       "package": "com.kyleolmedo.upasakaymobile",
       "googleServicesFile": "./google-services.json",
       "permissions": [
-        "ACCESS_COARSE_LOCATION",
-        "ACCESS_FINE_LOCATION",
-        "ACCESS_BACKGROUND_LOCATION",
-        "FOREGROUND_SERVICE",
-        "android.permission.ACCESS_COARSE_LOCATION",
-        "android.permission.ACCESS_FINE_LOCATION",
-        "CAMERA",
-        "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO",
         "ACCESS_COARSE_LOCATION",
         "ACCESS_FINE_LOCATION",
         "ACCESS_BACKGROUND_LOCATION",
