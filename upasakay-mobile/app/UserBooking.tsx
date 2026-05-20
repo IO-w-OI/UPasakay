@@ -1,5 +1,5 @@
-import UserMapScreen from '../screens/Users/UserMap';
+import UserBookingScreen from '../screens/Users/UserBooking';
 
 export default function UserBooking() {
-  return <UserMapScreen />;
+  return <UserBookingScreen />;
 }
