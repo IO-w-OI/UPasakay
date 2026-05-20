@@ -20,6 +20,7 @@ const props = defineProps<{
             driver: string; status: string; time: string; date: string; eta: string;
             created_at: string | null; completed_at: string | null;
             latitude: number | null; longitude: number | null;
+            rating: number | null; comment: string | null;
         }>;
         current_page: number; last_page: number; total: number; per_page: number;
         links: Array<{ url: string | null; label: string; active: boolean }>;
@@ -276,6 +277,21 @@ const statCards = computed(() => [
                                             </div>
                                             <div v-else class="mt-4 flex h-28 items-center justify-center rounded-xl border border-dashed border-border/70 bg-muted/50 text-sm text-muted-foreground">
                                                 <Map class="inline-block h-5 w-5 mr-2" /> No GPS coordinates available
+                                            </div>
+                                            <div class="mt-4 rounded-xl border border-border/70 bg-muted/30 px-4 py-3">
+                                                <p class="mb-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">Passenger Rating</p>
+                                                <div v-if="r.rating" class="flex items-center gap-2">
+                                                    <span class="flex gap-0.5">
+                                                        <span v-for="i in 5" :key="i"
+                                                            class="text-base"
+                                                            :class="i <= r.rating ? 'text-yellow-400' : 'text-muted-foreground/30'">
+                                                            ★
+                                                        </span>
+                                                    </span>
+                                                    <span class="text-sm font-semibold text-foreground">{{ r.rating }}/5</span>
+                                                </div>
+                                                <p v-if="r.comment" class="mt-1 text-sm text-foreground italic">"{{ r.comment }}"</p>
+                                                <p v-if="!r.rating" class="text-sm text-muted-foreground">No rating yet.</p>
                                             </div>
                                         </div>
                                     </td>
