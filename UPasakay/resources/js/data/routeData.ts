@@ -2623,6 +2623,7 @@ export const liveMapRoutes: RouteConfig = {
         [10.329066480061208, 123.90216149375473], // USP (front)
         [10.330508129133642, 123.89792033979448], // JY Square
         [10.32854085813706, 123.89729405708417], // Corner Sudlon
+        [10.32240110974636, 123.89839499974325], // UP Cebu Lahug
         ],
         path: cebuCityPath,
         landmarks: [
@@ -2632,6 +2633,7 @@ export const liveMapRoutes: RouteConfig = {
         { name: 'USPF (front)', coord: [10.329066480061208, 123.90216149375473] },
         { name: 'JY Square', coord: [10.330508129133642, 123.89792033979448] },
         { name: 'Corner Sudlon', coord: [10.32854085813706, 123.89729405708417] },
+        { name: 'UP Cebu Lahug', coord: [10.32240110974636, 123.89839499974325] },
         ],
     },
     south: {
@@ -2676,6 +2678,7 @@ export const dashboardRoutes: RouteConfig = {
             [10.3274, 123.8953],
             [10.3303, 123.8989],
             [10.3325, 123.8885],
+            [10.3224, 123.8984],
         ],
         path: cebuCityPath,
         landmarks: [
@@ -2685,6 +2688,7 @@ export const dashboardRoutes: RouteConfig = {
             { name: 'USPF (front)', coord: [10.3274, 123.8953] },
             { name: 'JY Square', coord: [10.3303, 123.8989] },
             { name: 'Corner Sudlon', coord: [10.3325, 123.8885] },
+            { name: 'UP Cebu Lahug', coord: [10.3224, 123.8984] },
         ],
     },
     south: {
