@@ -97,6 +97,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('pickup-requests/{pickupRequest}/board', [DriverApiController::class, 'board']);
     Route::patch('pickup-requests/{pickupRequest}/no-show', [DriverApiController::class, 'noShow']);
     Route::patch('pickup-requests/{pickupRequest}/decline', [DriverApiController::class, 'decline']);
+    Route::patch('pickup-requests/{pickupRequest}/complete', [DriverApiController::class, 'complete']);
 
     //Edit Profile for both drivers and passengers (shared endpoint)
     Route::get('profile', [ProfileController::class, 'show']);

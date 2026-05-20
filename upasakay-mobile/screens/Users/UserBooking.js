@@ -43,17 +43,20 @@ const getRouteColor = (name = '') => {
 
 const UserMapScreen = () => {
   const { active, routeId } = useLocalSearchParams();
-  const { setActiveTrip } = useTrip();
+  const { setActiveTrip, activeRequest, setActiveRequest } = useTrip();
   const webViewRef = useRef(null);
   const reverseGeocodeTimer = useRef(null);
   const pusherRef = useRef(null);
 
-  const [status, setStatus] = useState(active === 'true' ? 'booking' : 'searching');
+  const [status, setStatus] = useState(() => {
+    if (activeRequest?.status) return activeRequest.status;
+    return active === 'true' ? 'booking' : 'searching';
+  });
   const [pickupAddress, setPickupAddress] = useState('Locating...');
   const [currentCoords, setCurrentCoords] = useState({ lat: 10.3381, lng: 123.9116 });
   const [searchText, setSearchText] = useState('');
-  const [driverInfo, setDriverInfo] = useState(null);
-  const [pickupRequestId, setPickupRequestId] = useState(null);
+  const [driverInfo, setDriverInfo] = useState(activeRequest?.driverInfo ?? null);
+  const [pickupRequestId, setPickupRequestId] = useState(activeRequest?.id ?? null);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [routeStops, setRouteStops] = useState([]);
   const [routeColor, setRouteColor] = useState('#f97316');
@@ -93,12 +96,17 @@ const UserMapScreen = () => {
     const passengerCh = pusher.subscribe(`passenger-${passengerId}`);
 
     passengerCh.bind('ride.accepted', (data) => {
-      setDriverInfo({
+      const newDriverInfo = {
         name: data.driver_name,
         shuttleNumber: data.shuttle_number,
         eta: data.eta_minutes,
-      });
+      };
+      setDriverInfo(newDriverInfo);
       setPickupRequestId(data.pickup_request_id ?? null);
+      setActiveRequest(prev => prev
+        ? { ...prev, status: 'booking', driverInfo: newDriverInfo }
+        : { id: data.pickup_request_id, status: 'booking', driverInfo: newDriverInfo }
+      );
       setActiveTrip({
         driverName: data.driver_name,
         etaText: data.eta_minutes ? `${data.eta_minutes} min` : 'On the way',
@@ -119,6 +127,7 @@ const UserMapScreen = () => {
     });
 
     passengerCh.bind('passenger.boarded', () => {
+      setActiveRequest(prev => prev ? { ...prev, status: 'onboard' } : prev);
       LayoutAnimation.configureNext(SnappyAnim);
       setStatus('onboard');
       Notifications.scheduleNotificationAsync({
@@ -132,9 +141,10 @@ const UserMapScreen = () => {
     });
 
     passengerCh.bind('ride.completed', () => {
+      setActiveRequest(prev => prev ? { ...prev, status: 'arrived' } : prev);
       Notifications.scheduleNotificationAsync({
         content: {
-          title: 'Ride Completed ✅',
+          title: 'You have arrived!',
           body: 'Thank you for riding with UPasakay! Please rate your trip.',
           sound: true,
         },
@@ -142,6 +152,8 @@ const UserMapScreen = () => {
       });
       setFeedbackRequestId(pickupRequestIdRef.current);
       setFeedbackVisible(true);
+      LayoutAnimation.configureNext(SnappyAnim);
+      setStatus('arrived');
     });
 
     return () => {
@@ -153,6 +165,27 @@ const UserMapScreen = () => {
     };
   }, [setActiveTrip]);
   // ──────────────────────────────────────────────────────────────────────────
+
+  // On mount: verify any persisted request is still active so stale context
+  // doesn't lock the passenger in a phantom booking state.
+  useEffect(() => {
+    if (!activeRequest?.id) return;
+    apiGet(`pickup-requests/${activeRequest.id}`).then(({ ok, data }) => {
+      if (!ok || !data) return;
+      const s = data.status;
+      if (s === 'completed' || s === 'cancelled') {
+        setActiveRequest(null);
+        setStatus('searching');
+        setPickupRequestId(null);
+        setDriverInfo(null);
+      } else if (s === 'in_progress') {
+        setStatus('onboard');
+      } else {
+        setStatus('booking');
+      }
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Fetch stops for the selected route
   useEffect(() => {
@@ -435,6 +468,7 @@ const UserMapScreen = () => {
     }
 
     setPickupRequestId(data.id);
+    setActiveRequest({ id: data.id, status: 'booking', driverInfo: null });
     webViewRef.current?.injectJavaScript(`window.startBusFromUPC(${currentCoords.lat}, ${currentCoords.lng});`);
   };
 
@@ -442,10 +476,13 @@ const UserMapScreen = () => {
     clearMap();
     LayoutAnimation.configureNext(SnappyAnim);
     setStatus('searching');
-    setActiveTrip(null); 
+    setDriverInfo(null);
+    setPickupRequestId(null);
+    setActiveRequest(null);
+    setActiveTrip(null);
   };
 
-  const handleBoarded = () => {
+  const handleArrived = () => {
     clearMap();
     LayoutAnimation.configureNext(SnappyAnim);
     setStatus('searching');
@@ -462,6 +499,7 @@ const UserMapScreen = () => {
     setStatus('searching');
     setDriverInfo(null);
     setPickupRequestId(null);
+    setActiveRequest(null);
     setActiveTrip(null);
   };
 
@@ -481,6 +519,10 @@ const UserMapScreen = () => {
       return;
     }
     closeFeedback();
+    setDriverInfo(null);
+    setPickupRequestId(null);
+    setActiveRequest(null);
+    setActiveTrip(null);
   };
 
   return (
@@ -629,13 +671,15 @@ const UserMapScreen = () => {
           <View style={styles.arrivalModal}>
             <View style={styles.modalTop}>
               <Image source={{ uri: 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=100' }} style={styles.modalAvatar} />
-              <View>
-                <Text style={styles.modalTitle}>Sir Sanford has arrived</Text>
-                <Text style={styles.modalSub}>Please board the bus on time!</Text>
+              <View style={{ flex: 1, marginLeft: 12 }}>
+                <Text style={styles.modalTitle}>{"You've arrived! 🎉"}</Text>
+                <Text style={styles.modalSub}>
+                  {driverInfo?.name ? `Thanks for riding with ${driverInfo.name}!` : 'Thanks for riding with UPasakay!'}
+                </Text>
               </View>
             </View>
-            <TouchableOpacity style={styles.boardedBtn} onPress={handleBoarded}>
-              <Text style={styles.boardedText}>I have boarded!</Text>
+            <TouchableOpacity style={styles.boardedBtn} onPress={handleArrived}>
+              <Text style={styles.boardedText}>Done</Text>
             </TouchableOpacity>
           </View>
         </View>
