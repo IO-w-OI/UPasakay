@@ -62,6 +62,18 @@ const UserMapScreen = () => {
   const [dropoffAddress, setDropoffAddress] = useState('');
   const [dropoffStopId, setDropoffStopId] = useState(null);
 
+  // Feedback modal — shown after ride.completed before resetting to searching
+  const [feedbackVisible, setFeedbackVisible] = useState(false);
+  const [feedbackRequestId, setFeedbackRequestId] = useState(null);
+  const [selectedRating, setSelectedRating] = useState(0);
+  const [feedbackComment, setFeedbackComment] = useState('');
+  const [submittingFeedback, setSubmittingFeedback] = useState(false);
+  // Ref so the Pusher ride.completed closure always sees the current request ID
+  const pickupRequestIdRef = useRef(null);
+
+  // Keep ref current so Pusher closures see the latest pickupRequestId
+  useEffect(() => { pickupRequestIdRef.current = pickupRequestId; }, [pickupRequestId]);
+
   // ── Pusher real-time subscriptions ────────────────────────────────────────
   useEffect(() => {
     const passengerId = currentUser?.passenger_id ?? currentUser?.id ?? 1;
@@ -123,15 +135,13 @@ const UserMapScreen = () => {
       Notifications.scheduleNotificationAsync({
         content: {
           title: 'Ride Completed ✅',
-          body: 'Thank you for riding with UPasakay!',
+          body: 'Thank you for riding with UPasakay! Please rate your trip.',
           sound: true,
         },
         trigger: null,
       });
-      clearMap();
-      LayoutAnimation.configureNext(SnappyAnim);
-      setStatus('searching');
-      setDriverInfo(null);
+      setFeedbackRequestId(pickupRequestIdRef.current);
+      setFeedbackVisible(true);
     });
 
     return () => {
@@ -439,7 +449,38 @@ const UserMapScreen = () => {
     clearMap();
     LayoutAnimation.configureNext(SnappyAnim);
     setStatus('searching');
-    setActiveTrip(null); 
+    setActiveTrip(null);
+  };
+
+  const closeFeedback = () => {
+    setFeedbackVisible(false);
+    setFeedbackRequestId(null);
+    setSelectedRating(0);
+    setFeedbackComment('');
+    clearMap();
+    LayoutAnimation.configureNext(SnappyAnim);
+    setStatus('searching');
+    setDriverInfo(null);
+    setPickupRequestId(null);
+    setActiveTrip(null);
+  };
+
+  const submitFeedback = async () => {
+    if (selectedRating === 0) {
+      Alert.alert('Rating required', 'Please select at least 1 star.');
+      return;
+    }
+    setSubmittingFeedback(true);
+    const { ok } = await apiPost(`pickup-requests/${feedbackRequestId}/feedback`, {
+      rating: selectedRating,
+      comment: feedbackComment.trim() || null,
+    });
+    setSubmittingFeedback(false);
+    if (!ok) {
+      Alert.alert('Error', 'Could not submit feedback. Please try again.');
+      return;
+    }
+    closeFeedback();
   };
 
   return (
@@ -599,6 +640,48 @@ const UserMapScreen = () => {
           </View>
         </View>
       )}
+
+      {/* ── Feedback / rating modal ── */}
+      {feedbackVisible && (
+        <View style={styles.overlay}>
+          <View style={styles.dimmer} />
+          <View style={styles.feedbackModal}>
+            <Text style={styles.feedbackTitle}>Rate your ride</Text>
+            <Text style={styles.feedbackSub}>How was your experience?</Text>
+            <View style={styles.starsRow}>
+              {[1, 2, 3, 4, 5].map(star => (
+                <TouchableOpacity key={star} onPress={() => setSelectedRating(star)}>
+                  <Ionicons
+                    name={star <= selectedRating ? 'star' : 'star-outline'}
+                    size={38}
+                    color={star <= selectedRating ? '#FFB82E' : '#ccc'}
+                    style={{ marginHorizontal: 4 }}
+                  />
+                </TouchableOpacity>
+              ))}
+            </View>
+            <TextInput
+              style={styles.feedbackInput}
+              placeholder="Optional comment..."
+              placeholderTextColor="#999"
+              value={feedbackComment}
+              onChangeText={setFeedbackComment}
+              multiline
+              maxLength={500}
+            />
+            <TouchableOpacity
+              style={[styles.feedbackSubmit, submittingFeedback && { opacity: 0.6 }]}
+              onPress={submitFeedback}
+              disabled={submittingFeedback}
+            >
+              <Text style={styles.feedbackSubmitText}>{submittingFeedback ? 'Submitting…' : 'Submit'}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.feedbackSkip} onPress={closeFeedback}>
+              <Text style={styles.feedbackSkipText}>Skip</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
     </View>
   );
 };
@@ -650,6 +733,25 @@ const styles = StyleSheet.create({
   onboardBox: { alignItems: 'center', paddingVertical: 30 },
   onboardTitle: { fontSize: 22, color: '#1A2E1A', fontFamily: 'Nunito-Bold', marginTop: 10 },
   onboardSub: { fontSize: 14, color: '#666', fontFamily: 'Nunito-Regular', marginTop: 4 },
+  feedbackModal: {
+    width: width * 0.88, backgroundColor: '#F4F7F4', borderRadius: 35,
+    padding: 28, borderWidth: 1.5, borderColor: '#3e5141', alignItems: 'center',
+  },
+  feedbackTitle: { fontSize: 22, color: '#1A2E1A', fontFamily: 'Nunito-Bold', marginBottom: 6 },
+  feedbackSub: { fontSize: 14, color: '#555', fontFamily: 'Nunito-Regular', marginBottom: 20 },
+  starsRow: { flexDirection: 'row', marginBottom: 20 },
+  feedbackInput: {
+    width: '100%', borderWidth: 1, borderColor: '#3e5141', borderRadius: 16,
+    padding: 14, fontSize: 14, fontFamily: 'Nunito-Regular', color: '#1A2E1A',
+    backgroundColor: '#fff', minHeight: 80, textAlignVertical: 'top', marginBottom: 16,
+  },
+  feedbackSubmit: {
+    width: '100%', backgroundColor: '#FFB82E', height: 52, borderRadius: 30,
+    justifyContent: 'center', alignItems: 'center', marginBottom: 10,
+  },
+  feedbackSubmitText: { fontSize: 17, color: '#1A2E1A', fontFamily: 'Nunito-Black' },
+  feedbackSkip: { paddingVertical: 8 },
+  feedbackSkipText: { fontSize: 14, color: '#888', fontFamily: 'Nunito-Regular', textDecorationLine: 'underline' },
 });
 
 export default UserMapScreen;
