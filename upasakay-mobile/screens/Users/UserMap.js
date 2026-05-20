@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import * as Location from 'expo-location';
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { router, Stack, useLocalSearchParams, useNavigation } from 'expo-router';
 import { Pusher } from 'pusher-js/react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -222,6 +222,7 @@ const leafletHTML = `
 const UserMap = () => {
   const { routeId, busName } = useLocalSearchParams();
   const { activeBooking, refreshActiveBooking } = useTrip();
+  const navigation = useNavigation();
   const webRef = useRef(null);
   const pusherRef = useRef(null);
   const trackedShuttleIds = useRef(new Set());
@@ -276,15 +277,29 @@ const UserMap = () => {
   const passengerId = currentUser?.passenger_id ?? currentUser?.id ?? null;
 
   // ── Lock the screen while a booking is in flight ──────────────────────────
-  // Consume Android hardware back so the passenger can't accidentally leave
-  // the waiting/onboard view. iOS swipe-back is disabled via Stack.Screen
-  // options below. The only way out is Cancel or ride completion.
+  // Three layers of protection so the passenger can't accidentally leave the
+  // waiting/onboard view:
+  //   1. Consume Android hardware back (gesture + button).
+  //   2. Veto any React Navigation removal event (catches router.back(),
+  //      router.replace() from anywhere, and the in-app back arrow tap).
+  //   3. Disable iOS swipe-back via Stack.Screen options below.
+  // The only intended exit is Cancel (subject to the 200m proximity guard)
+  // or ride completion.
   const locked = phase === 'waiting' || phase === 'onboard';
+
   useEffect(() => {
     if (!locked) return;
     const sub = BackHandler.addEventListener('hardwareBackPress', () => true);
     return () => sub.remove();
   }, [locked]);
+
+  useEffect(() => {
+    if (!locked) return;
+    const unsub = navigation.addListener('beforeRemove', (e) => {
+      e.preventDefault();
+    });
+    return unsub;
+  }, [locked, navigation]);
 
   // ── Hydrate from any in-flight pickup request ─────────────────────────────
   // Refresh once on mount so the screen recovers state when the passenger

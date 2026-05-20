@@ -69,7 +69,14 @@ const failedDash  = computed(() => (props.stats.failedPct  / 100) * CIRC);
 
 // Helpers
 const statusBadge = (s: string) =>
-    ({ boarded: 'bg-green-500/15 text-green-600 dark:text-green-400', failed: 'bg-red-500/15 text-red-600 dark:text-red-400' }[s] ?? 'bg-muted text-muted-foreground');
+    ({
+        boarded: 'bg-green-500/15 text-green-600 dark:text-green-400',
+        cancelled: 'bg-amber-500/15 text-amber-600 dark:text-amber-400',
+        failed: 'bg-red-500/15 text-red-600 dark:text-red-400',
+    }[s] ?? 'bg-muted text-muted-foreground');
+
+const statusLabel = (s: string) =>
+    s === 'boarded' ? 'Boarded' : s === 'cancelled' ? 'Cancelled' : 'Failed';
 </script>
 
 <template>
@@ -173,16 +180,20 @@ const statusBadge = (s: string) =>
                                     </td>
                                     <td class="px-4 py-3 font-medium text-foreground">{{ f.passenger }}</td>
                                     <td class="px-4 py-3 text-sm">
-                                        <span class="flex items-center gap-0.5">
+                                        <span v-if="f.rating > 0" class="flex items-center gap-0.5">
                                             <Star v-for="i in f.rating" :key="i" class="h-4 w-4 text-yellow-500" />
                                         </span>
+                                        <span v-else class="text-xs text-muted-foreground">—</span>
                                     </td>
-                                    <td class="px-4 py-3 max-w-xs truncate text-muted-foreground">"{{ f.comment }}"</td>
+                                    <td class="px-4 py-3 max-w-xs truncate text-muted-foreground">
+                                        <span v-if="f.comment">"{{ f.comment }}"</span>
+                                        <span v-else class="italic">No comment</span>
+                                    </td>
                                     <td class="px-4 py-3">
                                         <span class="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium capitalize" :class="statusBadge(f.status)">
                                             <Check v-if="f.status === 'boarded'" class="h-3 w-3" />
                                             <X v-else class="h-3 w-3" />
-                                            {{ f.status === 'boarded' ? 'Boarded' : 'Failed' }}
+                                            {{ statusLabel(f.status) }}
                                         </span>
                                     </td>
                                     <td class="px-4 py-3 text-muted-foreground text-xs">{{ f.date }}</td>
@@ -201,9 +212,18 @@ const statusBadge = (s: string) =>
                                 <tr v-if="expanded === f.id">
                                     <td colspan="7" class="bg-muted/50 px-6 py-3 border-b border-border/50">
                                         <div class="rounded-xl border border-border/70 bg-card p-4 text-sm">
-                                            <p class="font-semibold text-foreground mb-1">{{ f.passenger }}</p>
-                                            <p class="text-lg"><span class="flex items-center gap-0.5"><Star v-for="i in f.rating" :key="i" class="h-4 w-4 text-yellow-500" /></span></p>
-                                            <p class="mt-1 text-muted-foreground">"{{ f.comment }}"</p>
+                                            <div class="flex items-center justify-between mb-2">
+                                                <p class="font-semibold text-foreground">{{ f.passenger }}</p>
+                                                <span class="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium capitalize" :class="statusBadge(f.status)">
+                                                    {{ statusLabel(f.status) }}
+                                                </span>
+                                            </div>
+                                            <p v-if="f.rating > 0" class="text-lg"><span class="flex items-center gap-0.5"><Star v-for="i in f.rating" :key="i" class="h-4 w-4 text-yellow-500" /></span></p>
+                                            <p v-if="f.status === 'cancelled'" class="mt-1 text-xs uppercase tracking-wide text-muted-foreground">Cancellation reason</p>
+                                            <p class="mt-1 text-muted-foreground">
+                                                <template v-if="f.comment">"{{ f.comment }}"</template>
+                                                <span v-else class="italic">No comment</span>
+                                            </p>
                                         </div>
                                     </td>
                                 </tr>

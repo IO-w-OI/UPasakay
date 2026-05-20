@@ -16,9 +16,18 @@ class FeedbackController extends Controller
     {
         $routes = Route::where('is_active', true)->pluck('name');
 
-        // Build feedback from completed pickup requests as proxy
+        // Feedback now combines two signals admins care about:
+        //  · Completed rides with a passenger rating + comment, AND
+        //  · Cancellations where the passenger gave a reason.
+        // Showing both means admins see *what passengers said* in either case,
+        // not just completed-ride ratings (which is rare in early testing).
         $query = PickupRequest::with(['user', 'route'])
-            ->where('status', 'completed')
+            ->where(function ($q) {
+                $q->where('status', 'completed')
+                    ->orWhere(function ($qq) {
+                        $qq->where('status', 'cancelled')->whereNotNull('cancel_reason');
+                    });
+            })
             ->latest();
 
         // Time range filter
@@ -37,14 +46,16 @@ class FeedbackController extends Controller
         // Route filter for reports
         $reportRouteFilter = $request->input('reportRoute');
 
-        $completed = $query->take(50)->get();
+        $feedbackRows = $query->take(50)->get();
 
-        $total = $completed->count();
+        $completedCount = $feedbackRows->where('status', 'completed')->count();
+
+        $total = $feedbackRows->count();
 
         $requestTable = (new PickupRequest())->getTable();
         $hasRatingColumn = Schema::hasColumn($requestTable, 'rating');
         $avgRating = $hasRatingColumn
-            ? (float) (PickupRequest::query()->whereNotNull('rating')->avg('rating') ?? 0)
+            ? round((float) (PickupRequest::query()->whereNotNull('rating')->avg('rating') ?? 0), 1)
             : 0;
 
         $allRequests = PickupRequest::whereIn('status', ['completed', 'cancelled'])->count();
@@ -52,25 +63,29 @@ class FeedbackController extends Controller
             $boardedPct = 0;
             $failedPct = 0;
         } else {
-            $boardedPct = round(($completed->count() / $allRequests) * 100);
+            $boardedPct = round(($completedCount / $allRequests) * 100);
             $failedPct = 100 - $boardedPct;
         }
 
-        $feedback = [];
-        if ($hasRatingColumn) {
-            $feedback = $completed->take(20)->values()->map(function ($r) {
-                return [
-                    'id' => $r->id,
-                    'passenger' => $r->user?->email ?? 'Passenger',
-                    'rating' => (int) ($r->rating ?? 0),
-                    'comment' => $r->comment ?? '',
-                    'route' => $r->route?->name ?? '—',
-                    'status' => 'boarded',
-                    'date' => Carbon::parse($r->created_at)->timezone('Asia/Manila')->format('M j'),
-                    'replied' => (bool) ($r->replied ?? false),
-                ];
-            })->all();
-        }
+        $feedback = $feedbackRows->take(20)->values()->map(function ($r) {
+            $isCompleted = $r->status === 'completed';
+
+            return [
+                'id' => $r->id,
+                'passenger' => $r->user?->full_name ?? $r->user?->email ?? 'Passenger',
+                'rating' => $isCompleted ? (int) ($r->rating ?? 0) : 0,
+                // For cancellations the cancel_reason IS the feedback the
+                // passenger gave; surface it in the same column so admins
+                // can scan rationale at a glance.
+                'comment' => $isCompleted
+                    ? ($r->comment ?? '')
+                    : ($r->cancel_reason ?? ''),
+                'route' => $r->route?->name ?? '—',
+                'status' => $isCompleted ? 'boarded' : 'cancelled',
+                'date' => Carbon::parse($r->created_at)->timezone('Asia/Manila')->format('M j'),
+                'replied' => (bool) ($r->replied ?? false),
+            ];
+        })->all();
 
         // Daily pickups chart (respecting time range)
         $rangeDays = 7;
