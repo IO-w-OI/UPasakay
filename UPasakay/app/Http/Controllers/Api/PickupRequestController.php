@@ -119,7 +119,11 @@ class PickupRequestController extends Controller
     public function confirmBoarding(Request $request, PickupRequest $pickupRequest)
     {
         $user = $request->user();
-        if (! $user || (int) $pickupRequest->user_id !== (int) $user->id) {
+        if (! $user) {
+            return response()->json(['message' => 'Unauthenticated.'], 401);
+        }
+        $userId = $user instanceof Passenger ? $user->user_id : $user->id;
+        if ((int) $pickupRequest->user_id !== (int) $userId) {
             return response()->json(['message' => 'This is not your ride.'], 403);
         }
 
