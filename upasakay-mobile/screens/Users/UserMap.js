@@ -10,12 +10,13 @@ import {
   Platform,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 
-import { apiDelete, apiGet, apiPost } from '../../services/apiClient';
+import { apiDelete, apiGet, apiPatch, apiPost } from '../../services/apiClient';
 import { currentUser } from '../../services/UserStore';
 import { moderateScale, scale } from '../../utils/responsive';
 
@@ -30,6 +31,34 @@ const getRouteColor = (name = '') => {
     if (n.includes(k)) return c;
   }
   return '#f97316';
+};
+
+const CANCEL_REASONS = [
+  'Changed my mind',
+  'Driver is taking too long',
+  'Wrong stop selected',
+  'Emergency',
+  'Other',
+];
+
+const isUpcStop = (stop) => {
+  if (!stop?.name) return false;
+  const n = stop.name.toLowerCase();
+  return (n.includes('up') && n.includes('cebu')) || n.includes('upc');
+};
+
+// Great-circle distance in km (Haversine) — used to auto-select the nearest
+// stop to the passenger's current position.
+const haversineKm = (lat1, lng1, lat2, lng2) => {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 };
 
 // Leaflet map HTML — all JS lives here and communicates back via ReactNativeWebView.postMessage
@@ -203,6 +232,12 @@ const UserMap = () => {
   const [phase, setPhase] = useState('book');
   const [pickupRequestId, setPickupRequestId] = useState(null);
   const [driverInfo, setDriverInfo] = useState(null); // { name, shuttle, eta }
+
+  // Cancel-reason modal
+  const [cancelVisible, setCancelVisible] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
+  const [cancelOtherText, setCancelOtherText] = useState('');
+
   const phaseRef = useRef('book');
   useEffect(() => {
     phaseRef.current = phase;
@@ -230,15 +265,79 @@ const UserMap = () => {
     );
   }, []);
 
-  // ── 2. Fetch route stops from the API ─────────────────────────────────────
+  // ── 2. Fetch route stops from the API, then auto-select nearest pickup ────
   useEffect(() => {
     setRouteColor(getRouteColor(busName));
     if (!routeId) return;
-    apiGet(`routes/${routeId}`).then(({ ok, data }) => {
-      if (ok && Array.isArray(data?.stops)) {
-        setRouteStops(data.stops.filter((s) => s.is_active));
+    apiGet(`routes/${routeId}`).then(async ({ ok, data }) => {
+      if (!ok || !Array.isArray(data?.stops)) return;
+      const stops = data.stops.filter((s) => s.is_active);
+      setRouteStops(stops);
+
+      // Only auto-pick if the passenger hasn't already chosen a pickup.
+      if (pickupStop) return;
+
+      const upc = stops.find(isUpcStop);
+      const geoStops = stops.filter((s) => s.latitude != null && s.longitude != null);
+      if (geoStops.length === 0) return;
+
+      try {
+        const { status: perm } = await Location.requestForegroundPermissionsAsync();
+        if (perm !== 'granted') return;
+        const pos = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
+        const { latitude: myLat, longitude: myLng } = pos.coords;
+
+        let nearest = geoStops[0];
+        let bestKm = haversineKm(
+          myLat,
+          myLng,
+          parseFloat(nearest.latitude),
+          parseFloat(nearest.longitude),
+        );
+        for (const s of geoStops.slice(1)) {
+          const d = haversineKm(
+            myLat,
+            myLng,
+            parseFloat(s.latitude),
+            parseFloat(s.longitude),
+          );
+          if (d < bestKm) {
+            bestKm = d;
+            nearest = s;
+          }
+        }
+
+        const pickup = {
+          id: nearest.id,
+          name: nearest.name,
+          lat: parseFloat(nearest.latitude),
+          lng: parseFloat(nearest.longitude),
+          sequence: nearest.sequence,
+        };
+        setPickupStop(pickup);
+
+        // Enforce the "one side must be UP Cebu" rule on auto-pick too:
+        // if the nearest isn't UPC, lock drop-off to UPC; if it is, leave
+        // drop-off for the passenger to choose.
+        if (upc && pickup.id !== upc.id) {
+          setDropoffStop({
+            id: upc.id,
+            name: upc.name,
+            lat: parseFloat(upc.latitude),
+            lng: parseFloat(upc.longitude),
+            sequence: upc.sequence,
+          });
+          setSelecting('pickup');
+        } else if (upc && pickup.id === upc.id) {
+          setSelecting('dropoff');
+        }
+      } catch (_) {
+        // GPS unavailable — leave the passenger to tap a stop manually.
       }
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [routeId, busName]);
 
   // ── 3. Inject stop pins once map is loaded and stops are fetched ───────────
@@ -248,6 +347,17 @@ const UserMap = () => {
       `window.renderRouteStops(${JSON.stringify(routeStops)}, '${routeColor}'); true;`
     );
   }, [mapLoaded, routeStops, routeColor]);
+
+  // Recolour pickup/dropoff pins and pan to the pickup whenever they change
+  // (covers both auto-selection and manual taps).
+  useEffect(() => {
+    if (!mapLoaded || routeStops.length === 0) return;
+    webRef.current?.injectJavaScript(
+      `window.markStops(${pickupStop?.id ?? 'null'}, ${dropoffStop?.id ?? 'null'}, '${routeColor}');` +
+        (pickupStop ? ` window.highlightStop(${pickupStop.lat}, ${pickupStop.lng});` : '') +
+        ' true;'
+    );
+  }, [mapLoaded, routeStops, pickupStop, dropoffStop, routeColor]);
 
   // ── 4. Live shuttle positions: poll + Pusher ──────────────────────────────
   const pollShuttles = useCallback(async () => {
@@ -332,6 +442,20 @@ const UserMap = () => {
     };
   }, [mapLoaded, passengerId]);
 
+  // Compute the route's UP Cebu stop (if any) — used to enforce that one side
+  // of every booking is always UPC.
+  const upcStop = routeStops.find(isUpcStop) ?? null;
+  const upcStopObj = upcStop
+    ? {
+        id: upcStop.id,
+        name: upcStop.name,
+        lat: parseFloat(upcStop.latitude),
+        lng: parseFloat(upcStop.longitude),
+        sequence: upcStop.sequence,
+      }
+    : null;
+  const isPickupUPC = Boolean(pickupStop && upcStopObj && pickupStop.id === upcStopObj.id);
+
   // ── 5. Handle messages from Leaflet ───────────────────────────────────────
   const handleMessage = (event) => {
     try {
@@ -339,6 +463,7 @@ const UserMap = () => {
       if (msg.type !== 'STOP_TAPPED') return;
 
       const stop = { id: msg.id, name: msg.name, lat: msg.lat, lng: msg.lng, sequence: msg.sequence };
+      const tappedIsUPC = upcStopObj && stop.id === upcStopObj.id;
 
       let nextPickup = pickupStop;
       let nextDropoff = dropoffStop;
@@ -346,9 +471,40 @@ const UserMap = () => {
       if (selecting === 'pickup') {
         nextPickup = stop;
         setPickupStop(stop);
-        // First time picking pickup → guide them to choose a drop-off next.
-        if (!dropoffStop) setSelecting('dropoff');
+
+        if (upcStopObj) {
+          if (!tappedIsUPC) {
+            // Non-UPC pickup → drop-off is automatically UPC.
+            nextDropoff = upcStopObj;
+            setDropoffStop(upcStopObj);
+          } else {
+            // UPC pickup → clear drop-off so the passenger can choose, and
+            // jump the selector to drop-off as a UX cue.
+            nextDropoff = null;
+            setDropoffStop(null);
+            setSelecting('dropoff');
+          }
+        } else if (!dropoffStop) {
+          setSelecting('dropoff');
+        }
       } else {
+        // Drop-off slot tap: only meaningful when pickup is UPC. Otherwise
+        // tell the passenger why the drop-off is locked instead of silently
+        // ignoring the tap.
+        if (upcStopObj && !isPickupUPC && pickupStop) {
+          Alert.alert(
+            'Drop-off Locked',
+            "When you're not coming from UP Cebu, your drop-off is automatically UP Cebu."
+          );
+          return;
+        }
+        if (upcStopObj && tappedIsUPC) {
+          Alert.alert(
+            'Same Stop',
+            'Drop-off cannot also be UP Cebu. Tap another stop.'
+          );
+          return;
+        }
         nextDropoff = stop;
         setDropoffStop(stop);
       }
@@ -420,13 +576,35 @@ const UserMap = () => {
     }
   };
 
-  // Best-effort cancel: drop the pending request server-side so it doesn't
-  // linger, then return to stop selection. (Mirrors the prior UX — if the
-  // delete fails we still reset locally rather than trap the user.)
-  const handleCancelWait = () => {
+  // Tapping "Cancel" opens the reason modal; the actual cancellation runs in
+  // handleCancelConfirm once the passenger picks a reason. The reason is
+  // surfaced to admins so we can spot patterns (e.g. drivers taking too long).
+  const handleCancelPress = () => {
+    setCancelReason('');
+    setCancelOtherText('');
+    setCancelVisible(true);
+  };
+
+  const handleCancelConfirm = async () => {
+    const reason =
+      cancelReason === 'Other'
+        ? cancelOtherText.trim() || 'Other'
+        : cancelReason;
+
+    setCancelVisible(false);
+
     if (pickupRequestId) {
-      apiDelete(`pickup-requests/${pickupRequestId}`).catch(() => {});
+      // PATCH so cancel_reason is stored against the request. Fall back to
+      // DELETE if the PATCH fails — we still don't want to trap the user.
+      const { ok } = await apiPatch(`pickup-requests/${pickupRequestId}`, {
+        status: 'cancelled',
+        cancel_reason: reason,
+      });
+      if (!ok) {
+        apiDelete(`pickup-requests/${pickupRequestId}`).catch(() => {});
+      }
     }
+
     setPhase('book');
     setDriverInfo(null);
     setPickupRequestId(null);
@@ -435,7 +613,14 @@ const UserMap = () => {
     }
   };
 
-  const canBook = pickupStop && dropoffStop && pickupStop.id !== dropoffStop.id;
+  const canBook =
+    pickupStop &&
+    dropoffStop &&
+    pickupStop.id !== dropoffStop.id &&
+    (!routeStops.length || upcStopObj) &&
+    (!upcStopObj ||
+      pickupStop.id === upcStopObj.id ||
+      dropoffStop.id === upcStopObj.id);
 
   return (
     <View style={styles.container}>
@@ -506,10 +691,13 @@ const UserMap = () => {
               {pickupStop && <Text style={styles.stopSeq}>#{pickupStop.sequence}</Text>}
             </TouchableOpacity>
 
-            {/* Drop-off slot */}
+            {/* Drop-off slot. When pickup is set but is NOT UP Cebu, the
+                drop-off is locked to UPC (auto). When pickup is UPC the
+                passenger picks. */}
             <TouchableOpacity
               activeOpacity={0.85}
               onPress={() => selectSlot('dropoff')}
+              disabled={Boolean(pickupStop && !isPickupUPC && upcStopObj)}
               style={[styles.stopRow, selecting === 'dropoff' && styles.stopRowActive]}
             >
               <View style={[styles.stopDot, { backgroundColor: dropoffStop ? '#ef4444' : '#ccc' }]} />
@@ -522,8 +710,18 @@ const UserMap = () => {
                   {dropoffStop ? dropoffStop.name : 'Tap a stop on the map'}
                 </Text>
               </View>
-              {dropoffStop && <Text style={styles.stopSeq}>#{dropoffStop.sequence}</Text>}
+              {pickupStop && !isPickupUPC && upcStopObj ? (
+                <Text style={styles.autoBadge}>auto</Text>
+              ) : dropoffStop ? (
+                <Text style={styles.stopSeq}>#{dropoffStop.sequence}</Text>
+              ) : null}
             </TouchableOpacity>
+
+            {routeStops.length > 0 && !upcStopObj && (
+              <Text style={styles.upcWarning}>
+                This route has no UP Cebu stop configured. Booking unavailable.
+              </Text>
+            )}
 
             <TouchableOpacity
               style={[styles.paraBtn, (!canBook || paraLoading) && styles.paraBtnLoading]}
@@ -587,7 +785,7 @@ const UserMap = () => {
               </TouchableOpacity>
             )}
 
-            <TouchableOpacity style={styles.cancelBtn} onPress={handleCancelWait} activeOpacity={0.85}>
+            <TouchableOpacity style={styles.cancelBtn} onPress={handleCancelPress} activeOpacity={0.85}>
               <Text style={styles.cancelText}>Cancel</Text>
             </TouchableOpacity>
           </>
@@ -601,6 +799,64 @@ const UserMap = () => {
           </View>
         )}
       </View>
+
+      {cancelVisible && (
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalDim} />
+          <View style={styles.cancelModal}>
+            <Text style={styles.cancelModalTitle}>Why are you cancelling?</Text>
+            <Text style={styles.cancelModalSub}>This helps us improve the service.</Text>
+            {CANCEL_REASONS.map((reason) => (
+              <TouchableOpacity
+                key={reason}
+                style={[styles.cancelOption, cancelReason === reason && styles.cancelOptionActive]}
+                onPress={() => setCancelReason(reason)}
+                activeOpacity={0.85}
+              >
+                <Ionicons
+                  name={cancelReason === reason ? 'radio-button-on' : 'radio-button-off'}
+                  size={20}
+                  color={cancelReason === reason ? '#8B211E' : '#999'}
+                  style={{ marginRight: 10 }}
+                />
+                <Text
+                  style={[
+                    styles.cancelOptionText,
+                    cancelReason === reason && styles.cancelOptionTextActive,
+                  ]}
+                >
+                  {reason}
+                </Text>
+              </TouchableOpacity>
+            ))}
+            {cancelReason === 'Other' && (
+              <TextInput
+                style={styles.cancelOtherInput}
+                placeholder="Please describe..."
+                placeholderTextColor="#999"
+                value={cancelOtherText}
+                onChangeText={setCancelOtherText}
+                maxLength={200}
+              />
+            )}
+            <TouchableOpacity
+              style={[styles.cancelConfirmBtn, !cancelReason && { opacity: 0.45 }]}
+              onPress={handleCancelConfirm}
+              disabled={!cancelReason}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.cancelConfirmText}>Confirm Cancellation</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.cancelModalBack}
+              onPress={() => setCancelVisible(false)}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.cancelModalBackText}>Keep my booking</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
     </View>
   );
 };
@@ -864,6 +1120,118 @@ const styles = StyleSheet.create({
     fontFamily: 'Nunito-Regular',
     color: '#666',
     marginTop: 3,
+  },
+
+  autoBadge: {
+    fontSize: moderateScale(10),
+    fontFamily: 'Nunito-Bold',
+    color: '#666',
+    backgroundColor: '#eee',
+    borderRadius: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    marginLeft: 6,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  upcWarning: {
+    fontSize: moderateScale(12),
+    color: '#8B211E',
+    fontFamily: 'Nunito-Regular',
+    marginTop: 2,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+
+  // Cancel-reason modal
+  modalOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 100,
+  },
+  modalDim: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+  },
+  cancelModal: {
+    width: '88%',
+    backgroundColor: '#F4F7F4',
+    borderRadius: 28,
+    padding: 24,
+    borderWidth: 1.5,
+    borderColor: '#8B211E',
+  },
+  cancelModalTitle: {
+    fontSize: moderateScale(19),
+    color: '#1A2E1A',
+    fontFamily: 'Nunito-Bold',
+    marginBottom: 4,
+  },
+  cancelModalSub: {
+    fontSize: moderateScale(12),
+    color: '#666',
+    fontFamily: 'Nunito-Regular',
+    marginBottom: 16,
+  },
+  cancelOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    backgroundColor: '#fff',
+    marginBottom: 8,
+  },
+  cancelOptionActive: {
+    borderColor: '#8B211E',
+    backgroundColor: '#fff5f5',
+  },
+  cancelOptionText: {
+    fontSize: moderateScale(14),
+    fontFamily: 'Nunito-Regular',
+    color: '#444',
+  },
+  cancelOptionTextActive: {
+    color: '#8B211E',
+    fontFamily: 'Nunito-Bold',
+  },
+  cancelOtherInput: {
+    borderWidth: 1,
+    borderColor: '#3e5141',
+    borderRadius: 14,
+    padding: 12,
+    fontSize: moderateScale(13),
+    fontFamily: 'Nunito-Regular',
+    color: '#1A2E1A',
+    backgroundColor: '#fff',
+    marginBottom: 8,
+  },
+  cancelConfirmBtn: {
+    backgroundColor: '#8B211E',
+    height: moderateScale(50),
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 6,
+    marginBottom: 8,
+  },
+  cancelConfirmText: {
+    fontSize: moderateScale(15),
+    color: '#fff',
+    fontFamily: 'Nunito-Black',
+  },
+  cancelModalBack: {
+    alignItems: 'center',
+    paddingVertical: 6,
+  },
+  cancelModalBackText: {
+    fontSize: moderateScale(13),
+    color: '#555',
+    fontFamily: 'Nunito-Regular',
+    textDecorationLine: 'underline',
   },
 });
 
