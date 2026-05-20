@@ -126,12 +126,6 @@ class PickupRequestService
 
         $pickupRequest->load('pickupStop');
 
-        try {
-            $this->notifyOnDutyDrivers($pickupRequest, $passenger);
-        } catch (\Throwable $e) {
-            \Log::error('notifyOnDutyDrivers failed: ' . $e->getMessage());
-        }
-
         // Capacity-gated auto-accept: if the route's active shuttle still has
         // free seats, accept immediately and assign its driver. Otherwise the
         // request waits in the route queue (status stays 'pending').
@@ -141,19 +135,30 @@ class PickupRequestService
             \Log::error('placeInQueue failed: ' . $e->getMessage());
         }
 
-        try {
-            $this->logDriverNotification(
-                $pickupRequest,
-                ($passenger->full_name ?? 'A passenger').' is waiting at '
-                    .($pickupRequest->pickupStop?->name ?? 'a stop')
-                    .($pickupRequest->pickupStop?->sequence !== null
-                        ? ' (Stop '.((int) $pickupRequest->pickupStop->sequence + 1).')'
-                        : '')
-                    .'.'
-            );
-        } catch (\Throwable $e) {
-            \Log::error('logDriverNotification failed: ' . $e->getMessage());
-        }
+        // Push notifications are deferred to run after the HTTP response is
+        // sent so their network latency (Expo HTTP call) never blocks the
+        // passenger's booking confirmation. defer() is a Laravel 11+ helper
+        // that runs the closure in the request terminate phase.
+        $notificationMessage = ($passenger->full_name ?? 'A passenger').' is waiting at '
+            .($pickupRequest->pickupStop?->name ?? 'a stop')
+            .($pickupRequest->pickupStop?->sequence !== null
+                ? ' (Stop '.((int) $pickupRequest->pickupStop->sequence + 1).')'
+                : '')
+            .'.';
+
+        defer(function () use ($pickupRequest, $passenger, $notificationMessage) {
+            try {
+                $this->notifyOnDutyDrivers($pickupRequest, $passenger);
+            } catch (\Throwable $e) {
+                \Log::error('notifyOnDutyDrivers failed: ' . $e->getMessage());
+            }
+
+            try {
+                $this->logDriverNotification($pickupRequest, $notificationMessage);
+            } catch (\Throwable $e) {
+                \Log::error('logDriverNotification failed: ' . $e->getMessage());
+            }
+        });
 
         return $pickupRequest->fresh();
     }
@@ -345,31 +350,10 @@ class PickupRequestService
 
     private function calculateETA($driverLat, $driverLng, $passengerLat, $passengerLng): int
     {
-        /**
-         * Calculate ETA in minutes from driver's current position to passenger's pickup stop.
-         * Uses OSRM for road-accurate ETA with Haversine as fallback.
-         */
-        try {
-            $url = "http://router.project-osrm.org/route/v1/driving/"
-                 . "{$driverLng},{$driverLat};{$passengerLng},{$passengerLat}"
-                 . "?overview=false";
-
-            $context = stream_context_create([
-                'http' => ['timeout' => 3]
-            ]);
-
-            $response = file_get_contents($url, false, $context);
-
-            if ($response) {
-                $data = json_decode($response, true);
-                if (isset($data['routes'][0]['duration'])) {
-                    return (int) round($data['routes'][0]['duration'] / 60);
-                }
-            }
-        } catch (\Exception $e) {
-            // Fall through to Haversine
-        }
-
+        // Haversine-based ETA (assumes 30 km/h average shuttle speed).
+        // OSRM was removed: the public demo server adds unpredictable
+        // latency (up to 3s) synchronously in the booking request path,
+        // contributing to Heroku 30s timeouts.
         return $this->haversineETA($driverLat, $driverLng, $passengerLat, $passengerLng);
     }
 
