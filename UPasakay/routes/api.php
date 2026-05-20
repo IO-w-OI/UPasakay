@@ -76,6 +76,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('shuttles', ShuttleController::class);
     Route::apiResource('passengers', PassengerController::class);
     Route::apiResource('drivers', DriverController::class);
+    // Passenger's single in-flight pickup request — used by the app to lock
+    // the user into the waiting screen until they cancel or the ride ends.
+    Route::get('passenger/active-pickup-request', [PickupRequestController::class, 'activeForPassenger'])
+        ->middleware('ensure.passenger.approved');
     Route::apiResource('pickup-requests', PickupRequestController::class)
         ->middleware('ensure.passenger.approved');
     // Passenger self-confirms boarding by scanning/typing the code on the

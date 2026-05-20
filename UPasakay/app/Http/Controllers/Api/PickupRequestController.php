@@ -10,6 +10,7 @@ use App\Models\PickupRequest;
 use App\Models\ShuttleLocation;
 use App\Services\ExpoPushService;
 use App\Services\PickupRequestService;
+use App\Support\Geo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\ValidationException;
@@ -91,6 +92,13 @@ class PickupRequestController extends Controller
         );
     }
 
+    /**
+     * Distance (metres) under which a passenger can no longer cancel an
+     * accepted ride — the shuttle is essentially arriving and the driver
+     * shouldn't be stranded.
+     */
+    private const CANCEL_LOCK_RADIUS_METERS = 200;
+
     public function update(Request $request, PickupRequest $pickupRequest)
     {
         $validated = $request->validate([
@@ -100,9 +108,92 @@ class PickupRequestController extends Controller
             'cancel_reason' => 'nullable|string|max:500',
         ]);
 
+        // Passenger-initiated cancel of an already-accepted ride: refuse if
+        // the assigned shuttle is within CANCEL_LOCK_RADIUS_METERS of the
+        // pickup stop. We only enforce when status is `accepted` — pending
+        // requests have no driver to strand, and in_progress / completed
+        // shouldn't be cancellable through this path anyway.
+        if (($validated['status'] ?? null) === 'cancelled' && $pickupRequest->status === 'accepted') {
+            $shuttle = $pickupRequest->assignment?->driver?->shuttle;
+            $latest = $shuttle?->latestLocation;
+            $pickupStop = $pickupRequest->pickupStop;
+
+            if ($shuttle && $latest && $pickupStop) {
+                $staleBefore = now()->subMinutes(self::SHUTTLE_GPS_MAX_AGE_MINUTES);
+                $isFresh = Carbon::parse($latest->recorded_at)->gte($staleBefore);
+
+                if ($isFresh) {
+                    $distance = Geo::distanceMeters(
+                        (float) $latest->latitude,
+                        (float) $latest->longitude,
+                        (float) $pickupStop->latitude,
+                        (float) $pickupStop->longitude,
+                    );
+
+                    if ($distance < self::CANCEL_LOCK_RADIUS_METERS) {
+                        return response()->json([
+                            'message' => "The shuttle is already arriving — you can't cancel within 200 metres of the pickup stop.",
+                        ], 422);
+                    }
+                }
+            }
+        }
+
         $pickupRequest->update($validated);
 
         return response()->json($pickupRequest);
+    }
+
+    /**
+     * Return the authenticated passenger's single in-flight pickup request,
+     * with everything the mobile app needs to render the locked waiting
+     * screen (route, stops, assigned driver/shuttle, latest shuttle GPS,
+     * distance from shuttle → pickup). Returns 204 when none.
+     */
+    public function activeForPassenger(Request $request)
+    {
+        $principal = $request->user();
+        if (! $principal) {
+            return response()->json(['message' => 'Unauthenticated'], 401);
+        }
+
+        $userId = $principal instanceof Passenger ? $principal->user_id : $principal->id;
+
+        $active = PickupRequest::with([
+            'route',
+            'pickupStop',
+            'dropoffStop',
+            'assignment.driver.user',
+            'assignment.driver.shuttle.latestLocation',
+        ])
+            ->where('user_id', $userId)
+            ->active()
+            ->latest('id')
+            ->first();
+
+        if (! $active) {
+            return response()->noContent();
+        }
+
+        $shuttle = $active->assignment?->driver?->shuttle;
+        $latest = $shuttle?->latestLocation;
+        $pickupStop = $active->pickupStop;
+
+        $distance = null;
+        if ($latest && $pickupStop) {
+            $distance = Geo::distanceMeters(
+                (float) $latest->latitude,
+                (float) $latest->longitude,
+                (float) $pickupStop->latitude,
+                (float) $pickupStop->longitude,
+            );
+        }
+
+        return response()->json([
+            'pickup_request' => $active,
+            'shuttle_distance_meters' => $distance,
+            'cancel_lock_radius_meters' => self::CANCEL_LOCK_RADIUS_METERS,
+        ]);
     }
 
     public function destroy(PickupRequest $pickupRequest)
@@ -168,7 +259,7 @@ class PickupRequestController extends Controller
             ], 422);
         }
 
-        $meters = $this->distanceMeters(
+        $meters = Geo::distanceMeters(
             (float) $validated['latitude'],
             (float) $validated['longitude'],
             (float) $latest->latitude,
@@ -247,17 +338,4 @@ class PickupRequestController extends Controller
         return response()->json($pickupRequest->fresh());
     }
 
-    /**
-     * Great-circle distance in metres (Haversine).
-     */
-    private function distanceMeters(float $lat1, float $lng1, float $lat2, float $lng2): float
-    {
-        $earthRadius = 6_371_000; // metres
-        $dLat = deg2rad($lat2 - $lat1);
-        $dLng = deg2rad($lng2 - $lng1);
-        $a = sin($dLat / 2) ** 2 +
-            cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLng / 2) ** 2;
-
-        return $earthRadius * 2 * atan2(sqrt($a), sqrt(1 - $a));
-    }
 }

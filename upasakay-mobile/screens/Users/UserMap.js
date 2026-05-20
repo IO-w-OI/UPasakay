@@ -1,12 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import * as Location from 'expo-location';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { Pusher } from 'pusher-js/react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  BackHandler,
   Platform,
   StyleSheet,
   Text,
@@ -16,9 +17,15 @@ import {
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 
+import { useTrip } from '../../context/TripContext';
 import { apiDelete, apiGet, apiPatch, apiPost } from '../../services/apiClient';
 import { currentUser } from '../../services/UserStore';
 import { moderateScale, scale } from '../../utils/responsive';
+
+// Server enforces the same threshold — see PickupRequestController
+// CANCEL_LOCK_RADIUS_METERS. We mirror it client-side so the Cancel button
+// can be visibly disabled (with explanation) instead of failing on submit.
+const CANCEL_LOCK_RADIUS_M = 200;
 
 const PUSHER_KEY = process.env.EXPO_PUBLIC_PUSHER_KEY ?? 'f21efd02988d084b7b35';
 const PUSHER_CLUSTER = process.env.EXPO_PUBLIC_PUSHER_CLUSTER ?? 'ap1';
@@ -214,9 +221,14 @@ const leafletHTML = `
 
 const UserMap = () => {
   const { routeId, busName } = useLocalSearchParams();
+  const { activeBooking, refreshActiveBooking } = useTrip();
   const webRef = useRef(null);
   const pusherRef = useRef(null);
   const trackedShuttleIds = useRef(new Set());
+  // Latest GPS of the assigned shuttle — kept fresh by both pollShuttles
+  // and the Pusher 'location.updated' event. Used to compute the cancel
+  // proximity guard without an extra round trip.
+  const assignedShuttleLocRef = useRef(null);
 
   const [mapLoaded, setMapLoaded] = useState(false);
   const [routeStops, setRouteStops] = useState([]);
@@ -232,6 +244,13 @@ const UserMap = () => {
   const [phase, setPhase] = useState('book');
   const [pickupRequestId, setPickupRequestId] = useState(null);
   const [driverInfo, setDriverInfo] = useState(null); // { name, shuttle, eta }
+  // The shuttle assigned to the current request. Set once the server-side
+  // active-booking snapshot arrives (or as ride.accepted fires). We use this
+  // to filter Pusher location updates down to "our" shuttle only.
+  const [assignedShuttleId, setAssignedShuttleId] = useState(null);
+  // Live distance (metres) from the assigned shuttle to the pickup stop —
+  // drives the cancel proximity guard. null when unknown.
+  const [shuttleDistanceM, setShuttleDistanceM] = useState(null);
 
   // Cancel-reason modal
   const [cancelVisible, setCancelVisible] = useState(false);
@@ -243,7 +262,97 @@ const UserMap = () => {
     phaseRef.current = phase;
   }, [phase]);
 
+  // Mirrors for pollShuttles (which is memoised on routeId only) so we don't
+  // need to recreate the 8s polling interval whenever stops or shuttle change.
+  const assignedShuttleIdRef = useRef(null);
+  const pickupStopRef = useRef(null);
+  useEffect(() => {
+    assignedShuttleIdRef.current = assignedShuttleId;
+  }, [assignedShuttleId]);
+  useEffect(() => {
+    pickupStopRef.current = pickupStop;
+  }, [pickupStop]);
+
   const passengerId = currentUser?.passenger_id ?? currentUser?.id ?? null;
+
+  // ── Lock the screen while a booking is in flight ──────────────────────────
+  // Consume Android hardware back so the passenger can't accidentally leave
+  // the waiting/onboard view. iOS swipe-back is disabled via Stack.Screen
+  // options below. The only way out is Cancel or ride completion.
+  const locked = phase === 'waiting' || phase === 'onboard';
+  useEffect(() => {
+    if (!locked) return;
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => true);
+    return () => sub.remove();
+  }, [locked]);
+
+  // ── Hydrate from any in-flight pickup request ─────────────────────────────
+  // Refresh once on mount so the screen recovers state when the passenger
+  // arrives here via the active-trip banner, a push notification, or after
+  // killing/relaunching the app mid-ride.
+  useEffect(() => {
+    refreshActiveBooking();
+  }, [refreshActiveBooking]);
+
+  // When the trip context's activeBooking snapshot updates, seed the
+  // booking-card state so the waiting/onboard UI shows the right driver,
+  // stops, and assigned shuttle without needing the user to re-Para.
+  useEffect(() => {
+    const pr = activeBooking?.pickup_request;
+    if (!pr) return;
+
+    setPickupRequestId(pr.id);
+
+    const seedStop = (s) =>
+      s
+        ? {
+            id: s.id,
+            name: s.name,
+            lat: parseFloat(s.latitude),
+            lng: parseFloat(s.longitude),
+            sequence: s.sequence,
+          }
+        : null;
+    if (pr.pickup_stop) setPickupStop(seedStop(pr.pickup_stop));
+    if (pr.dropoff_stop) setDropoffStop(seedStop(pr.dropoff_stop));
+
+    const driver = pr.assignment?.driver;
+    const shuttle = driver?.shuttle;
+    if (driver || shuttle) {
+      setDriverInfo({
+        name: driver?.user?.full_name ?? driver?.name ?? 'Your driver',
+        shuttle: shuttle?.shuttle_code ?? null,
+        eta: pr.eta_minutes ?? null,
+      });
+    }
+    if (shuttle?.id) {
+      setAssignedShuttleId(shuttle.id);
+      const latest = shuttle.latest_location;
+      if (latest?.latitude != null && latest?.longitude != null) {
+        assignedShuttleLocRef.current = {
+          lat: parseFloat(latest.latitude),
+          lng: parseFloat(latest.longitude),
+        };
+      }
+    }
+
+    if (activeBooking?.shuttle_distance_meters != null) {
+      setShuttleDistanceM(activeBooking.shuttle_distance_meters);
+    }
+
+    setPhase(pr.status === 'in_progress' ? 'onboard' : 'waiting');
+  }, [activeBooking]);
+
+  // Recompute shuttle→pickup distance whenever either side moves.
+  useEffect(() => {
+    if (!pickupStop || !assignedShuttleLocRef.current) {
+      setShuttleDistanceM(null);
+      return;
+    }
+    const { lat, lng } = assignedShuttleLocRef.current;
+    const km = haversineKm(lat, lng, pickupStop.lat, pickupStop.lng);
+    setShuttleDistanceM(km * 1000);
+  }, [pickupStop, assignedShuttleId]);
 
   // ── 1. GPS permission + auto-center ────────────────────────────────────────
   const locateUser = useCallback(async (pan = true) => {
@@ -373,6 +482,26 @@ const UserMap = () => {
       webRef.current?.injectJavaScript(
         `window.upsertShuttle(${s.id}, ${s.latitude}, ${s.longitude}); true;`
       );
+      // Track our assigned shuttle's latest GPS for the cancel proximity guard.
+      // Read assignedShuttleId / pickupStop via refs so pollShuttles doesn't
+      // need to be re-created (and the 8s interval reset) on every change.
+      const myShuttle = assignedShuttleIdRef.current;
+      if (myShuttle && s.id === myShuttle) {
+        assignedShuttleLocRef.current = {
+          lat: parseFloat(s.latitude),
+          lng: parseFloat(s.longitude),
+        };
+        const pickup = pickupStopRef.current;
+        if (pickup) {
+          const km = haversineKm(
+            assignedShuttleLocRef.current.lat,
+            assignedShuttleLocRef.current.lng,
+            pickup.lat,
+            pickup.lng,
+          );
+          setShuttleDistanceM(km * 1000);
+        }
+      }
     });
     webRef.current?.injectJavaScript(
       `window.syncShuttles(${JSON.stringify(ids)});` +
@@ -406,6 +535,23 @@ const UserMap = () => {
             (phaseRef.current === 'waiting' ? ' window.fitUserAndShuttles();' : '') +
             ' true;'
         );
+        // Keep the proximity guard fresh between 8s polls.
+        if (assignedShuttleIdRef.current && payload.id === assignedShuttleIdRef.current) {
+          assignedShuttleLocRef.current = {
+            lat: parseFloat(payload.latitude),
+            lng: parseFloat(payload.longitude),
+          };
+          const pickup = pickupStopRef.current;
+          if (pickup) {
+            const km = haversineKm(
+              assignedShuttleLocRef.current.lat,
+              assignedShuttleLocRef.current.lng,
+              pickup.lat,
+              pickup.lng,
+            );
+            setShuttleDistanceM(km * 1000);
+          }
+        }
       });
 
       // Passenger-specific channel: driver assigned / boarded / ride done.
@@ -419,8 +565,13 @@ const UserMap = () => {
             eta: data?.eta_minutes ?? null,
           });
           if (data?.pickup_request_id) setPickupRequestId(data.pickup_request_id);
+          if (data?.shuttle_id) setAssignedShuttleId(data.shuttle_id);
           setPhase('waiting');
           webRef.current?.injectJavaScript('window.fitUserAndShuttles(); true;');
+          // The full active-booking snapshot (assigned shuttle, latest GPS,
+          // distance) is now valid — fetch it so the proximity guard arms
+          // immediately rather than waiting for the first location event.
+          refreshActiveBooking();
         });
 
         paxCh.bind('passenger.boarded', () => setPhase('onboard'));
@@ -429,6 +580,9 @@ const UserMap = () => {
           setPhase('book');
           setDriverInfo(null);
           setPickupRequestId(null);
+          setAssignedShuttleId(null);
+          setShuttleDistanceM(null);
+          assignedShuttleLocRef.current = null;
         });
       }
     } catch (e) {
@@ -576,10 +730,23 @@ const UserMap = () => {
     }
   };
 
+  // Cancel is locked when the assigned shuttle is within 200m of the pickup
+  // stop — the driver is essentially arriving. Mirrors the server-side guard
+  // in PickupRequestController::update so we fail fast in the UI.
+  const cancelLocked =
+    shuttleDistanceM != null && shuttleDistanceM < CANCEL_LOCK_RADIUS_M;
+
   // Tapping "Cancel" opens the reason modal; the actual cancellation runs in
   // handleCancelConfirm once the passenger picks a reason. The reason is
   // surfaced to admins so we can spot patterns (e.g. drivers taking too long).
   const handleCancelPress = () => {
+    if (cancelLocked) {
+      Alert.alert(
+        "Can't cancel right now",
+        "The shuttle is already arriving — you can't cancel within 200 metres of the pickup. Please wait for the driver."
+      );
+      return;
+    }
     setCancelReason('');
     setCancelOtherText('');
     setCancelVisible(true);
@@ -594,13 +761,20 @@ const UserMap = () => {
     setCancelVisible(false);
 
     if (pickupRequestId) {
-      // PATCH so cancel_reason is stored against the request. Fall back to
-      // DELETE if the PATCH fails — we still don't want to trap the user.
-      const { ok } = await apiPatch(`pickup-requests/${pickupRequestId}`, {
+      // PATCH so cancel_reason is stored against the request. The server
+      // re-checks the 200m proximity guard, so a stale-client bypass still
+      // gets rejected with a clear message we surface below.
+      const { ok, data } = await apiPatch(`pickup-requests/${pickupRequestId}`, {
         status: 'cancelled',
         cancel_reason: reason,
       });
       if (!ok) {
+        if (data?.message) {
+          Alert.alert("Can't cancel right now", data.message);
+          return;
+        }
+        // Fall through to local reset on transport-level failures so the
+        // passenger isn't trapped on a dead screen.
         apiDelete(`pickup-requests/${pickupRequestId}`).catch(() => {});
       }
     }
@@ -608,6 +782,10 @@ const UserMap = () => {
     setPhase('book');
     setDriverInfo(null);
     setPickupRequestId(null);
+    setAssignedShuttleId(null);
+    setShuttleDistanceM(null);
+    assignedShuttleLocRef.current = null;
+    refreshActiveBooking();
     if (routeStops.length > 0) {
       webRef.current?.injectJavaScript('window.fitUserAndShuttles(); true;');
     }
@@ -624,6 +802,10 @@ const UserMap = () => {
 
   return (
     <View style={styles.container}>
+      {/* Disable iOS swipe-back when an active booking is in flight; the
+          back button itself is also hidden below. The only exit is Cancel. */}
+      <Stack.Screen options={{ gestureEnabled: !locked }} />
+
       <WebView
         ref={webRef}
         originWhitelist={['*']}
@@ -638,12 +820,15 @@ const UserMap = () => {
         onMessage={handleMessage}
       />
 
-      {/* Back button */}
-      <TouchableOpacity style={styles.backBtn} onPress={() => router.back()} activeOpacity={0.8}>
-        <BlurView intensity={80} tint="light" style={styles.glassSmall}>
-          <Ionicons name="arrow-back" size={22} color="#1A2E1A" />
-        </BlurView>
-      </TouchableOpacity>
+      {/* Back button — only while the passenger is still choosing stops.
+          Once a booking is in flight, the only way out is Cancel. */}
+      {!locked && (
+        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()} activeOpacity={0.8}>
+          <BlurView intensity={80} tint="light" style={styles.glassSmall}>
+            <Ionicons name="arrow-back" size={22} color="#1A2E1A" />
+          </BlurView>
+        </TouchableOpacity>
+      )}
 
       {/* Shuttle status chip */}
       <View style={styles.statusChip}>
@@ -785,8 +970,14 @@ const UserMap = () => {
               </TouchableOpacity>
             )}
 
-            <TouchableOpacity style={styles.cancelBtn} onPress={handleCancelPress} activeOpacity={0.85}>
-              <Text style={styles.cancelText}>Cancel</Text>
+            <TouchableOpacity
+              style={[styles.cancelBtn, cancelLocked && styles.cancelBtnLocked]}
+              onPress={handleCancelPress}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.cancelText}>
+                {cancelLocked ? 'Cancel locked — shuttle arriving' : 'Cancel'}
+              </Text>
             </TouchableOpacity>
           </>
         )}
@@ -1099,6 +1290,9 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  cancelBtnLocked: {
+    backgroundColor: '#9ca3af',
   },
   cancelText: {
     color: '#fff',

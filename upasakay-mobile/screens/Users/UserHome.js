@@ -6,6 +6,7 @@ import { ActivityIndicator, Image, RefreshControl, ScrollView, StyleSheet, Text,
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Colors, StyledContainer } from '../../components/styles';
+import { useTrip } from '../../context/TripContext';
 import { apiGet } from '../../services/apiClient';
 import { currentUser } from '../../services/UserStore';
 import { moderateScale, NAV_CLEARANCE, scale } from '../../utils/responsive';
@@ -59,6 +60,7 @@ const RouteCard = ({ route, onPress }) => {
 
 const UserHome = () => {
     const router = useRouter();
+    const { refreshActiveBooking } = useTrip();
     const [routes, setRoutes] = useState([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -76,16 +78,32 @@ const UserHome = () => {
 
     useEffect(() => { fetchRoutes(); }, [fetchRoutes]);
 
-    // Refresh routes and re-read name whenever this tab regains focus,
-    // plus a 30s poll so the route's availability (driver on/off duty)
-    // reflects backend changes without manual refresh. Interval is cleared
-    // on blur, so background tabs don't poll.
+    // Whenever this tab regains focus: refresh routes + 30s poll, and check
+    // for an in-flight pickup request. If one exists, redirect into the
+    // locked booking screen so the passenger can't start a parallel ride.
     useFocusEffect(useCallback(() => {
         setFirstName(currentUser?.full_name ? currentUser.full_name.split(' ')[0] : 'User');
         fetchRoutes();
+
+        let cancelled = false;
+        refreshActiveBooking().then((data) => {
+            if (cancelled || !data?.pickup_request) return;
+            const pr = data.pickup_request;
+            router.replace({
+                pathname: '/UserBooking',
+                params: {
+                    busName: pr.route?.name ?? '',
+                    routeId: String(pr.route_id),
+                },
+            });
+        });
+
         const intervalId = setInterval(() => fetchRoutes(), 30000);
-        return () => clearInterval(intervalId);
-    }, [fetchRoutes]));
+        return () => {
+            cancelled = true;
+            clearInterval(intervalId);
+        };
+    }, [fetchRoutes, refreshActiveBooking, router]));
 
     const handleBusSelection = (route) => {
         if (!isRouteBookable(route)) return;
