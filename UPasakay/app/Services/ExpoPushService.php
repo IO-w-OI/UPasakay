@@ -43,7 +43,7 @@ class ExpoPushService
             try {
                 $response = Http::acceptJson()
                     ->asJson()
-                    ->timeout(15)
+                    ->timeout(5)
                     ->post(self::ENDPOINT, $messages);
 
                 if ($response->failed()) {
