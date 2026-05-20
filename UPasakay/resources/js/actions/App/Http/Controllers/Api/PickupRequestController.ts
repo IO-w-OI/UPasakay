@@ -338,7 +338,7 @@ update.patch = (args: { pickup_request: string | number } | [pickup_request: str
     update.form = updateForm
 /**
 * @see \App\Http\Controllers\Api\PickupRequestController::destroy
- * @see app/Http/Controllers/Api/PickupRequestController.php:107
+ * @see app/Http/Controllers/Api/PickupRequestController.php:108
  * @route '/api/pickup-requests/{pickup_request}'
  */
 export const destroy = (args: { pickup_request: string | number } | [pickup_request: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -353,7 +353,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\PickupRequestController::destroy
- * @see app/Http/Controllers/Api/PickupRequestController.php:107
+ * @see app/Http/Controllers/Api/PickupRequestController.php:108
  * @route '/api/pickup-requests/{pickup_request}'
  */
 destroy.url = (args: { pickup_request: string | number } | [pickup_request: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -381,7 +381,7 @@ destroy.url = (args: { pickup_request: string | number } | [pickup_request: stri
 
 /**
 * @see \App\Http\Controllers\Api\PickupRequestController::destroy
- * @see app/Http/Controllers/Api/PickupRequestController.php:107
+ * @see app/Http/Controllers/Api/PickupRequestController.php:108
  * @route '/api/pickup-requests/{pickup_request}'
  */
 destroy.delete = (args: { pickup_request: string | number } | [pickup_request: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -391,7 +391,7 @@ destroy.delete = (args: { pickup_request: string | number } | [pickup_request: s
 
     /**
 * @see \App\Http\Controllers\Api\PickupRequestController::destroy
- * @see app/Http/Controllers/Api/PickupRequestController.php:107
+ * @see app/Http/Controllers/Api/PickupRequestController.php:108
  * @route '/api/pickup-requests/{pickup_request}'
  */
     const destroyForm = (args: { pickup_request: string | number } | [pickup_request: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -406,7 +406,7 @@ destroy.delete = (args: { pickup_request: string | number } | [pickup_request: s
 
             /**
 * @see \App\Http\Controllers\Api\PickupRequestController::destroy
- * @see app/Http/Controllers/Api/PickupRequestController.php:107
+ * @see app/Http/Controllers/Api/PickupRequestController.php:108
  * @route '/api/pickup-requests/{pickup_request}'
  */
         destroyForm.delete = (args: { pickup_request: string | number } | [pickup_request: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -422,7 +422,7 @@ destroy.delete = (args: { pickup_request: string | number } | [pickup_request: s
     destroy.form = destroyForm
 /**
 * @see \App\Http\Controllers\Api\PickupRequestController::confirmBoarding
- * @see app/Http/Controllers/Api/PickupRequestController.php:119
+ * @see app/Http/Controllers/Api/PickupRequestController.php:120
  * @route '/api/pickup-requests/{pickupRequest}/confirm-boarding'
  */
 export const confirmBoarding = (args: { pickupRequest: number | { id: number } } | [pickupRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -437,7 +437,7 @@ confirmBoarding.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\PickupRequestController::confirmBoarding
- * @see app/Http/Controllers/Api/PickupRequestController.php:119
+ * @see app/Http/Controllers/Api/PickupRequestController.php:120
  * @route '/api/pickup-requests/{pickupRequest}/confirm-boarding'
  */
 confirmBoarding.url = (args: { pickupRequest: number | { id: number } } | [pickupRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -470,7 +470,7 @@ confirmBoarding.url = (args: { pickupRequest: number | { id: number } } | [picku
 
 /**
 * @see \App\Http\Controllers\Api\PickupRequestController::confirmBoarding
- * @see app/Http/Controllers/Api/PickupRequestController.php:119
+ * @see app/Http/Controllers/Api/PickupRequestController.php:120
  * @route '/api/pickup-requests/{pickupRequest}/confirm-boarding'
  */
 confirmBoarding.post = (args: { pickupRequest: number | { id: number } } | [pickupRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -480,7 +480,7 @@ confirmBoarding.post = (args: { pickupRequest: number | { id: number } } | [pick
 
     /**
 * @see \App\Http\Controllers\Api\PickupRequestController::confirmBoarding
- * @see app/Http/Controllers/Api/PickupRequestController.php:119
+ * @see app/Http/Controllers/Api/PickupRequestController.php:120
  * @route '/api/pickup-requests/{pickupRequest}/confirm-boarding'
  */
     const confirmBoardingForm = (args: { pickupRequest: number | { id: number } } | [pickupRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -490,7 +490,7 @@ confirmBoarding.post = (args: { pickupRequest: number | { id: number } } | [pick
 
             /**
 * @see \App\Http\Controllers\Api\PickupRequestController::confirmBoarding
- * @see app/Http/Controllers/Api/PickupRequestController.php:119
+ * @see app/Http/Controllers/Api/PickupRequestController.php:120
  * @route '/api/pickup-requests/{pickupRequest}/confirm-boarding'
  */
         confirmBoardingForm.post = (args: { pickupRequest: number | { id: number } } | [pickupRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -501,7 +501,7 @@ confirmBoarding.post = (args: { pickupRequest: number | { id: number } } | [pick
     confirmBoarding.form = confirmBoardingForm
 /**
 * @see \App\Http\Controllers\Api\PickupRequestController::feedback
- * @see app/Http/Controllers/Api/PickupRequestController.php:210
+ * @see app/Http/Controllers/Api/PickupRequestController.php:214
  * @route '/api/pickup-requests/{pickupRequest}/feedback'
  */
 export const feedback = (args: { pickupRequest: number | { id: number } } | [pickupRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -516,7 +516,7 @@ feedback.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\PickupRequestController::feedback
- * @see app/Http/Controllers/Api/PickupRequestController.php:210
+ * @see app/Http/Controllers/Api/PickupRequestController.php:214
  * @route '/api/pickup-requests/{pickupRequest}/feedback'
  */
 feedback.url = (args: { pickupRequest: number | { id: number } } | [pickupRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -549,7 +549,7 @@ feedback.url = (args: { pickupRequest: number | { id: number } } | [pickupReques
 
 /**
 * @see \App\Http\Controllers\Api\PickupRequestController::feedback
- * @see app/Http/Controllers/Api/PickupRequestController.php:210
+ * @see app/Http/Controllers/Api/PickupRequestController.php:214
  * @route '/api/pickup-requests/{pickupRequest}/feedback'
  */
 feedback.post = (args: { pickupRequest: number | { id: number } } | [pickupRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -559,7 +559,7 @@ feedback.post = (args: { pickupRequest: number | { id: number } } | [pickupReque
 
     /**
 * @see \App\Http\Controllers\Api\PickupRequestController::feedback
- * @see app/Http/Controllers/Api/PickupRequestController.php:210
+ * @see app/Http/Controllers/Api/PickupRequestController.php:214
  * @route '/api/pickup-requests/{pickupRequest}/feedback'
  */
     const feedbackForm = (args: { pickupRequest: number | { id: number } } | [pickupRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -569,7 +569,7 @@ feedback.post = (args: { pickupRequest: number | { id: number } } | [pickupReque
 
             /**
 * @see \App\Http\Controllers\Api\PickupRequestController::feedback
- * @see app/Http/Controllers/Api/PickupRequestController.php:210
+ * @see app/Http/Controllers/Api/PickupRequestController.php:214
  * @route '/api/pickup-requests/{pickupRequest}/feedback'
  */
         feedbackForm.post = (args: { pickupRequest: number | { id: number } } | [pickupRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

@@ -10,7 +10,7 @@ class PickupRequest extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['user_id', 'route_id', 'pickup_stop_id', 'dropoff_stop_id', 'status', 'eta_minutes', 'queue_position', 'assigned_at', 'boarded_at', 'completed_at', 'rating', 'comment', 'replied'];
+    protected $fillable = ['user_id', 'route_id', 'pickup_stop_id', 'dropoff_stop_id', 'status', 'eta_minutes', 'queue_position', 'assigned_at', 'boarded_at', 'completed_at', 'rating', 'comment', 'replied', 'cancel_reason'];
 
     protected $casts = [
         'assigned_at' => 'datetime',

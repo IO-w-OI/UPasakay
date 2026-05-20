@@ -103,7 +103,7 @@ const TabButton = ({ active, label, badge, onPress }) => (
     onPress={onPress}
     style={[styles.tabBtn, active && styles.tabBtnActive]}
   >
-    <Text style={[styles.tabBtnText, active && styles.tabBtnTextActive]}>{label}</Text>
+    <Text style={[styles.tabBtnText, active && styles.tabBtnTextActive]} numberOfLines={1}>{label}</Text>
     {badge > 0 && (
       <View style={styles.tabBadge}>
         <Text style={styles.tabBadgeText}>{badge > 99 ? '99+' : badge}</Text>
@@ -166,8 +166,8 @@ const UserRecents = () => {
               />
               <TabButton
                 active={tab === 'notifications'}
-                label="Notifications"
-                badge={notifications.length}
+                label="Notifs"
+                badge={tab !== 'notifications' ? notifications.length : 0}
                 onPress={() => setTab('notifications')}
               />
             </View>
@@ -244,8 +244,9 @@ const styles = StyleSheet.create({
   },
   tabBtnText: {
     fontFamily: 'Nunito-Bold',
-    fontSize: moderateScale(14),
+    fontSize: moderateScale(13),
     color: Colors.text_idle,
+    flexShrink: 1,
   },
   tabBtnTextActive: {
     color: Colors.golden_brown,

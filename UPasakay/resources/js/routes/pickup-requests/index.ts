@@ -416,7 +416,7 @@ update.patch = (args: { pickup_request: string | number } | [pickup_request: str
     update.form = updateForm
 /**
 * @see \App\Http\Controllers\Api\PickupRequestController::destroy
- * @see app/Http/Controllers/Api/PickupRequestController.php:107
+ * @see app/Http/Controllers/Api/PickupRequestController.php:108
  * @route '/api/pickup-requests/{pickup_request}'
  */
 export const destroy = (args: { pickup_request: string | number } | [pickup_request: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -431,7 +431,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\PickupRequestController::destroy
- * @see app/Http/Controllers/Api/PickupRequestController.php:107
+ * @see app/Http/Controllers/Api/PickupRequestController.php:108
  * @route '/api/pickup-requests/{pickup_request}'
  */
 destroy.url = (args: { pickup_request: string | number } | [pickup_request: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -459,7 +459,7 @@ destroy.url = (args: { pickup_request: string | number } | [pickup_request: stri
 
 /**
 * @see \App\Http\Controllers\Api\PickupRequestController::destroy
- * @see app/Http/Controllers/Api/PickupRequestController.php:107
+ * @see app/Http/Controllers/Api/PickupRequestController.php:108
  * @route '/api/pickup-requests/{pickup_request}'
  */
 destroy.delete = (args: { pickup_request: string | number } | [pickup_request: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -469,7 +469,7 @@ destroy.delete = (args: { pickup_request: string | number } | [pickup_request: s
 
     /**
 * @see \App\Http\Controllers\Api\PickupRequestController::destroy
- * @see app/Http/Controllers/Api/PickupRequestController.php:107
+ * @see app/Http/Controllers/Api/PickupRequestController.php:108
  * @route '/api/pickup-requests/{pickup_request}'
  */
     const destroyForm = (args: { pickup_request: string | number } | [pickup_request: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -484,7 +484,7 @@ destroy.delete = (args: { pickup_request: string | number } | [pickup_request: s
 
             /**
 * @see \App\Http\Controllers\Api\PickupRequestController::destroy
- * @see app/Http/Controllers/Api/PickupRequestController.php:107
+ * @see app/Http/Controllers/Api/PickupRequestController.php:108
  * @route '/api/pickup-requests/{pickup_request}'
  */
         destroyForm.delete = (args: { pickup_request: string | number } | [pickup_request: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

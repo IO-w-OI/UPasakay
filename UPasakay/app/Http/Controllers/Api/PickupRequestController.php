@@ -97,6 +97,7 @@ class PickupRequestController extends Controller
             'status' => 'sometimes|in:pending,accepted,in_progress,completed,cancelled',
             'assigned_at' => 'nullable|date',
             'completed_at' => 'nullable|date',
+            'cancel_reason' => 'nullable|string|max:500',
         ]);
 
         $pickupRequest->update($validated);
@@ -163,7 +164,7 @@ class PickupRequestController extends Controller
         $staleBefore = now()->subMinutes(self::SHUTTLE_GPS_MAX_AGE_MINUTES);
         if (! $latest || Carbon::parse($latest->recorded_at)->lt($staleBefore)) {
             return response()->json([
-                'message' => "Can't verify you're at the shuttle yet — no recent shuttle GPS. Try again in a moment.",
+                'message' => "Can't verify your location — the driver's GPS hasn't updated recently. Make sure you're physically at the shuttle, then try again in a minute.",
             ], 422);
         }
 

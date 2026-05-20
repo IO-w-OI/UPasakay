@@ -75,6 +75,9 @@ class PickupRequestController extends Controller
                 'eta' => '~4 minutes',
                 'latitude' => $r->pickupStop?->latitude,
                 'longitude' => $r->pickupStop?->longitude,
+                'cancel_reason' => $r->cancel_reason,
+                'rating' => $r->rating,
+                'comment' => $r->comment,
             ];
         });
 

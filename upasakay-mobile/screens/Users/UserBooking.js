@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { StyleSheet, View, TextInput, TouchableOpacity, Text, Image, LayoutAnimation, Platform, UIManager, Dimensions, Alert } from 'react-native';
+import * as Location from 'expo-location';
 import { WebView } from 'react-native-webview';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -9,7 +10,7 @@ import { currentUser } from '../../services/UserStore';
 import * as Notifications from 'expo-notifications';
 import { useTrip } from '../../context/TripContext';
 import { ROUTE_STOPS } from '../../services/UserRouteStops';
-import { apiGet, apiPost } from '../../services/apiClient';
+import { apiGet, apiPost, apiPatch } from '../../services/apiClient';
 
 const { width } = Dimensions.get('window');
 
@@ -33,12 +34,30 @@ const ROUTE_COLORS = {
   'cebu city': '#f97316',
 };
 
+const CANCEL_REASONS = [
+  'Changed my mind',
+  'Driver is taking too long',
+  'Wrong stop selected',
+  'Emergency',
+  'Other',
+];
+
 const getRouteColor = (name = '') => {
   const n = name.toLowerCase();
   for (const [key, color] of Object.entries(ROUTE_COLORS)) {
     if (n.includes(key)) return color;
   }
   return '#f97316';
+};
+
+const haversineKm = (lat1, lng1, lat2, lng2) => {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 };
 
 const UserMapScreen = () => {
@@ -64,13 +83,21 @@ const UserMapScreen = () => {
   const [dropoffSearchText, setDropoffSearchText] = useState('');
   const [dropoffAddress, setDropoffAddress] = useState('');
   const [dropoffStopId, setDropoffStopId] = useState(null);
+  // Auto-selected stop coords — used to pan the map once it loads
+  const [autoStop, setAutoStop] = useState(null);
 
-  // Feedback modal — shown after ride.completed before resetting to searching
+  // Feedback modal
   const [feedbackVisible, setFeedbackVisible] = useState(false);
   const [feedbackRequestId, setFeedbackRequestId] = useState(null);
   const [selectedRating, setSelectedRating] = useState(0);
   const [feedbackComment, setFeedbackComment] = useState('');
   const [submittingFeedback, setSubmittingFeedback] = useState(false);
+
+  // Cancel reason modal
+  const [cancelVisible, setCancelVisible] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
+  const [cancelOtherText, setCancelOtherText] = useState('');
+
   // Ref so the Pusher ride.completed closure always sees the current request ID
   const pickupRequestIdRef = useRef(null);
 
@@ -187,16 +214,63 @@ const UserMapScreen = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Fetch stops for the selected route
+  // Fetch stops for the selected route, then auto-select the nearest one
   useEffect(() => {
     if (!routeId) return;
     apiGet(`routes/${routeId}`).then(({ ok, data }) => {
       if (ok && data?.stops?.length) {
-        setRouteStops(data.stops);
+        const stops = data.stops;
+        setRouteStops(stops);
         setRouteColor(getRouteColor(data.name));
+
+        // Auto-select nearest active stop based on current GPS position.
+        // Only runs if the passenger hasn't already picked a stop.
+        (async () => {
+          try {
+            const { status: perm } = await Location.requestForegroundPermissionsAsync();
+            if (perm !== 'granted') return;
+            const pos = await Location.getCurrentPositionAsync({
+              accuracy: Location.Accuracy.Balanced,
+            });
+            const { latitude: myLat, longitude: myLng } = pos.coords;
+
+            const active = stops.filter(
+              s => s.is_active && s.latitude != null && s.longitude != null
+            );
+            if (active.length === 0) return;
+
+            let nearest = active[0];
+            let nearestDist = haversineKm(
+              myLat, myLng,
+              parseFloat(nearest.latitude), parseFloat(nearest.longitude)
+            );
+            for (const s of active.slice(1)) {
+              const d = haversineKm(
+                myLat, myLng,
+                parseFloat(s.latitude), parseFloat(s.longitude)
+              );
+              if (d < nearestDist) { nearestDist = d; nearest = s; }
+            }
+
+            setSelectedStopId(nearest.id);
+            setPickupAddress(nearest.name);
+            setCurrentCoords({ lat: parseFloat(nearest.latitude), lng: parseFloat(nearest.longitude) });
+            setAutoStop({ lat: parseFloat(nearest.latitude), lng: parseFloat(nearest.longitude) });
+          } catch (_) {
+            // GPS unavailable — let the user search manually
+          }
+        })();
       }
     });
   }, [routeId]);
+
+  // Pan the map to the auto-selected stop once both are ready
+  useEffect(() => {
+    if (!mapLoaded || !autoStop) return;
+    webViewRef.current?.injectJavaScript(
+      `window.panTo(${autoStop.lat}, ${autoStop.lng}); true;`
+    );
+  }, [mapLoaded, autoStop]);
 
   // Inject stop markers once the map WebView has loaded and stops are ready
   useEffect(() => {
@@ -302,18 +376,18 @@ const UserMapScreen = () => {
               const data = await response.json();
               const routeCoords = data.routes[0].geometry.coordinates;
               const latLngs = routeCoords.map(c => [c[1], c[0]]);
-              
+
               destMarker = L.marker([destLat, destLng]).addTo(map);
               fullRouteLine = L.polyline(latLngs, { color: '#3e5141', weight: 3, opacity: 0.25, dashArray: '6,8' }).addTo(map);
               estimatorLine = L.polyline(latLngs, { color: '#7B2D26', weight: 5, opacity: 0.9, lineJoin: 'round' }).addTo(map);
-              
+
               var busIcon = L.divIcon({ className: 'bus-marker-icon', html: '🚌', iconSize:[40,40] });
               busMarker = L.marker(latLngs[0], { icon: busIcon }).addTo(map);
               map.fitBounds(L.latLngBounds(latLngs), { padding: [80, 80] });
-              
+
               let i = 0;
               function drive() {
-                if (window.stopDrive) return; 
+                if (window.stopDrive) return;
                 if (i < latLngs.length) {
                   busMarker.setLatLng(latLngs[i]);
                   estimatorLine.setLatLngs(latLngs.slice(i));
@@ -472,7 +546,27 @@ const UserMapScreen = () => {
     webViewRef.current?.injectJavaScript(`window.startBusFromUPC(${currentCoords.lat}, ${currentCoords.lng});`);
   };
 
-  const handleCancel = () => {
+  // Show the cancel reason modal instead of cancelling immediately
+  const handleCancelPress = () => {
+    setCancelReason('');
+    setCancelOtherText('');
+    setCancelVisible(true);
+  };
+
+  const handleCancelConfirm = async () => {
+    const reason = cancelReason === 'Other'
+      ? (cancelOtherText.trim() || 'Other')
+      : cancelReason;
+
+    setCancelVisible(false);
+
+    if (pickupRequestId && reason) {
+      await apiPatch(`pickup-requests/${pickupRequestId}`, {
+        status: 'cancelled',
+        cancel_reason: reason,
+      });
+    }
+
     clearMap();
     LayoutAnimation.configureNext(SnappyAnim);
     setStatus('searching');
@@ -547,7 +641,7 @@ const UserMapScreen = () => {
               </TouchableOpacity>
               <TextInput
                 style={[styles.searchInput, {fontFamily: 'Nunito-Regular'}]}
-                placeholder="Where to pick up?"
+                placeholder="Change pick-up stop..."
                 value={searchText}
                 onChangeText={setSearchText}
                 onSubmitEditing={handleSearchSubmit}
@@ -558,8 +652,8 @@ const UserMapScreen = () => {
               </TouchableOpacity>
             </View>
           ) : (
-            <TouchableOpacity 
-              style={styles.backCircle} 
+            <TouchableOpacity
+              style={styles.backCircle}
               onPress={() => {
                 clearMap();
                 router.replace('/Users/UserHome');
@@ -580,11 +674,32 @@ const UserMapScreen = () => {
       <View style={styles.bookingCard}>
         {status === 'searching' ? (
           <>
-            <Text style={styles.cardHeader}>Pick-up Point</Text>
+            <Text style={styles.cardHeader}>Pick-up Stop</Text>
             <View style={styles.inputBox}>
               <View style={styles.greenDot}><Ionicons name="location" size={14} color="white" /></View>
-              <Text style={styles.addressText} numberOfLines={1}>{pickupAddress}</Text>
+              <Text style={styles.addressText} numberOfLines={1}>
+                {pickupAddress === 'Locating...' && !selectedStopId ? 'Detecting nearest stop…' : pickupAddress}
+              </Text>
+              {selectedStopId && (
+                <Ionicons name="checkmark-circle" size={18} color="#004d00" style={{ marginLeft: 6 }} />
+              )}
             </View>
+
+            {/* Show auto-selected drop-off when pickup is NOT UP Cebu */}
+            {!isPickupUPC && selectedStopId && upcStop && (
+              <>
+                <Text style={[styles.cardHeader, { marginTop: 10, fontSize: 16 }]}>Drop-off</Text>
+                <View style={[styles.inputBox, { marginBottom: 0 }]}>
+                  <View style={[styles.greenDot, { backgroundColor: '#8B0000' }]}>
+                    <Ionicons name="location" size={14} color="white" />
+                  </View>
+                  <Text style={styles.addressText} numberOfLines={1}>{upcStop.name}</Text>
+                  <Text style={styles.autoLabel}>auto</Text>
+                </View>
+              </>
+            )}
+
+            {/* Dropoff search when pickup IS UP Cebu */}
             {isPickupUPC && (
               <>
                 <Text style={[styles.cardHeader, { marginTop: 10, fontSize: 16 }]}>Drop-off Stop</Text>
@@ -603,12 +718,22 @@ const UserMapScreen = () => {
                 </View>
                 {dropoffAddress ? (
                   <View style={[styles.inputBox, { marginTop: 8 }]}>
-                    <View style={styles.greenDot}><Ionicons name="location" size={14} color="white" /></View>
+                    <View style={[styles.greenDot, { backgroundColor: '#8B0000' }]}>
+                      <Ionicons name="location" size={14} color="white" />
+                    </View>
                     <Text style={styles.addressText} numberOfLines={1}>{dropoffAddress}</Text>
                   </View>
                 ) : null}
               </>
             )}
+
+            {/* No UP Cebu stop warning */}
+            {selectedStopId && !upcStop && (
+              <Text style={styles.noUpcWarning}>
+                This route has no UP Cebu stop configured. Booking unavailable.
+              </Text>
+            )}
+
             <TouchableOpacity
               style={[styles.paraBtn, { marginTop: 15 }, !effectiveDropoffStopId && { opacity: 0.5 }]}
               onPress={handleParaPress}
@@ -658,7 +783,7 @@ const UserMapScreen = () => {
                 <Text style={styles.boardBtnText}>I'm on the bus — scan to board</Text>
               </TouchableOpacity>
             ) : null}
-            <TouchableOpacity style={styles.cancelBtn} onPress={handleCancel}>
+            <TouchableOpacity style={styles.cancelBtn} onPress={handleCancelPress}>
               <Text style={styles.cancelText}>Cancel Para</Text>
             </TouchableOpacity>
           </View>
@@ -726,6 +851,54 @@ const UserMapScreen = () => {
           </View>
         </View>
       )}
+
+      {/* ── Cancel reason modal ── */}
+      {cancelVisible && (
+        <View style={styles.overlay}>
+          <View style={styles.dimmer} />
+          <View style={styles.cancelModal}>
+            <Text style={styles.cancelModalTitle}>Why are you cancelling?</Text>
+            <Text style={styles.cancelModalSub}>This helps us improve the service.</Text>
+            {CANCEL_REASONS.map(reason => (
+              <TouchableOpacity
+                key={reason}
+                style={[styles.cancelOption, cancelReason === reason && styles.cancelOptionActive]}
+                onPress={() => setCancelReason(reason)}
+              >
+                <Ionicons
+                  name={cancelReason === reason ? 'radio-button-on' : 'radio-button-off'}
+                  size={20}
+                  color={cancelReason === reason ? '#8B211E' : '#999'}
+                  style={{ marginRight: 10 }}
+                />
+                <Text style={[styles.cancelOptionText, cancelReason === reason && styles.cancelOptionTextActive]}>
+                  {reason}
+                </Text>
+              </TouchableOpacity>
+            ))}
+            {cancelReason === 'Other' && (
+              <TextInput
+                style={styles.cancelOtherInput}
+                placeholder="Please describe..."
+                placeholderTextColor="#999"
+                value={cancelOtherText}
+                onChangeText={setCancelOtherText}
+                maxLength={200}
+              />
+            )}
+            <TouchableOpacity
+              style={[styles.cancelConfirmBtn, !cancelReason && { opacity: 0.45 }]}
+              onPress={handleCancelConfirm}
+              disabled={!cancelReason}
+            >
+              <Text style={styles.cancelConfirmText}>Confirm Cancellation</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.cancelModalBack} onPress={() => setCancelVisible(false)}>
+              <Text style={styles.cancelModalBackText}>Keep my booking</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
     </View>
   );
 };
@@ -749,6 +922,8 @@ const styles = StyleSheet.create({
   inputBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', padding: 15, borderRadius: 30, borderWidth: 1, borderColor: '#1A2E1A', marginBottom: 15 },
   greenDot: { width: 24, height: 24, borderRadius: 12, backgroundColor: '#004d00', justifyContent: 'center', alignItems: 'center', marginRight: 10 },
   addressText: { flex: 1, fontFamily: 'Nunito-Regular', color: '#1A2E1A' },
+  autoLabel: { fontSize: 11, fontFamily: 'Nunito-Bold', color: '#888', backgroundColor: '#eee', borderRadius: 8, paddingHorizontal: 6, paddingVertical: 2, marginLeft: 6 },
+  noUpcWarning: { fontSize: 13, color: '#8B211E', fontFamily: 'Nunito-Regular', marginTop: 4, marginBottom: 8, textAlign: 'center' },
   paraBtn: { backgroundColor: '#FFB82E', height: 55, borderRadius: 30, justifyContent: 'center', alignItems: 'center', elevation: 3 },
   paraText: { fontSize: 20, color: '#1A2E1A', fontFamily: 'Nunito-Black' },
   arriveTitle: { fontSize: 22, color: '#1A2E1A', fontFamily: 'Nunito-Bold' },
@@ -777,6 +952,7 @@ const styles = StyleSheet.create({
   onboardBox: { alignItems: 'center', paddingVertical: 30 },
   onboardTitle: { fontSize: 22, color: '#1A2E1A', fontFamily: 'Nunito-Bold', marginTop: 10 },
   onboardSub: { fontSize: 14, color: '#666', fontFamily: 'Nunito-Regular', marginTop: 4 },
+  waitingContent: {},
   feedbackModal: {
     width: width * 0.88, backgroundColor: '#F4F7F4', borderRadius: 35,
     padding: 28, borderWidth: 1.5, borderColor: '#3e5141', alignItems: 'center',
@@ -796,6 +972,35 @@ const styles = StyleSheet.create({
   feedbackSubmitText: { fontSize: 17, color: '#1A2E1A', fontFamily: 'Nunito-Black' },
   feedbackSkip: { paddingVertical: 8 },
   feedbackSkipText: { fontSize: 14, color: '#888', fontFamily: 'Nunito-Regular', textDecorationLine: 'underline' },
+
+  // Cancel reason modal
+  cancelModal: {
+    width: width * 0.88, backgroundColor: '#F4F7F4', borderRadius: 35,
+    padding: 28, borderWidth: 1.5, borderColor: '#8B211E',
+  },
+  cancelModalTitle: { fontSize: 20, color: '#1A2E1A', fontFamily: 'Nunito-Bold', marginBottom: 4 },
+  cancelModalSub: { fontSize: 13, color: '#666', fontFamily: 'Nunito-Regular', marginBottom: 18 },
+  cancelOption: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingVertical: 12, paddingHorizontal: 16,
+    borderRadius: 16, borderWidth: 1, borderColor: '#ddd',
+    backgroundColor: '#fff', marginBottom: 10,
+  },
+  cancelOptionActive: { borderColor: '#8B211E', backgroundColor: '#fff5f5' },
+  cancelOptionText: { fontSize: 15, fontFamily: 'Nunito-Regular', color: '#444' },
+  cancelOptionTextActive: { color: '#8B211E', fontFamily: 'Nunito-Bold' },
+  cancelOtherInput: {
+    borderWidth: 1, borderColor: '#3e5141', borderRadius: 16,
+    padding: 12, fontSize: 14, fontFamily: 'Nunito-Regular', color: '#1A2E1A',
+    backgroundColor: '#fff', marginBottom: 10,
+  },
+  cancelConfirmBtn: {
+    backgroundColor: '#8B211E', height: 52, borderRadius: 30,
+    justifyContent: 'center', alignItems: 'center', marginTop: 6, marginBottom: 10,
+  },
+  cancelConfirmText: { fontSize: 16, color: '#fff', fontFamily: 'Nunito-Black' },
+  cancelModalBack: { alignItems: 'center', paddingVertical: 8 },
+  cancelModalBackText: { fontSize: 14, color: '#555', fontFamily: 'Nunito-Regular', textDecorationLine: 'underline' },
 });
 
 export default UserMapScreen;

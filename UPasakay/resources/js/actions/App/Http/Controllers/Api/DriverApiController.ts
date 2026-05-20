@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Api\DriverApiController::setStatus
- * @see app/Http/Controllers/Api/DriverApiController.php:46
+ * @see app/Http/Controllers/Api/DriverApiController.php:47
  * @route '/api/driver/status'
  */
 export const setStatus = (options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -16,7 +16,7 @@ setStatus.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\DriverApiController::setStatus
- * @see app/Http/Controllers/Api/DriverApiController.php:46
+ * @see app/Http/Controllers/Api/DriverApiController.php:47
  * @route '/api/driver/status'
  */
 setStatus.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ setStatus.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\DriverApiController::setStatus
- * @see app/Http/Controllers/Api/DriverApiController.php:46
+ * @see app/Http/Controllers/Api/DriverApiController.php:47
  * @route '/api/driver/status'
  */
 setStatus.patch = (options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -35,7 +35,7 @@ setStatus.patch = (options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\DriverApiController::setStatus
- * @see app/Http/Controllers/Api/DriverApiController.php:46
+ * @see app/Http/Controllers/Api/DriverApiController.php:47
  * @route '/api/driver/status'
  */
     const setStatusForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -50,7 +50,7 @@ setStatus.patch = (options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\DriverApiController::setStatus
- * @see app/Http/Controllers/Api/DriverApiController.php:46
+ * @see app/Http/Controllers/Api/DriverApiController.php:47
  * @route '/api/driver/status'
  */
         setStatusForm.patch = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -66,7 +66,7 @@ setStatus.patch = (options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
     setStatus.form = setStatusForm
 /**
 * @see \App\Http\Controllers\Api\DriverApiController::queue
- * @see app/Http/Controllers/Api/DriverApiController.php:84
+ * @see app/Http/Controllers/Api/DriverApiController.php:85
  * @route '/api/driver/queue'
  */
 export const queue = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -81,7 +81,7 @@ queue.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\DriverApiController::queue
- * @see app/Http/Controllers/Api/DriverApiController.php:84
+ * @see app/Http/Controllers/Api/DriverApiController.php:85
  * @route '/api/driver/queue'
  */
 queue.url = (options?: RouteQueryOptions) => {
@@ -90,7 +90,7 @@ queue.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\DriverApiController::queue
- * @see app/Http/Controllers/Api/DriverApiController.php:84
+ * @see app/Http/Controllers/Api/DriverApiController.php:85
  * @route '/api/driver/queue'
  */
 queue.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -99,7 +99,7 @@ queue.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\Api\DriverApiController::queue
- * @see app/Http/Controllers/Api/DriverApiController.php:84
+ * @see app/Http/Controllers/Api/DriverApiController.php:85
  * @route '/api/driver/queue'
  */
 queue.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -109,7 +109,7 @@ queue.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\DriverApiController::queue
- * @see app/Http/Controllers/Api/DriverApiController.php:84
+ * @see app/Http/Controllers/Api/DriverApiController.php:85
  * @route '/api/driver/queue'
  */
     const queueForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -119,7 +119,7 @@ queue.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\DriverApiController::queue
- * @see app/Http/Controllers/Api/DriverApiController.php:84
+ * @see app/Http/Controllers/Api/DriverApiController.php:85
  * @route '/api/driver/queue'
  */
         queueForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -128,7 +128,7 @@ queue.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\Api\DriverApiController::queue
- * @see app/Http/Controllers/Api/DriverApiController.php:84
+ * @see app/Http/Controllers/Api/DriverApiController.php:85
  * @route '/api/driver/queue'
  */
         queueForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -144,7 +144,7 @@ queue.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     queue.form = queueForm
 /**
 * @see \App\Http\Controllers\Api\DriverApiController::notifications
- * @see app/Http/Controllers/Api/DriverApiController.php:165
+ * @see app/Http/Controllers/Api/DriverApiController.php:166
  * @route '/api/driver/notifications'
  */
 export const notifications = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -159,7 +159,7 @@ notifications.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\DriverApiController::notifications
- * @see app/Http/Controllers/Api/DriverApiController.php:165
+ * @see app/Http/Controllers/Api/DriverApiController.php:166
  * @route '/api/driver/notifications'
  */
 notifications.url = (options?: RouteQueryOptions) => {
@@ -168,7 +168,7 @@ notifications.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\DriverApiController::notifications
- * @see app/Http/Controllers/Api/DriverApiController.php:165
+ * @see app/Http/Controllers/Api/DriverApiController.php:166
  * @route '/api/driver/notifications'
  */
 notifications.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -177,7 +177,7 @@ notifications.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\Api\DriverApiController::notifications
- * @see app/Http/Controllers/Api/DriverApiController.php:165
+ * @see app/Http/Controllers/Api/DriverApiController.php:166
  * @route '/api/driver/notifications'
  */
 notifications.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -187,7 +187,7 @@ notifications.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => (
 
     /**
 * @see \App\Http\Controllers\Api\DriverApiController::notifications
- * @see app/Http/Controllers/Api/DriverApiController.php:165
+ * @see app/Http/Controllers/Api/DriverApiController.php:166
  * @route '/api/driver/notifications'
  */
     const notificationsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -197,7 +197,7 @@ notifications.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => (
 
             /**
 * @see \App\Http\Controllers\Api\DriverApiController::notifications
- * @see app/Http/Controllers/Api/DriverApiController.php:165
+ * @see app/Http/Controllers/Api/DriverApiController.php:166
  * @route '/api/driver/notifications'
  */
         notificationsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -206,7 +206,7 @@ notifications.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => (
         })
             /**
 * @see \App\Http\Controllers\Api\DriverApiController::notifications
- * @see app/Http/Controllers/Api/DriverApiController.php:165
+ * @see app/Http/Controllers/Api/DriverApiController.php:166
  * @route '/api/driver/notifications'
  */
         notificationsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -222,7 +222,7 @@ notifications.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => (
     notifications.form = notificationsForm
 /**
 * @see \App\Http\Controllers\Api\DriverApiController::board
- * @see app/Http/Controllers/Api/DriverApiController.php:198
+ * @see app/Http/Controllers/Api/DriverApiController.php:199
  * @route '/api/pickup-requests/{pickupRequest}/board'
  */
 export const board = (args: { pickupRequest: number | { id: number } } | [pickupRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -237,7 +237,7 @@ board.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\DriverApiController::board
- * @see app/Http/Controllers/Api/DriverApiController.php:198
+ * @see app/Http/Controllers/Api/DriverApiController.php:199
  * @route '/api/pickup-requests/{pickupRequest}/board'
  */
 board.url = (args: { pickupRequest: number | { id: number } } | [pickupRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -270,7 +270,7 @@ board.url = (args: { pickupRequest: number | { id: number } } | [pickupRequest: 
 
 /**
 * @see \App\Http\Controllers\Api\DriverApiController::board
- * @see app/Http/Controllers/Api/DriverApiController.php:198
+ * @see app/Http/Controllers/Api/DriverApiController.php:199
  * @route '/api/pickup-requests/{pickupRequest}/board'
  */
 board.patch = (args: { pickupRequest: number | { id: number } } | [pickupRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -280,7 +280,7 @@ board.patch = (args: { pickupRequest: number | { id: number } } | [pickupRequest
 
     /**
 * @see \App\Http\Controllers\Api\DriverApiController::board
- * @see app/Http/Controllers/Api/DriverApiController.php:198
+ * @see app/Http/Controllers/Api/DriverApiController.php:199
  * @route '/api/pickup-requests/{pickupRequest}/board'
  */
     const boardForm = (args: { pickupRequest: number | { id: number } } | [pickupRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -295,7 +295,7 @@ board.patch = (args: { pickupRequest: number | { id: number } } | [pickupRequest
 
             /**
 * @see \App\Http\Controllers\Api\DriverApiController::board
- * @see app/Http/Controllers/Api/DriverApiController.php:198
+ * @see app/Http/Controllers/Api/DriverApiController.php:199
  * @route '/api/pickup-requests/{pickupRequest}/board'
  */
         boardForm.patch = (args: { pickupRequest: number | { id: number } } | [pickupRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -311,7 +311,7 @@ board.patch = (args: { pickupRequest: number | { id: number } } | [pickupRequest
     board.form = boardForm
 /**
 * @see \App\Http\Controllers\Api\DriverApiController::noShow
- * @see app/Http/Controllers/Api/DriverApiController.php:225
+ * @see app/Http/Controllers/Api/DriverApiController.php:269
  * @route '/api/pickup-requests/{pickupRequest}/no-show'
  */
 export const noShow = (args: { pickupRequest: number | { id: number } } | [pickupRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -326,7 +326,7 @@ noShow.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\DriverApiController::noShow
- * @see app/Http/Controllers/Api/DriverApiController.php:225
+ * @see app/Http/Controllers/Api/DriverApiController.php:269
  * @route '/api/pickup-requests/{pickupRequest}/no-show'
  */
 noShow.url = (args: { pickupRequest: number | { id: number } } | [pickupRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -359,7 +359,7 @@ noShow.url = (args: { pickupRequest: number | { id: number } } | [pickupRequest:
 
 /**
 * @see \App\Http\Controllers\Api\DriverApiController::noShow
- * @see app/Http/Controllers/Api/DriverApiController.php:225
+ * @see app/Http/Controllers/Api/DriverApiController.php:269
  * @route '/api/pickup-requests/{pickupRequest}/no-show'
  */
 noShow.patch = (args: { pickupRequest: number | { id: number } } | [pickupRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -369,7 +369,7 @@ noShow.patch = (args: { pickupRequest: number | { id: number } } | [pickupReques
 
     /**
 * @see \App\Http\Controllers\Api\DriverApiController::noShow
- * @see app/Http/Controllers/Api/DriverApiController.php:225
+ * @see app/Http/Controllers/Api/DriverApiController.php:269
  * @route '/api/pickup-requests/{pickupRequest}/no-show'
  */
     const noShowForm = (args: { pickupRequest: number | { id: number } } | [pickupRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -384,7 +384,7 @@ noShow.patch = (args: { pickupRequest: number | { id: number } } | [pickupReques
 
             /**
 * @see \App\Http\Controllers\Api\DriverApiController::noShow
- * @see app/Http/Controllers/Api/DriverApiController.php:225
+ * @see app/Http/Controllers/Api/DriverApiController.php:269
  * @route '/api/pickup-requests/{pickupRequest}/no-show'
  */
         noShowForm.patch = (args: { pickupRequest: number | { id: number } } | [pickupRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -400,7 +400,7 @@ noShow.patch = (args: { pickupRequest: number | { id: number } } | [pickupReques
     noShow.form = noShowForm
 /**
 * @see \App\Http\Controllers\Api\DriverApiController::decline
- * @see app/Http/Controllers/Api/DriverApiController.php:233
+ * @see app/Http/Controllers/Api/DriverApiController.php:277
  * @route '/api/pickup-requests/{pickupRequest}/decline'
  */
 export const decline = (args: { pickupRequest: number | { id: number } } | [pickupRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -415,7 +415,7 @@ decline.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\DriverApiController::decline
- * @see app/Http/Controllers/Api/DriverApiController.php:233
+ * @see app/Http/Controllers/Api/DriverApiController.php:277
  * @route '/api/pickup-requests/{pickupRequest}/decline'
  */
 decline.url = (args: { pickupRequest: number | { id: number } } | [pickupRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -448,7 +448,7 @@ decline.url = (args: { pickupRequest: number | { id: number } } | [pickupRequest
 
 /**
 * @see \App\Http\Controllers\Api\DriverApiController::decline
- * @see app/Http/Controllers/Api/DriverApiController.php:233
+ * @see app/Http/Controllers/Api/DriverApiController.php:277
  * @route '/api/pickup-requests/{pickupRequest}/decline'
  */
 decline.patch = (args: { pickupRequest: number | { id: number } } | [pickupRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -458,7 +458,7 @@ decline.patch = (args: { pickupRequest: number | { id: number } } | [pickupReque
 
     /**
 * @see \App\Http\Controllers\Api\DriverApiController::decline
- * @see app/Http/Controllers/Api/DriverApiController.php:233
+ * @see app/Http/Controllers/Api/DriverApiController.php:277
  * @route '/api/pickup-requests/{pickupRequest}/decline'
  */
     const declineForm = (args: { pickupRequest: number | { id: number } } | [pickupRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -473,7 +473,7 @@ decline.patch = (args: { pickupRequest: number | { id: number } } | [pickupReque
 
             /**
 * @see \App\Http\Controllers\Api\DriverApiController::decline
- * @see app/Http/Controllers/Api/DriverApiController.php:233
+ * @see app/Http/Controllers/Api/DriverApiController.php:277
  * @route '/api/pickup-requests/{pickupRequest}/decline'
  */
         declineForm.patch = (args: { pickupRequest: number | { id: number } } | [pickupRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -487,6 +487,95 @@ decline.patch = (args: { pickupRequest: number | { id: number } } | [pickupReque
         })
     
     decline.form = declineForm
-const DriverApiController = { setStatus, queue, notifications, board, noShow, decline }
+/**
+* @see \App\Http\Controllers\Api\DriverApiController::complete
+ * @see app/Http/Controllers/Api/DriverApiController.php:226
+ * @route '/api/pickup-requests/{pickupRequest}/complete'
+ */
+export const complete = (args: { pickupRequest: number | { id: number } } | [pickupRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
+    url: complete.url(args, options),
+    method: 'patch',
+})
+
+complete.definition = {
+    methods: ["patch"],
+    url: '/api/pickup-requests/{pickupRequest}/complete',
+} satisfies RouteDefinition<["patch"]>
+
+/**
+* @see \App\Http\Controllers\Api\DriverApiController::complete
+ * @see app/Http/Controllers/Api/DriverApiController.php:226
+ * @route '/api/pickup-requests/{pickupRequest}/complete'
+ */
+complete.url = (args: { pickupRequest: number | { id: number } } | [pickupRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
+    if (typeof args === 'string' || typeof args === 'number') {
+        args = { pickupRequest: args }
+    }
+
+            if (typeof args === 'object' && !Array.isArray(args) && 'id' in args) {
+            args = { pickupRequest: args.id }
+        }
+    
+    if (Array.isArray(args)) {
+        args = {
+                    pickupRequest: args[0],
+                }
+    }
+
+    args = applyUrlDefaults(args)
+
+    const parsedArgs = {
+                        pickupRequest: typeof args.pickupRequest === 'object'
+                ? args.pickupRequest.id
+                : args.pickupRequest,
+                }
+
+    return complete.definition.url
+            .replace('{pickupRequest}', parsedArgs.pickupRequest.toString())
+            .replace(/\/+$/, '') + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Api\DriverApiController::complete
+ * @see app/Http/Controllers/Api/DriverApiController.php:226
+ * @route '/api/pickup-requests/{pickupRequest}/complete'
+ */
+complete.patch = (args: { pickupRequest: number | { id: number } } | [pickupRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
+    url: complete.url(args, options),
+    method: 'patch',
+})
+
+    /**
+* @see \App\Http\Controllers\Api\DriverApiController::complete
+ * @see app/Http/Controllers/Api/DriverApiController.php:226
+ * @route '/api/pickup-requests/{pickupRequest}/complete'
+ */
+    const completeForm = (args: { pickupRequest: number | { id: number } } | [pickupRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+        action: complete.url(args, {
+                    [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                        _method: 'PATCH',
+                        ...(options?.query ?? options?.mergeQuery ?? {}),
+                    }
+                }),
+        method: 'post',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\DriverApiController::complete
+ * @see app/Http/Controllers/Api/DriverApiController.php:226
+ * @route '/api/pickup-requests/{pickupRequest}/complete'
+ */
+        completeForm.patch = (args: { pickupRequest: number | { id: number } } | [pickupRequest: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+            action: complete.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'PATCH',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'post',
+        })
+    
+    complete.form = completeForm
+const DriverApiController = { setStatus, queue, notifications, board, noShow, decline, complete }
 
 export default DriverApiController

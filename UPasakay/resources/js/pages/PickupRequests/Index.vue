@@ -21,6 +21,7 @@ const props = defineProps<{
             created_at: string | null; completed_at: string | null;
             latitude: number | null; longitude: number | null;
             rating: number | null; comment: string | null;
+            cancel_reason: string | null;
         }>;
         current_page: number; last_page: number; total: number; per_page: number;
         links: Array<{ url: string | null; label: string; active: boolean }>;
@@ -292,6 +293,10 @@ const statCards = computed(() => [
                                                 </div>
                                                 <p v-if="r.comment" class="mt-1 text-sm text-foreground italic">"{{ r.comment }}"</p>
                                                 <p v-if="!r.rating" class="text-sm text-muted-foreground">No rating yet.</p>
+                                            </div>
+                                            <div v-if="r.status === 'cancelled'" class="mt-4 rounded-xl border border-red-500/30 bg-red-500/5 px-4 py-3">
+                                                <p class="mb-1.5 text-xs font-medium uppercase tracking-wide text-red-600 dark:text-red-400">Cancellation Reason</p>
+                                                <p class="text-sm text-foreground">{{ r.cancel_reason ?? 'No reason provided.' }}</p>
                                             </div>
                                         </div>
                                     </td>
