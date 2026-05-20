@@ -119,18 +119,10 @@ class PickupRequestController extends Controller
     public function confirmBoarding(Request $request, PickupRequest $pickupRequest)
     {
         $user = $request->user();
-<<<<<<< HEAD
-        if (! $user) {
-            return response()->json(['message' => 'Unauthenticated.'], 401);
-        }
-        $userId = $user instanceof Passenger ? $user->user_id : $user->id;
-        if ((int) $pickupRequest->user_id !== (int) $userId) {
-=======
         // pickup_requests.user_id references users.id; a Passenger token
         // carries its own PK (passengers.id), so resolve via user_id FK.
         $userId = $user instanceof Passenger ? $user->user_id : $user?->id;
         if (! $user || (int) $pickupRequest->user_id !== (int) $userId) {
->>>>>>> 4ba993a7305d4ba9e5b12adfa7a2d981aa0675de
             return response()->json(['message' => 'This is not your ride.'], 403);
         }
 
