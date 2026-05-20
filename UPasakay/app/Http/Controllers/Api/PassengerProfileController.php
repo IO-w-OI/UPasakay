@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Notification;
 use App\Models\Passenger;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
@@ -51,6 +52,34 @@ class PassengerProfileController extends Controller
             'message' => 'Passenger profile completed successfully.',
             'data' => $this->payload($passenger->fresh()),
         ]);
+    }
+
+    /**
+     * Passenger-facing notifications feed: admin announcements aimed at
+     * passengers (audience = passengers or all), newest first. The mobile
+     * Recents screen renders this alongside the trip history.
+     */
+    public function notifications(Request $request): JsonResponse
+    {
+        $this->resolvePassenger($request, true);
+
+        $notifications = Notification::whereIn('audience', ['passengers', 'all'])
+            ->where('status', 'sent')
+            ->orderByRaw('COALESCE(sent_at, created_at) DESC')
+            ->limit(50)
+            ->get()
+            ->map(fn ($n) => [
+                'id' => $n->id,
+                'title' => $n->title,
+                'message' => $n->message,
+                'type' => $n->type,
+                'type_label' => $n->getTypeLabel(),
+                'time' => $n->getFormattedTime(),
+                'date' => $n->getFormattedDate(),
+                'created_at' => $n->created_at?->toIso8601String(),
+            ]);
+
+        return response()->json(['data' => $notifications]);
     }
 
     public function verification(Request $request): JsonResponse

@@ -5,7 +5,8 @@ import {
     Trash2, Key, Bus, AlertTriangle, Archive, Wrench, UserMinus,
     UserCheck, RefreshCw, Shuffle, CircleDot, X,
 } from 'lucide-vue-next';
-import { ref, computed, onBeforeUnmount } from 'vue';
+import { ref, computed, watch, onBeforeUnmount } from 'vue';
+import QRCode from 'qrcode';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { dashboard } from '@/routes';
 import { type BreadcrumbItem } from '@/types';
@@ -271,6 +272,41 @@ const regenerateBoardingCode = () => {
         onSuccess: () => { showShuttleEditModal.value = false; editingShuttle.value = null; },
     });
 };
+
+const qrDataUrl = ref<string | null>(null);
+watch(
+    () => editingShuttle.value?.boarding_code,
+    async (code) => {
+        qrDataUrl.value = code
+            ? await QRCode.toDataURL(code, { width: 256, margin: 2, color: { dark: '#000000', light: '#ffffff' } })
+            : null;
+    },
+    { immediate: true },
+);
+function printQrCode() {
+    const s = editingShuttle.value;
+    if (!s?.boarding_code || !qrDataUrl.value) return;
+    const win = window.open('', '_blank');
+    if (!win) return;
+    win.document.write(`<!DOCTYPE html><html><head>
+<title>QR – ${s.plate_number}</title>
+<style>
+  body{font-family:sans-serif;text-align:center;padding:40px}
+  img{display:block;margin:0 auto 12px}
+  .code{font-size:2rem;font-weight:700;letter-spacing:.4em}
+  .label{color:#555;font-size:.9rem;margin:6px 0}
+  @media print{button{display:none}}
+</style>
+</head><body>
+<p class="label">UPasakay Shuttle — ${s.plate_number} (${s.shuttle_code})</p>
+<img src="${qrDataUrl.value}" width="256" height="256" alt="Boarding QR" />
+<p class="label">Or type the code manually:</p>
+<p class="code">${s.boarding_code}</p>
+<br/>
+<button onclick="window.print()">Print</button>
+</body></html>`);
+    win.document.close();
+}
 
 // Shuttle assign driver
 const showAssignDriverModal = ref(false);
@@ -1062,12 +1098,22 @@ const lastActiveClass = (d: DriverItem) => d.is_online ? 'text-green-600 dark:te
                     <div>
                         <label class="mb-1 block text-sm font-medium text-foreground">Boarding Code</label>
                         <p class="mb-2 text-xs text-muted-foreground">
-                            Print this and post it inside the shuttle. Passengers scan/type it to confirm boarding.
+                            Print and post inside the shuttle. Passengers scan or type this to confirm boarding.
                         </p>
-                        <div class="flex items-center gap-3">
-                            <span class="flex-1 rounded-lg border border-border/70 bg-muted/40 px-3 py-2 text-center text-lg font-bold tracking-[0.3em] text-foreground">
-                                {{ editingShuttle?.boarding_code || '— none —' }}
-                            </span>
+                        <div v-if="qrDataUrl" class="flex justify-center my-3">
+                            <img :src="qrDataUrl" alt="Boarding QR" class="w-48 h-48 rounded border border-border/40" />
+                        </div>
+                        <p class="text-center text-2xl font-bold tracking-[0.4em] my-2 text-foreground">
+                            {{ editingShuttle?.boarding_code || '— none —' }}
+                        </p>
+                        <div class="flex items-center justify-center gap-2 mt-2">
+                            <button
+                                v-if="editingShuttle?.boarding_code"
+                                type="button"
+                                @click="printQrCode"
+                                class="rounded-lg border border-border/70 px-3 py-2 text-sm font-medium text-foreground hover:bg-accent">
+                                Print QR Code
+                            </button>
                             <button type="button" @click="regenerateBoardingCode"
                                 class="rounded-lg border border-border/70 px-3 py-2 text-sm font-medium text-foreground hover:bg-accent">
                                 Regenerate

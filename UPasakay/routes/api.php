@@ -60,6 +60,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('passenger/profile', [PassengerProfileController::class, 'update']);
     Route::post('passenger/profile/complete', [PassengerProfileController::class, 'complete']);
     Route::get('passenger/profile/verification', [PassengerProfileController::class, 'verification']);
+    Route::get('passenger/notifications', [PassengerProfileController::class, 'notifications']);
 
     // Backward-compatible mobile profile aliases
     Route::prefix('mobile')->group(function () {

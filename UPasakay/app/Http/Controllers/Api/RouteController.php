@@ -12,7 +12,24 @@ class RouteController extends Controller
 {
     public function index()
     {
-        return response()->json(Route::with('stops')->get());
+        // Routes that currently have a driver on duty (active shuttle +
+        // driver is_available). Passenger Home uses this to grey out routes
+        // they cannot book — same gate PickupRequestService enforces.
+        $activeRouteIds = Shuttle::query()
+            ->where('status', 'active')
+            ->whereNotNull('driver_id')
+            ->whereHas('driver', fn ($q) => $q->where('is_available', true))
+            ->pluck('route_id')
+            ->unique();
+
+        $routes = Route::with('stops')->get()->map(function ($route) use ($activeRouteIds) {
+            $payload = $route->toArray();
+            $payload['has_active_driver'] = $activeRouteIds->contains($route->id);
+
+            return $payload;
+        });
+
+        return response()->json($routes);
     }
 
     /**

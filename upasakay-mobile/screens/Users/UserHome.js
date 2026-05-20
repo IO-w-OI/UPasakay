@@ -10,34 +10,52 @@ import { apiGet } from '../../services/apiClient';
 import { currentUser } from '../../services/UserStore';
 import { moderateScale, NAV_CLEARANCE, scale } from '../../utils/responsive';
 
-const RouteCard = ({ route, onPress }) => (
-    <TouchableOpacity
-        activeOpacity={route.is_active ? 0.85 : 1}
-        disabled={!route.is_active}
-        onPress={onPress}
-        style={[styles.card, !route.is_active && styles.cardDisabled]}
-    >
-        <View style={styles.busIconWrap}>
-            <Image
-                source={require('../../assets/images/UPasakaySmall.png')}
-                style={styles.busIcon}
-                resizeMode="contain"
-            />
-        </View>
+// A route is bookable when the admin hasn't disabled it AND a driver is
+// currently on duty (PickupRequestService rejects bookings otherwise, so
+// surfacing this here avoids walking the passenger into a dead-end).
+const isRouteBookable = (route) => route.is_active && route.has_active_driver !== false;
 
-        <Text style={[styles.routeName, !route.is_active && styles.routeNameDisabled]} numberOfLines={2}>
-            {route.name}
-        </Text>
+const RouteCard = ({ route, onPress }) => {
+    const bookable = isRouteBookable(route);
+    // Distinguish admin-disabled vs no-driver so the label is honest.
+    const unavailableLabel = !route.is_active ? 'Route closed' : 'No driver on duty';
 
-        {route.is_active ? (
-            <Ionicons name="chevron-forward" size={moderateScale(20)} color={Colors.golden_brown} />
-        ) : (
-            <View style={styles.pill}>
-                <Text style={styles.pillText}>Unavailable</Text>
+    return (
+        <TouchableOpacity
+            activeOpacity={bookable ? 0.85 : 1}
+            disabled={!bookable}
+            onPress={onPress}
+            style={[styles.card, !bookable && styles.cardDisabled]}
+            accessibilityState={{ disabled: !bookable }}
+            accessibilityHint={bookable ? undefined : unavailableLabel}
+        >
+            <View style={styles.busIconWrap}>
+                <Image
+                    source={require('../../assets/images/UPasakaySmall.png')}
+                    style={styles.busIcon}
+                    resizeMode="contain"
+                />
             </View>
-        )}
-    </TouchableOpacity>
-);
+
+            <View style={{ flex: 1 }}>
+                <Text style={[styles.routeName, !bookable && styles.routeNameDisabled]} numberOfLines={2}>
+                    {route.name}
+                </Text>
+                {!bookable && (
+                    <Text style={styles.unavailableHint}>{unavailableLabel}</Text>
+                )}
+            </View>
+
+            {bookable ? (
+                <Ionicons name="chevron-forward" size={moderateScale(20)} color={Colors.golden_brown} />
+            ) : (
+                <View style={styles.pill}>
+                    <Text style={styles.pillText}>{!route.is_active ? 'Closed' : 'No driver'}</Text>
+                </View>
+            )}
+        </TouchableOpacity>
+    );
+};
 
 const UserHome = () => {
     const router = useRouter();
@@ -58,14 +76,19 @@ const UserHome = () => {
 
     useEffect(() => { fetchRoutes(); }, [fetchRoutes]);
 
-    // Refresh routes and re-read name whenever this tab regains focus.
+    // Refresh routes and re-read name whenever this tab regains focus,
+    // plus a 30s poll so the route's availability (driver on/off duty)
+    // reflects backend changes without manual refresh. Interval is cleared
+    // on blur, so background tabs don't poll.
     useFocusEffect(useCallback(() => {
         setFirstName(currentUser?.full_name ? currentUser.full_name.split(' ')[0] : 'User');
         fetchRoutes();
+        const intervalId = setInterval(() => fetchRoutes(), 30000);
+        return () => clearInterval(intervalId);
     }, [fetchRoutes]));
 
     const handleBusSelection = (route) => {
-        if (!route.is_active) return;
+        if (!isRouteBookable(route)) return;
         router.push({
             pathname: '/UserBooking',
             params: { busName: route.name, routeId: String(route.id) },
@@ -177,6 +200,12 @@ const styles = StyleSheet.create({
     },
     routeNameDisabled: {
         color: Colors.white,
+    },
+    unavailableHint: {
+        marginTop: 2,
+        fontSize: moderateScale(11),
+        fontFamily: 'Nunito-Bold',
+        color: 'rgba(255,255,255,0.85)',
     },
     pill: {
         backgroundColor: 'rgba(0,0,0,0.25)',
