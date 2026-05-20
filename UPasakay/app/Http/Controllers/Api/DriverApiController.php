@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Events\PassengerBoarded;
+use App\Events\RideCompleted;
 use App\Http\Controllers\Controller;
 use App\Models\Driver;
 use App\Models\Notification;
@@ -217,6 +218,49 @@ class DriverApiController extends Controller
         );
 
         return response()->json($pickupRequest->fresh());
+    }
+
+    /**
+     * Driver marks a boarded passenger as dropped off — completes the ride.
+     */
+    public function complete(Request $request, PickupRequest $pickupRequest)
+    {
+        if ($error = $this->authorizeDriverOwnsRequest($request, $pickupRequest)) {
+            return $error;
+        }
+
+        if ($pickupRequest->status !== 'in_progress') {
+            return response()->json(['message' => 'This passenger has not boarded yet.'], 409);
+        }
+
+        $routeId = $pickupRequest->route_id;
+        $passengerName = $pickupRequest->user?->full_name ?? 'Passenger';
+
+        if ($pickupRequest->assignment) {
+            $this->driverAssignments->updateStatus($pickupRequest->assignment, 'completed');
+        } else {
+            $pickupRequest->update(['status' => 'completed', 'completed_at' => now()]);
+        }
+
+        try {
+            broadcast(new RideCompleted(
+                $pickupRequest->fresh(['user.passenger', 'assignment.driver.user'])
+            ));
+        } catch (\Throwable $e) {
+            \Log::error('RideCompleted broadcast failed: '.$e->getMessage());
+        }
+
+        $this->pickupRequests->logDriverNotification(
+            $pickupRequest->fresh(['user', 'pickupStop']),
+            $passengerName.' dropped off.'
+        );
+
+        $promoted = $this->pickupRequests->promoteNextInQueue($routeId);
+
+        return response()->json([
+            'pickup_request' => $pickupRequest->fresh(),
+            'promoted' => $promoted,
+        ]);
     }
 
     /**

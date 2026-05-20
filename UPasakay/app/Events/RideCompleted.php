@@ -9,7 +9,7 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class RideCompleted implements ShouldBroadcast
+class RideCompleted implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
@@ -24,8 +24,11 @@ class RideCompleted implements ShouldBroadcast
      */
     public function broadcastOn(): array
     {
+        $passengerId = $this->pickupRequest->user?->passenger?->id
+            ?? $this->pickupRequest->user_id;
+
         return [
-            new Channel('passenger-'.$this->pickupRequest->passenger_id),
+            new Channel('passenger-'.$passengerId),
         ];
     }
 
@@ -36,10 +39,13 @@ class RideCompleted implements ShouldBroadcast
      */
     public function broadcastWith(): array
     {
+        $driver = $this->pickupRequest->assignment?->driver;
+
         return [
             'pickup_request_id' => $this->pickupRequest->id,
             'status' => 'completed',
             'completed_at' => now(),
+            'driver_name' => $driver?->user?->name ?? $driver?->full_name ?? null,
         ];
     }
 

@@ -284,6 +284,7 @@ const DriverTrip = () => {
             board: `/pickup-requests/${request.id}/board`,
             'no-show': `/pickup-requests/${request.id}/no-show`,
             decline: `/pickup-requests/${request.id}/decline`,
+            complete: `/pickup-requests/${request.id}/complete`,
         };
         setActingId(request.id);
         const res = await apiPatch(endpoints[kind], {});
@@ -502,7 +503,26 @@ const DriverTrip = () => {
                                                                     </Text>
                                                                 </View>
                                                             </View>
-                                                            {p.status !== 'in_progress' && (
+                                                            {p.status === 'in_progress' ? (
+                                                                <View style={styles.paxActions}>
+                                                                    <TouchableOpacity
+                                                                        style={[styles.actionBtn, styles.completeBtn]}
+                                                                        disabled={actingId === p.id}
+                                                                        onPress={() =>
+                                                                            confirmAction(p, 'complete', 'Arrived at Stop')
+                                                                        }
+                                                                    >
+                                                                        <Ionicons
+                                                                            name="flag-outline"
+                                                                            size={18}
+                                                                            color="#fff"
+                                                                        />
+                                                                        <Text style={styles.actionText}>
+                                                                            Arrived at Stop
+                                                                        </Text>
+                                                                    </TouchableOpacity>
+                                                                </View>
+                                                            ) : (
                                                                 <View style={styles.paxActions}>
                                                                     <TouchableOpacity
                                                                         style={[styles.actionBtn, styles.boardBtn]}
@@ -672,6 +692,7 @@ const styles = StyleSheet.create({
     boardBtn: { backgroundColor: '#2E7D32', flex: 1 },
     noShowBtn: { backgroundColor: '#FFE0B2', flex: 1 },
     declineBtn: { backgroundColor: '#C62828', width: 48 },
+    completeBtn: { backgroundColor: '#1565C0', flex: 1 },
     actionText: { fontFamily: 'Nunito-Bold', fontSize: 14, color: '#fff' },
     actionTextDark: { fontFamily: 'Nunito-Bold', fontSize: 14, color: '#8A5A00' },
 
