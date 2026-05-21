@@ -399,6 +399,7 @@ const UserRecents = () => {
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
+                  style={styles.chipScroll}
                   contentContainerStyle={styles.chipRow}
                 >
                   {TRIP_STATUS_FILTERS.map((s) => (
@@ -413,6 +414,7 @@ const UserRecents = () => {
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
+                  style={styles.chipScroll}
                   contentContainerStyle={styles.chipRow}
                 >
                   {TRIP_DATE_FILTERS.map((d) => (
@@ -429,6 +431,7 @@ const UserRecents = () => {
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
+                style={styles.chipScroll}
                 contentContainerStyle={styles.chipRow}
               >
                 {NOTIF_TYPE_FILTERS.map((f) => (
@@ -572,11 +575,17 @@ const styles = StyleSheet.create({
   },
 
   // Filter chips
+  chipScroll: {
+    flexGrow: 0,
+    marginBottom: 6,
+  },
   chipRow: {
     paddingVertical: 3,
     gap: 8,
+    alignItems: 'center',
   },
   chip: {
+    alignSelf: 'center',
     paddingHorizontal: 14,
     paddingVertical: 7,
     borderRadius: 999,
