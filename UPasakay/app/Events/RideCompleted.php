@@ -29,6 +29,7 @@ class RideCompleted implements ShouldBroadcastNow
 
         return [
             new Channel('passenger-'.$passengerId),
+            new Channel('admin-rides'),
         ];
     }
 

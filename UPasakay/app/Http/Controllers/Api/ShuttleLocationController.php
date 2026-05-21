@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Driver;
 use App\Models\Shuttle;
 use App\Models\ShuttleLocation;
+use App\Services\PickupRequestService;
 use Illuminate\Http\Request;
 
 class ShuttleLocationController extends Controller
@@ -119,6 +120,16 @@ class ShuttleLocationController extends Controller
             (float) $validated['longitude'],
             'active',
         ));
+
+        $pingLat = (float) $validated['latitude'];
+        $pingLng = (float) $validated['longitude'];
+        defer(function () use ($shuttleId, $pingLat, $pingLng) {
+            try {
+                app(PickupRequestService::class)->autoCompleteNearDropoff($shuttleId, $pingLat, $pingLng);
+            } catch (\Throwable $e) {
+                \Log::error('autoCompleteNearDropoff failed: '.$e->getMessage());
+            }
+        });
 
         return response()->json(array_merge($location->toArray(), [
             'shuttle_id' => $shuttleId,

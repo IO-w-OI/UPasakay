@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Events\RideCompleted;
 use App\Models\DeviceToken;
 use App\Models\Driver;
 use App\Models\Notification;
@@ -10,6 +11,7 @@ use App\Models\Shuttle;
 use App\Models\ShuttleLocation;
 use App\Models\Stop;
 use App\Models\User;
+use App\Support\Geo;
 use Illuminate\Validation\ValidationException;
 
 class PickupRequestService
@@ -346,6 +348,82 @@ class PickupRequestService
             ($passenger->full_name ?? 'A passenger').' requested a pickup on '.$routeName.'.',
             ['type' => 'pickup_request', 'pickup_request_id' => $pickupRequest->id],
         );
+    }
+
+    /**
+     * Shuttle GPS radius (metres) that triggers an auto-complete for any
+     * boarded passenger whose dropoff stop is this close.  10 m is tight
+     * enough to be deliberate but forgiving of typical consumer GPS error.
+     */
+    private const DROPOFF_AUTO_COMPLETE_METERS = 10;
+
+    /**
+     * Called on every driver GPS ping.  Finds all in-progress rides on this
+     * shuttle's route and completes any whose dropoff stop is within the
+     * threshold distance — no driver tap required.
+     *
+     * A fresh-read status guard prevents a double-complete if the driver
+     * also taps "Arrived at Stop" at the same moment.
+     */
+    public function autoCompleteNearDropoff(int $shuttleId, float $lat, float $lng): void
+    {
+        $shuttle = Shuttle::find($shuttleId);
+        if (! $shuttle?->route_id) {
+            return;
+        }
+
+        $inProgress = PickupRequest::with([
+            'dropoffStop',
+            'pickupStop',
+            'user.passenger',
+            'assignment.driver.user',
+        ])
+            ->where('route_id', $shuttle->route_id)
+            ->where('status', 'in_progress')
+            ->get();
+
+        foreach ($inProgress as $request) {
+            $dropoff = $request->dropoffStop;
+            if (! $dropoff?->latitude || ! $dropoff?->longitude) {
+                continue;
+            }
+
+            $meters = Geo::distanceMeters(
+                $lat, $lng,
+                (float) $dropoff->latitude,
+                (float) $dropoff->longitude,
+            );
+
+            if ($meters > self::DROPOFF_AUTO_COMPLETE_METERS) {
+                continue;
+            }
+
+            // Re-read to guard against a concurrent manual "Arrived at Stop".
+            if ($request->fresh()?->status !== 'in_progress') {
+                continue;
+            }
+
+            $passengerName = $request->user?->full_name ?? 'Passenger';
+
+            if ($request->assignment) {
+                $this->driverAssignments->updateStatus($request->assignment, 'completed');
+            } else {
+                $request->update(['status' => 'completed', 'completed_at' => now()]);
+            }
+
+            try {
+                broadcast(new RideCompleted(
+                    $request->fresh(['user.passenger', 'assignment.driver.user'])
+                ));
+            } catch (\Throwable $e) {
+                \Log::error('RideCompleted auto-complete broadcast failed: '.$e->getMessage());
+            }
+
+            $this->logDriverNotification(
+                $request->fresh(['user', 'pickupStop']),
+                $passengerName.' auto-completed at '.$dropoff->name.'.',
+            );
+        }
     }
 
     private function calculateETA($driverLat, $driverLng, $passengerLat, $passengerLng): int
