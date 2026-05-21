@@ -106,7 +106,7 @@ class DriverApiController extends Controller
         $queue = $this->pickupRequests->queueForRoute($route->id);
 
         $waitingByStop = $queue
-            ->where('status', 'pending')
+            ->whereIn('status', ['pending', 'accepted'])
             ->groupBy('pickup_stop_id')
             ->map->count();
 
