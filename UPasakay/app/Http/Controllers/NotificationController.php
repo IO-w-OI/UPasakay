@@ -30,10 +30,14 @@ class NotificationController extends Controller
                 'type' => $notification->type,
                 'label' => $notification->getTypeLabel(),
                 'target' => $notification->getTargetLabel(),
+                'audience' => $notification->audience ?? 'all',
                 'status' => $notification->status,
                 'date' => $notification->getFormattedDate(),
                 'message' => $notification->message,
                 'title' => $notification->title,
+                // Alert rows are system-generated (boarding events, etc.) —
+                // the UI tags them "System" rather than an admin broadcast.
+                'is_system' => $notification->isSystemGenerated(),
             ]);
 
         // Get recurring notification schedules
@@ -48,6 +52,15 @@ class NotificationController extends Controller
                 'target' => $schedule->getTargetLabel(),
                 'auto' => true, // All schedules are automated
                 'active' => $schedule->is_active,
+                // Raw fields so the edit modal can be pre-filled.
+                'name' => $schedule->name,
+                'notif_title' => $schedule->title,
+                'message' => $schedule->message,
+                'type' => $schedule->type,
+                'target_route' => $schedule->target_route ?? 'all',
+                'audience' => $schedule->audience ?? 'all',
+                'frequency' => $schedule->frequency,
+                'time' => substr((string) $schedule->time, 0, 5),
             ]);
 
         return Inertia::render('Notifications/Index', [
@@ -74,10 +87,13 @@ class NotificationController extends Controller
         ]);
 
         if ($validated['delivery_type'] === 'scheduled') {
+            // The admin picks the date/time in Manila time — parse it in that
+            // zone so the stored UTC value fires at the intended moment.
             $scheduledAt = \Carbon\Carbon::createFromFormat(
                 'Y-m-d H:i',
-                $validated['schedule_date'].' '.$validated['schedule_time']
-            );
+                $validated['schedule_date'].' '.$validated['schedule_time'],
+                Notification::DISPLAY_TZ,
+            )->utc();
 
             Notification::create([
                 'title' => $validated['title'],
@@ -89,7 +105,8 @@ class NotificationController extends Controller
                 'scheduled_at' => $scheduledAt,
             ]);
         } else {
-            // Send immediately
+            // Send immediately — fan-out respects the chosen audience and,
+            // for drivers, the target route.
             $notification = Notification::create([
                 'title' => $validated['title'],
                 'message' => $validated['message'],
@@ -100,15 +117,7 @@ class NotificationController extends Controller
                 'sent_at' => now(),
             ]);
 
-            $tokens = DeviceToken::pluck('expo_token')->filter()->values()->all();
-            if (!empty($tokens)) {
-                (new ExpoPushService())->send(
-                    $tokens,
-                    $validated['title'],
-                    $validated['message'],
-                    ['type' => 'announcement', 'notification_id' => $notification->id]
-                );
-            }
+            $notification->dispatchPush();
         }
 
         return back()->with('success', 'Notification '.($validated['delivery_type'] === 'scheduled' ? 'scheduled' : 'sent').' successfully.');

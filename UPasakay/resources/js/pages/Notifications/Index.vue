@@ -17,8 +17,12 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 const props = defineProps<{
     routes: string[];
-    notificationLog: Array<{ id: number; time: string; type: string; label: string; target: string; status: string; date: string; message?: string; title?: string }>;
-    scheduledNotifications: Array<{ id: number; title: string; schedule: string; target: string; auto: boolean; active: boolean }>;
+    notificationLog: Array<{ id: number; time: string; type: string; label: string; target: string; audience?: string; status: string; date: string; message?: string; title?: string; is_system?: boolean }>;
+    scheduledNotifications: Array<{
+        id: number; title: string; schedule: string; target: string; auto: boolean; active: boolean;
+        name: string; notif_title: string; message: string; type: string;
+        target_route: string; audience: string; frequency: string; time: string;
+    }>;
 }>();
 
 // ── Smart Templates ────────────────────────────────────────────────────────
@@ -70,21 +74,26 @@ const formatDateDisplay = (dateStr: string | Date): string => {
 };
 
 // ── Schedule Modal ─────────────────────────────────────────────────────────
+type ScheduleRow = typeof props.scheduledNotifications[0];
+
 const isScheduleModalOpen = ref(false);
 const isEditingSchedule = ref(false);
-const scheduleForm = ref({
+const isSavingSchedule = ref(false);
+
+const blankSchedule = () => ({
     name: '',
     frequency: 'daily' as 'daily' | 'weekdays' | 'weekends' | 'custom',
     time: '08:00',
     title: '',
-    type: 'Shuttle Availability',
+    type: 'availability',
     message: '',
     targetRoute: 'all',
     audience: 'all' as 'all' | 'passengers' | 'drivers',
     active: true,
-    days: [] as number[], // for custom days (0-6)
+    days: [] as number[],
 });
-const selectedSchedule = ref<null | { id: number; title: string; schedule: string; target: string; auto: boolean; active: boolean }>(null);
+const scheduleForm = ref(blankSchedule());
+const selectedSchedule = ref<null | ScheduleRow>(null);
 
 const toggleDay = (dayIndex: number) => {
     if (scheduleForm.value.days.includes(dayIndex)) {
@@ -94,55 +103,73 @@ const toggleDay = (dayIndex: number) => {
     }
 };
 
-const openScheduleModal = (schedule?: typeof selectedSchedule.value) => {
+const openScheduleModal = (schedule?: ScheduleRow) => {
     if (schedule) {
         isEditingSchedule.value = true;
         selectedSchedule.value = schedule;
         scheduleForm.value = {
-            name: schedule.title,
-            frequency: 'daily',
-            time: '08:00',
-            title: '',
-            type: 'Shuttle Availability',
-            message: '',
-            targetRoute: schedule.target === 'All' ? 'all' : schedule.target,
-            audience: 'all',
+            name: schedule.name,
+            frequency: (schedule.frequency as any) || 'daily',
+            time: schedule.time || '08:00',
+            title: schedule.notif_title || '',
+            type: schedule.type || 'availability',
+            message: schedule.message || '',
+            targetRoute: schedule.target_route || 'all',
+            audience: (schedule.audience as any) || 'all',
             active: schedule.active,
             days: [],
         };
     } else {
         isEditingSchedule.value = false;
         selectedSchedule.value = null;
-        scheduleForm.value = {
-            name: '',
-            frequency: 'daily',
-            time: '08:00',
-            title: '',
-            type: 'Shuttle Availability',
-            message: '',
-            targetRoute: 'all',
-            audience: 'all',
-            active: true,
-            days: [],
-        };
+        scheduleForm.value = blankSchedule();
     }
     isScheduleModalOpen.value = true;
 };
 
 const closeScheduleModal = () => {
     isScheduleModalOpen.value = false;
-    scheduleForm.value = {
-        name: '',
-        frequency: 'daily',
-        time: '08:00',
-        title: '',
-        type: 'Shuttle Availability',
-        message: '',
-        targetRoute: 'all',
-        audience: 'all',
-        active: true,
-        days: [],
+    scheduleForm.value = blankSchedule();
+};
+
+const canSaveSchedule = computed(() =>
+    scheduleForm.value.name.trim() !== '' &&
+    scheduleForm.value.title.trim() !== '' &&
+    scheduleForm.value.message.trim() !== ''
+);
+
+const submitSchedule = () => {
+    if (!canSaveSchedule.value) return;
+    isSavingSchedule.value = true;
+    const payload = {
+        name: scheduleForm.value.name,
+        title: scheduleForm.value.title,
+        message: scheduleForm.value.message,
+        type: scheduleForm.value.type,
+        target_route: scheduleForm.value.targetRoute,
+        audience: scheduleForm.value.audience,
+        frequency: scheduleForm.value.frequency,
+        time: scheduleForm.value.time,
+        is_active: scheduleForm.value.active,
     };
+    const opts = {
+        preserveScroll: true,
+        onSuccess: () => { isSavingSchedule.value = false; closeScheduleModal(); },
+        onError: () => { isSavingSchedule.value = false; },
+    };
+    if (isEditingSchedule.value && selectedSchedule.value) {
+        router.patch(`/notifications/schedules/${selectedSchedule.value.id}`, payload, opts);
+    } else {
+        router.post('/notifications/schedules', payload, opts);
+    }
+};
+
+const deleteSchedule = () => {
+    if (!selectedSchedule.value) return;
+    router.delete(`/notifications/schedules/${selectedSchedule.value.id}`, {
+        preserveScroll: true,
+        onSuccess: () => closeScheduleModal(),
+    });
 };
 
 // ── Delete Confirmation ────────────────────────────────────────────────────
@@ -207,10 +234,13 @@ const send = () => {
 };
 
 const resendNotification = (log: any) => {
-    form.value.title = log.label;
-    form.value.message = '';
-    form.value.type = log.type;
+    form.value.title = log.title || log.label;
+    form.value.message = log.message || '';
+    form.value.type = ['availability', 'delay', 'change', 'announcement'].includes(log.type)
+        ? log.type
+        : 'announcement';
     form.value.targetRoute = log.target === 'All Routes' ? 'all' : log.target;
+    form.value.audience = log.audience || 'all';
     form.value.delivery_type = 'now';
     window.scrollTo({ top: 0, behavior: 'smooth' });
 };
@@ -240,9 +270,12 @@ const filteredLog = computed(() =>
     props.notificationLog.filter(n => {
         const typeMatch = typeFilter.value === 'All' || n.type === typeFilter.value;
         const statusMatch = statusFilter.value === 'All' || n.status === statusFilter.value;
-        const searchMatch = !logSearch.value || 
-            n.label.toLowerCase().includes(logSearch.value.toLowerCase()) ||
-            n.target.toLowerCase().includes(logSearch.value.toLowerCase());
+        const q = logSearch.value.toLowerCase();
+        const searchMatch = !q ||
+            (n.title ?? '').toLowerCase().includes(q) ||
+            (n.message ?? '').toLowerCase().includes(q) ||
+            n.label.toLowerCase().includes(q) ||
+            n.target.toLowerCase().includes(q);
         return typeMatch && statusMatch && searchMatch;
     })
 );
@@ -254,10 +287,9 @@ const typeBadgeClass = (t: string) =>
     ({ schedule: 'bg-blue-500/15 text-blue-600 dark:text-blue-400', delay: 'bg-orange-500/15 text-orange-600 dark:text-orange-400', change: 'bg-purple-500/15 text-purple-600 dark:text-purple-400' }[t] ?? 'bg-muted text-muted-foreground');
 
 // ── Scheduled ──────────────────────────────────────────────────────────────
-const localScheduled = ref(props.scheduledNotifications.map(sn => ({ ...sn })));
+// Persist the on/off switch immediately; Inertia refreshes the prop on success.
 const toggleScheduled = (id: number) => {
-    const item = localScheduled.value.find(s => s.id === id);
-    if (item) item.active = !item.active;
+    router.patch(`/notifications/schedules/${id}/toggle`, {}, { preserveScroll: true });
 };
 
 // ── Analytics (mock) ───────────────────────────────────────────────────────
@@ -506,9 +538,9 @@ const audienceOptions = [
                             </select>
                         </div>
 
-                        <div class="overflow-x-auto">
+                        <div class="overflow-auto max-h-115 rounded-lg">
                             <table class="w-full text-sm">
-                                <thead>
+                                <thead class="sticky top-0 bg-card z-10">
                                     <tr class="text-left text-xs font-medium uppercase text-muted-foreground border-b border-border/50">
                                         <th class="pb-2 pr-3">Date/Time</th>
                                         <th class="pb-2 pr-3">Title & Message</th>
@@ -525,14 +557,20 @@ const audienceOptions = [
                                             <div class="text-muted-foreground/70">{{ n.date }}</div>
                                         </td>
                                         <td class="py-3 pr-3">
-                                            <div class="font-medium text-foreground text-sm line-clamp-1">{{ n.label }}</div>
-                                            <div class="text-xs text-muted-foreground line-clamp-1">{{ n.target }} · {{ n.type }}</div>
+                                            <div class="flex items-center gap-1.5">
+                                                <span class="font-medium text-foreground text-sm line-clamp-1">{{ n.title || n.label }}</span>
+                                                <span v-if="n.is_system" class="inline-flex items-center rounded-full bg-slate-500/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+                                                    System
+                                                </span>
+                                            </div>
+                                            <div class="text-xs text-muted-foreground line-clamp-1">{{ n.message || '—' }}</div>
                                         </td>
                                         <td class="py-3 pr-3">
                                             <span class="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium" :class="typeBadgeClass(n.type)">
                                                 <component :is="typeIconComponent(n.type)" class="h-3 w-3" />
                                                 {{ n.label }}
                                             </span>
+                                            <div class="mt-1 text-xs text-muted-foreground">{{ n.target }}</div>
                                         </td>
                                         <td class="py-3 pr-3">
                                             <span v-if="n.status === 'sent'" class="inline-flex items-center gap-1 rounded-full bg-green-500/15 px-2 py-0.5 text-xs font-medium text-green-600 dark:text-green-400">
@@ -571,7 +609,7 @@ const audienceOptions = [
                     <div class="rounded-2xl border border-border/70 bg-card p-6 shadow-sm shadow-black/5 dark:shadow-black/20">
                         <h2 class="mb-3 font-semibold text-foreground">Scheduled Notifications</h2>
                         <div class="space-y-3">
-                            <div v-for="sn in localScheduled" :key="sn.id"
+                            <div v-for="sn in props.scheduledNotifications" :key="sn.id"
                                 class="rounded-xl border border-border/50 p-4">
                                 <div class="mb-1 flex items-center justify-between">
                                     <div class="flex items-center gap-2">
@@ -588,12 +626,15 @@ const audienceOptions = [
                                 </div>
                                 <p class="mb-2 text-xs text-muted-foreground">
                                     <Clock class="inline h-3 w-3 mr-0.5" />
-                                    {{ sn.schedule }} · Target: {{ sn.target }} · {{ sn.auto ? 'Auto' : 'Manual' }}
+                                    {{ sn.schedule }} · Target: {{ sn.target }} · {{ sn.active ? 'Active' : 'Paused' }}
                                 </p>
                                 <div class="flex gap-2">
                                     <button @click="openScheduleModal(sn)" class="rounded-lg border border-border/70 px-2.5 py-1 text-xs text-muted-foreground hover:bg-accent transition-colors">Edit</button>
                                 </div>
                             </div>
+                            <p v-if="props.scheduledNotifications.length === 0" class="py-4 text-center text-xs text-muted-foreground">
+                                No recurring schedules yet.
+                            </p>
                         </div>
                         <button @click="openScheduleModal()" class="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-border/70 py-2.5 text-sm font-medium text-muted-foreground hover:bg-accent transition-colors">
                             <Plus class="h-4 w-4" /> Create Schedule
@@ -614,12 +655,21 @@ const audienceOptions = [
                     <span class="text-2xl">×</span>
                 </button>
                 
-                <h3 class="text-lg font-semibold border-b pb-3 pr-8">{{ selectedLog.label }}</h3>
-                
+                <div class="flex items-center gap-2 border-b pb-3 pr-8">
+                    <h3 class="text-lg font-semibold">{{ selectedLog.title || selectedLog.label }}</h3>
+                    <span v-if="selectedLog.is_system" class="inline-flex items-center rounded-full bg-slate-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+                        System
+                    </span>
+                </div>
+
+                <p v-if="selectedLog.is_system" class="mt-3 text-xs text-muted-foreground">
+                    This is an automated alert generated by the system, not an admin broadcast.
+                </p>
+
                 <div class="space-y-4 mt-4 text-sm">
                     <div>
                         <span class="text-muted-foreground block mb-1 text-xs font-medium">Message</span>
-                        <p class="p-3 bg-muted rounded-lg text-foreground">{{ selectedLog.target }} · {{ selectedLog.type }}</p>
+                        <p class="p-3 bg-muted rounded-lg text-foreground whitespace-pre-line">{{ selectedLog.message || 'No message content.' }}</p>
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
@@ -628,11 +678,11 @@ const audienceOptions = [
                         </div>
                         <div>
                             <span class="text-muted-foreground block mb-1 text-xs font-medium">Type</span>
-                            <span class="font-medium">{{ selectedLog.type }}</span>
+                            <span class="font-medium">{{ selectedLog.label }}</span>
                         </div>
                         <div>
                             <span class="text-muted-foreground block mb-1 text-xs font-medium">Date</span>
-                            <span class="font-medium">{{ formatDateDisplay((selectedLog.date ?? '') + ' ' + (selectedLog.time ?? '')) }}</span>
+                            <span class="font-medium">{{ selectedLog.date }}</span>
                         </div>
                         <div>
                             <span class="text-muted-foreground block mb-1 text-xs font-medium">Time</span>
@@ -794,10 +844,10 @@ const audienceOptions = [
                                 <label class="mb-2 block text-sm font-medium text-foreground">Type *</label>
                                 <select v-model="scheduleForm.type"
                                     class="w-full rounded-lg border border-border/70 bg-card px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-[#8B0000]">
-                                    <option>Shuttle Availability</option>
-                                    <option>Route Delay</option>
-                                    <option>Route Change</option>
-                                    <option>Service Announcement</option>
+                                    <option value="availability">Shuttle Availability</option>
+                                    <option value="delay">Route Delay</option>
+                                    <option value="change">Route Change</option>
+                                    <option value="announcement">Service Announcement</option>
                                 </select>
                             </div>
 
@@ -858,13 +908,17 @@ const audienceOptions = [
 
                     <!-- Actions -->
                     <div class="sticky bottom-0 bg-card border-t border-border/50 p-6 flex gap-3">
+                        <button v-if="isEditingSchedule" @click="deleteSchedule"
+                            class="rounded-lg border border-red-500/40 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-500/10">
+                            Delete
+                        </button>
                         <button @click="closeScheduleModal"
                             class="flex-1 rounded-lg border border-border/70 px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-accent">
                             Cancel
                         </button>
-                        <button @click="closeScheduleModal"
-                            class="flex-1 rounded-lg bg-[#8B0000] px-4 py-2 text-sm font-semibold text-white hover:bg-[#700000]">
-                            {{ isEditingSchedule ? 'Update' : 'Create' }}
+                        <button @click="submitSchedule" :disabled="!canSaveSchedule || isSavingSchedule"
+                            class="flex-1 rounded-lg bg-[#8B0000] px-4 py-2 text-sm font-semibold text-white hover:bg-[#700000] disabled:opacity-50">
+                            {{ isSavingSchedule ? 'Saving…' : (isEditingSchedule ? 'Update' : 'Create') }}
                         </button>
                     </div>
                         </div>

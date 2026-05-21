@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\DeviceToken;
 use App\Models\Notification;
+use App\Models\NotificationSchedule;
 use App\Services\ExpoPushService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 
 class NotificationController extends Controller
 {
@@ -129,17 +131,50 @@ class NotificationController extends Controller
         return response()->json($notifications);
     }
 
+    /**
+     * Fired by an external cron (e.g. cron-job.org). Handles BOTH:
+     *  · one-off scheduled notifications whose scheduled_at has passed, and
+     *  · recurring notification schedules that are due today.
+     * Each is pushed to its targeted audience, then stamped so it doesn't
+     * re-send.
+     */
     public function processScheduledNotifications()
     {
+        // ── One-off scheduled notifications ───────────────────────────────
         $readyToSend = Notification::readyToSend()->get();
-
         foreach ($readyToSend as $notification) {
             $notification->markAsSent();
+            $notification->dispatchPush();
+        }
+
+        // ── Recurring schedules ───────────────────────────────────────────
+        $nowManila = Carbon::now(Notification::DISPLAY_TZ);
+        $recurringCount = 0;
+
+        foreach (NotificationSchedule::where('is_active', true)->get() as $schedule) {
+            if (! $schedule->isDueNow($nowManila)) {
+                continue;
+            }
+
+            $notification = Notification::create([
+                'title' => $schedule->title ?: $schedule->name,
+                'message' => $schedule->message,
+                'type' => $schedule->type ?: 'announcement',
+                'target_route' => $schedule->target_route ?? 'all',
+                'audience' => $schedule->audience ?? 'all',
+                'status' => 'sent',
+                'sent_at' => now(),
+            ]);
+            $notification->dispatchPush();
+
+            $schedule->update(['last_sent_on' => $nowManila->toDateString()]);
+            $recurringCount++;
         }
 
         return response()->json([
             'message' => 'Scheduled notifications processed',
             'processed_count' => $readyToSend->count(),
+            'recurring_count' => $recurringCount,
         ]);
     }
 

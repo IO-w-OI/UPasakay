@@ -229,7 +229,8 @@ class PickupRequestController extends Controller
                 'route_id'      => $r->route_id,
                 'pickup_stop'   => $r->pickupStop?->name ?? '—',
                 'dropoff_stop'  => $r->dropoffStop?->name ?? '—',
-                'date'          => $r->updated_at?->format('d M Y, h:i A') ?? $r->created_at?->format('d M Y, h:i A'),
+                'date'          => ($r->updated_at ?? $r->created_at)
+                    ?->copy()->timezone('Asia/Manila')->format('d M Y, h:i A'),
                 // ISO timestamp for client-side date-range filtering.
                 'iso'           => ($r->updated_at ?? $r->created_at)?->toIso8601String(),
                 // Feedback the passenger left on this trip — surfaced in the

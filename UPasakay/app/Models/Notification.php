@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\ExpoPushService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,6 +10,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Notification extends Model
 {
     use HasFactory;
+
+    /** Display timezone — timestamps are stored UTC, shown in Manila time. */
+    public const DISPLAY_TZ = 'Asia/Manila';
 
     protected $fillable = [
         'title',
@@ -60,17 +64,88 @@ class Notification extends Model
             ->where('scheduled_at', '<=', now());
     }
 
+    /** The timestamp a row should be displayed against. */
+    private function displayMoment()
+    {
+        if ($this->status === 'scheduled' && $this->scheduled_at) {
+            return $this->scheduled_at;
+        }
+        return $this->sent_at ?? $this->created_at;
+    }
+
     public function getFormattedTime(): string
     {
-        return ($this->sent_at ?? $this->created_at)->format('h:i A');
+        return $this->displayMoment()
+            ->copy()
+            ->timezone(self::DISPLAY_TZ)
+            ->format('h:i A');
     }
 
     public function getFormattedDate(): string
     {
-        $dt = $this->sent_at ?? $this->created_at;
-        if ($dt->isToday()) return 'Today';
-        if ($dt->isYesterday()) return 'Yesterday';
+        $dt = $this->displayMoment()->copy()->timezone(self::DISPLAY_TZ);
+        $today = now()->timezone(self::DISPLAY_TZ);
+        if ($dt->isSameDay($today)) return 'Today';
+        if ($dt->isSameDay($today->copy()->subDay())) return 'Yesterday';
         return $dt->format('M d');
+    }
+
+    /**
+     * Alert-type rows are written by the system itself (e.g. passenger
+     * boarding events) — not composed by an admin. The admin UI uses this
+     * to label them separately from manually-sent broadcasts.
+     */
+    public function isSystemGenerated(): bool
+    {
+        return $this->type === 'alert';
+    }
+
+    /**
+     * Resolve the Expo push tokens for a given audience + target route.
+     * audience: all | passengers | drivers. For drivers a specific route
+     * narrows to the drivers currently on a shuttle for that route.
+     *
+     * @return array<int, string>
+     */
+    public static function recipientExpoTokens(string $audience = 'all', ?string $targetRoute = 'all'): array
+    {
+        $query = DeviceToken::query();
+
+        if ($audience === 'passengers') {
+            $userIds = Passenger::query()->whereNotNull('user_id')->pluck('user_id');
+            $query->whereIn('user_id', $userIds);
+        } elseif ($audience === 'drivers') {
+            $driverQuery = Driver::query();
+            if ($targetRoute && $targetRoute !== 'all') {
+                $routeId = Route::where('name', $targetRoute)->value('id');
+                $driverIds = $routeId
+                    ? Shuttle::where('route_id', $routeId)->whereNotNull('driver_id')->pluck('driver_id')
+                    : collect();
+                $driverQuery->whereIn('id', $driverIds);
+            }
+            $userIds = $driverQuery->whereNotNull('user_id')->pluck('user_id');
+            $query->whereIn('user_id', $userIds);
+        }
+
+        return $query->pluck('expo_token')->filter()->unique()->values()->all();
+    }
+
+    /**
+     * Push this notification to its audience and stamp it sent. Centralises
+     * the fan-out so immediate sends, the scheduled processor, and recurring
+     * schedules all behave identically.
+     */
+    public function dispatchPush(): void
+    {
+        $tokens = self::recipientExpoTokens($this->audience ?? 'all', $this->target_route ?? 'all');
+        if (! empty($tokens)) {
+            (new ExpoPushService())->send(
+                $tokens,
+                $this->title,
+                $this->message ?? '',
+                ['type' => $this->type ?? 'announcement', 'notification_id' => $this->id],
+            );
+        }
     }
 
     public function getTypeLabel(): string

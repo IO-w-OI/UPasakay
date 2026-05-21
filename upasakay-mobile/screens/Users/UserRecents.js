@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import * as SecureStore from 'expo-secure-store';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
@@ -123,7 +124,7 @@ const TripItem = ({ trip, onPress, onParaUlit }) => {
   );
 };
 
-const NotificationItem = ({ notification }) => {
+const NotificationItem = ({ notification, onDelete }) => {
   const iconName = NOTIF_ICON[notification.type] ?? 'notifications';
 
   return (
@@ -134,7 +135,16 @@ const NotificationItem = ({ notification }) => {
       <View style={{ flex: 1 }}>
         <View style={styles.notifHeader}>
           <Text style={styles.notifTitle} numberOfLines={1}>{notification.title}</Text>
-          <Text style={styles.notifTime}>{notification.date} · {notification.time}</Text>
+          <View style={styles.notifHeaderRight}>
+            <Text style={styles.notifTime}>{notification.date} · {notification.time}</Text>
+            <TouchableOpacity
+              onPress={() => onDelete(notification)}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              style={styles.notifTrash}
+            >
+              <Ionicons name="trash-outline" size={moderateScale(16)} color="#8B211E" />
+            </TouchableOpacity>
+          </View>
         </View>
         {!!notification.type_label && (
           <Text style={styles.notifTag}>{notification.type_label}</Text>
@@ -281,9 +291,52 @@ const UserRecents = () => {
   // route_id → currently bookable (driver on duty). Drives "Para ulit".
   const [routeActive, setRouteActive] = useState({});
 
+  // Notification IDs the passenger has cleared. Notifications are global
+  // broadcasts, so "deleting" is a per-device dismiss persisted locally.
+  const [dismissedIds, setDismissedIds] = useState([]);
+
   // Trip detail modal
   const [selectedTrip, setSelectedTrip] = useState(null);
   const [detailVisible, setDetailVisible] = useState(false);
+
+  // Load the locally-dismissed notification IDs once on mount.
+  useEffect(() => {
+    SecureStore.getItemAsync('dismissed_notifications')
+      .then((raw) => {
+        if (raw) {
+          try {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) setDismissedIds(parsed);
+          } catch (_) {}
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const persistDismissed = useCallback((ids) => {
+    setDismissedIds(ids);
+    SecureStore.setItemAsync('dismissed_notifications', JSON.stringify(ids)).catch(() => {});
+  }, []);
+
+  const handleDeleteNotification = useCallback(
+    (notification) => {
+      Alert.alert(
+        'Delete notification',
+        'Remove this notification from your list?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: () => {
+              persistDismissed([...new Set([...dismissedIds, notification.id])]);
+            },
+          },
+        ]
+      );
+    },
+    [dismissedIds, persistDismissed]
+  );
 
   const fetchTrips = useCallback(async (isPull = false) => {
     if (isPull) setTripsRefreshing(true);
@@ -338,13 +391,12 @@ const UserRecents = () => {
     [trips, statusFilter, dateFilter]
   );
 
-  const filteredNotifications = useMemo(
-    () =>
-      notifTypeFilter === 'all'
-        ? notifications
-        : notifications.filter((n) => n.type === notifTypeFilter),
-    [notifications, notifTypeFilter]
-  );
+  const filteredNotifications = useMemo(() => {
+    const visible = notifications.filter((n) => !dismissedIds.includes(n.id));
+    return notifTypeFilter === 'all'
+      ? visible
+      : visible.filter((n) => n.type === notifTypeFilter);
+  }, [notifications, notifTypeFilter, dismissedIds]);
 
   // ── "Para ulit" — re-book this route if a shuttle is on duty ──────────────
   const handleParaUlit = useCallback(
@@ -388,7 +440,9 @@ const UserRecents = () => {
               <TabButton
                 active={tab === 'notifications'}
                 label="Notifications"
-                badge={tab !== 'notifications' ? notifications.length : 0}
+                badge={tab !== 'notifications'
+                  ? notifications.filter((n) => !dismissedIds.includes(n.id)).length
+                  : 0}
                 onPress={() => setTab('notifications')}
               />
             </View>
@@ -507,7 +561,9 @@ const UserRecents = () => {
                   </Text>
                 </View>
               ) : (
-                filteredNotifications.map((n) => <NotificationItem key={n.id} notification={n} />)
+                filteredNotifications.map((n) => (
+                  <NotificationItem key={n.id} notification={n} onDelete={handleDeleteNotification} />
+                ))
               )}
             </ScrollView>
           )}
@@ -656,6 +712,14 @@ const styles = StyleSheet.create({
     fontFamily: 'Nunito-Bold',
     fontSize: moderateScale(11),
     color: Colors.text_idle,
+  },
+  notifHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  notifTrash: {
+    padding: 2,
   },
   notifTag: {
     marginTop: 2,
