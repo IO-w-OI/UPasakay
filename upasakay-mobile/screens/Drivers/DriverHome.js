@@ -110,6 +110,7 @@ const DriverHome = () => {
         );
     }, []);
 
+    const isSuspended = feed?.driver?.suspended ?? false;
     const shuttle = feed?.shuttle;
     const route = feed?.route;
     const counts = feed?.counts ?? { pending: 0, boarded: 0, capacity: 0 };
@@ -156,26 +157,31 @@ const DriverHome = () => {
                 }
             >
                 {/* Duty Toggle Card */}
-                <View style={[styles.dutyCard, !isOnDuty && styles.dutyCardOff]}>
+                <View style={[styles.dutyCard, (!isOnDuty || isSuspended) && styles.dutyCardOff]}>
                     <View style={styles.dutyLeft}>
-                        <Text style={styles.dutyLabel}>{isOnDuty ? 'On Duty' : 'Off Duty'}</Text>
+                        <Text style={styles.dutyLabel}>
+                            {isSuspended ? 'Suspended' : isOnDuty ? 'On Duty' : 'Off Duty'}
+                        </Text>
                         <Text style={styles.dutySubLabel} numberOfLines={2}>
-                            {isOnDuty
-                                ? 'Sharing location · available for pickups'
-                                : 'Location hidden · not receiving pickups'}
+                            {isSuspended
+                                ? 'Your account is suspended. Contact the administrator.'
+                                : isOnDuty
+                                    ? 'Sharing location · available for pickups'
+                                    : 'Location hidden · not receiving pickups'}
                         </Text>
                     </View>
                     <View style={styles.dutyRight}>
-                        <View style={[styles.dutyPill, isOnDuty ? styles.dutyPillOn : styles.dutyPillOff]}>
-                            <Text style={[styles.dutyPillText, { color: isOnDuty ? '#1B5E20' : '#9A2A2A' }]}>
-                                {isOnDuty ? 'Active' : 'Offline'}
+                        <View style={[styles.dutyPill, (isOnDuty && !isSuspended) ? styles.dutyPillOn : styles.dutyPillOff]}>
+                            <Text style={[styles.dutyPillText, { color: (isOnDuty && !isSuspended) ? '#1B5E20' : '#9A2A2A' }]}>
+                                {isSuspended ? 'Suspended' : isOnDuty ? 'Active' : 'Offline'}
                             </Text>
                         </View>
                         <Switch
-                            value={isOnDuty}
+                            value={isOnDuty && !isSuspended}
                             onValueChange={toggleDuty}
+                            disabled={isSuspended}
                             trackColor={{ false: '#e0e0e0', true: '#A5D6A7' }}
-                            thumbColor={isOnDuty ? '#2E7D32' : '#aaa'}
+                            thumbColor={(isOnDuty && !isSuspended) ? '#2E7D32' : '#aaa'}
                         />
                     </View>
                 </View>

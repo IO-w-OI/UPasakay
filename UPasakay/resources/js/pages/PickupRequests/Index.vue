@@ -77,6 +77,19 @@ const apply = () => {
     }, { preserveState: true, replace: true });
 };
 
+// ── CSV export ─────────────────────────────────────────────────────────────
+// Downloads the current filtered view via a plain browser navigation so the
+// streamed file lands as an attachment.
+const exportCsv = () => {
+    const params = new URLSearchParams();
+    if (search.value) params.set('search', search.value);
+    if (routeFilter.value  !== 'All') params.set('route', routeFilter.value);
+    if (statusFilter.value !== 'All') params.set('status', statusFilter.value);
+    if (dateFilter.value) params.set('date', dateFilter.value);
+    const qs = params.toString();
+    window.location.href = `/pickup-requests/export${qs ? `?${qs}` : ''}`;
+};
+
 // ── Expanded row ───────────────────────────────────────────────────────────
 const expanded = ref<number | null>(null);
 const toggleExpand = (id: number) => {
@@ -92,14 +105,30 @@ const toggleExpand = (id: number) => {
 // ── Leaflet request maps ─────────────────────────────────────────────────
 const requestMaps = new window.Map<number, L.Map>();
 
+// Leaflet's default marker icon resolves its PNGs relative to the CSS,
+// which breaks under Vite's bundling — the marker silently fails to load.
+// A self-contained SVG divIcon needs no asset resolution at all.
+const pinIcon = L.divIcon({
+    className: 'req-pin',
+    html: `<svg width="26" height="38" viewBox="0 0 26 38" xmlns="http://www.w3.org/2000/svg">
+        <path d="M13 0C5.82 0 0 5.82 0 13c0 9.75 13 25 13 25s13-15.25 13-25C26 5.82 20.18 0 13 0z" fill="#8B0000"/>
+        <circle cx="13" cy="13" r="4.5" fill="#fff"/>
+    </svg>`,
+    iconSize: [26, 38],
+    iconAnchor: [13, 38],
+});
+
 const initRequestMap = (id: number, lat: number, lng: number) => {
     requestMaps.get(id)?.remove();
     const el = document.getElementById(`req-map-${id}`);
     if (!el) return;
     const m = L.map(el, { zoomControl: false, attributionControl: false }).setView([lat, lng], 16);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(m);
-    L.marker([lat, lng]).addTo(m);
+    L.marker([lat, lng], { icon: pinIcon }).addTo(m);
     requestMaps.set(id, m);
+    // The map is created inside a row that just expanded; recompute its
+    // size once layout settles so tiles and the marker position correctly.
+    setTimeout(() => m.invalidateSize(), 150);
 };
 
 onUnmounted(() => {
@@ -195,7 +224,8 @@ const statCards = computed(() => [
                     <option value="today">Today</option>
                     <option value="">All Time</option>
                 </select>
-                <button class="ml-auto flex items-center gap-1.5 rounded-lg border border-border/70 px-3 py-2 text-sm text-muted-foreground hover:bg-accent">
+                <button type="button" @click="exportCsv"
+                    class="ml-auto flex items-center gap-1.5 rounded-lg border border-border/70 px-3 py-2 text-sm text-muted-foreground hover:bg-accent">
                     <Download class="h-4 w-4" /> CSV
                 </button>
             </div>

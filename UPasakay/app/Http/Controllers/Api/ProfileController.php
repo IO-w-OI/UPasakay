@@ -30,7 +30,8 @@ class ProfileController extends Controller
                     'full_name' => $driver->full_name,
                     'email' => $user->email,
                     'license_number' => $driver->license_number,
-                    'driver_status' => $driver->driver_status,
+                    'driver_status' => $driver->displayStatus(),
+                    'is_suspended' => (bool) $driver->is_suspended,
                 ],
             ]);
         }

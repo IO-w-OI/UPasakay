@@ -79,7 +79,7 @@ show.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     show.form = showForm
 /**
 * @see \App\Http\Controllers\Api\ProfileController::update
- * @see app/Http/Controllers/Api/ProfileController.php:54
+ * @see app/Http/Controllers/Api/ProfileController.php:55
  * @route '/api/profile'
  */
 export const update = (options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -94,7 +94,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\ProfileController::update
- * @see app/Http/Controllers/Api/ProfileController.php:54
+ * @see app/Http/Controllers/Api/ProfileController.php:55
  * @route '/api/profile'
  */
 update.url = (options?: RouteQueryOptions) => {
@@ -103,7 +103,7 @@ update.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\ProfileController::update
- * @see app/Http/Controllers/Api/ProfileController.php:54
+ * @see app/Http/Controllers/Api/ProfileController.php:55
  * @route '/api/profile'
  */
 update.patch = (options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -113,7 +113,7 @@ update.patch = (options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\ProfileController::update
- * @see app/Http/Controllers/Api/ProfileController.php:54
+ * @see app/Http/Controllers/Api/ProfileController.php:55
  * @route '/api/profile'
  */
     const updateForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -128,7 +128,7 @@ update.patch = (options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\ProfileController::update
- * @see app/Http/Controllers/Api/ProfileController.php:54
+ * @see app/Http/Controllers/Api/ProfileController.php:55
  * @route '/api/profile'
  */
         updateForm.patch = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

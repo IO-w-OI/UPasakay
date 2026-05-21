@@ -29,8 +29,10 @@ class DriverController extends Controller
 
         if ($request->filled('status')) {
             $status = $request->status;
-            if (in_array($status, ['active', 'idle', 'offline', 'suspended'])) {
-                $query->where('driver_status', $status);
+            if ($status === 'suspended') {
+                $query->where('is_suspended', true);
+            } elseif (in_array($status, ['active', 'idle', 'offline'])) {
+                $query->where('is_suspended', false)->where('driver_status', $status);
             }
         }
 
@@ -76,7 +78,8 @@ class DriverController extends Controller
                 'full_name' => $d->full_name ?? '—',
                 'email' => $d->user?->email ?? '—',
                 'license_number' => $d->license_number ?? '—',
-                'status' => $d->driver_status ?? ($d->is_available ? 'active' : 'offline'),
+                'status' => $d->displayStatus(),
+                'is_suspended' => (bool) $d->is_suspended,
                 'route' => $shuttle?->route?->name ?? '—',
                 'route_id' => $shuttle?->route_id,
                 'shuttle' => $shuttle?->shuttle_code ?? '—',
@@ -118,7 +121,7 @@ class DriverController extends Controller
             ->map(fn ($s) => ['id' => $s->id, 'shuttle_code' => $s->shuttle_code]);
 
         // All drivers list (for shuttle-driver assignment)
-        $allDrivers = Driver::where('driver_status', '!=', 'suspended')
+        $allDrivers = Driver::where('is_suspended', false)
             ->get()
             ->map(fn ($d) => ['id' => $d->id, 'full_name' => $d->full_name]);
 
@@ -167,7 +170,8 @@ class DriverController extends Controller
                 'employee_id' => 'D-'.str_pad($driver->id, 3, '0', STR_PAD_LEFT),
                 'full_name' => $driver->full_name ?? '—',
                 'license' => $driver->license_number,
-                'status' => $driver->driver_status ?? ($driver->is_available ? 'active' : 'offline'),
+                'status' => $driver->displayStatus(),
+                'is_suspended' => (bool) $driver->is_suspended,
                 'route' => $shuttle?->route?->name ?? '—',
                 'shuttle' => $shuttle?->shuttle_code ?? '—',
                 'shuttle_id' => $shuttle?->id,
@@ -227,18 +231,26 @@ class DriverController extends Controller
             'full_name' => 'required|string|max:255',
             'license_number' => 'sometimes|string|max:255',
             'email' => 'sometimes|email',
-            'driver_status' => 'sometimes|string|in:active,idle,offline,suspended',
+            'is_suspended' => 'sometimes|boolean',
             'route_id' => 'nullable|string',
             'shuttle_id' => 'nullable|integer',
         ]);
 
-        $driver->update($request->only(['full_name', 'license_number', 'driver_status']));
+        // driver_status is owned by the driver's own on/off-duty toggle in
+        // the mobile app — admin never sets it here. Admin only controls
+        // suspension.
+        $driver->update($request->only(['full_name', 'license_number']));
 
-        // Sync is_available from driver_status
-        if ($request->has('driver_status')) {
-            $driver->update([
-                'is_available' => in_array($request->driver_status, ['active', 'idle']),
-            ]);
+        if ($request->has('is_suspended')) {
+            $suspend = $request->boolean('is_suspended');
+            $driver->update(['is_suspended' => $suspend]);
+
+            // Suspending forces the driver off duty immediately.
+            if ($suspend) {
+                $driver->update(['is_available' => false, 'driver_status' => 'offline']);
+                Shuttle::where('driver_id', $driver->id)
+                    ->update(['status' => 'offline']);
+            }
         }
 
         // Update email if provided

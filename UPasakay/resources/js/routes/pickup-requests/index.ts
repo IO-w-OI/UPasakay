@@ -79,7 +79,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     index.form = indexForm
 /**
 * @see \App\Http\Controllers\PickupRequestController::index
- * @see app/Http/Controllers/PickupRequestController.php:13
+ * @see app/Http/Controllers/PickupRequestController.php:42
  * @route '/pickup-requests'
  */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -94,7 +94,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\PickupRequestController::index
- * @see app/Http/Controllers/PickupRequestController.php:13
+ * @see app/Http/Controllers/PickupRequestController.php:42
  * @route '/pickup-requests'
  */
 index.url = (options?: RouteQueryOptions) => {
@@ -103,7 +103,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\PickupRequestController::index
- * @see app/Http/Controllers/PickupRequestController.php:13
+ * @see app/Http/Controllers/PickupRequestController.php:42
  * @route '/pickup-requests'
  */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -112,7 +112,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\PickupRequestController::index
- * @see app/Http/Controllers/PickupRequestController.php:13
+ * @see app/Http/Controllers/PickupRequestController.php:42
  * @route '/pickup-requests'
  */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -122,7 +122,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\PickupRequestController::index
- * @see app/Http/Controllers/PickupRequestController.php:13
+ * @see app/Http/Controllers/PickupRequestController.php:42
  * @route '/pickup-requests'
  */
     const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -132,7 +132,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\PickupRequestController::index
- * @see app/Http/Controllers/PickupRequestController.php:13
+ * @see app/Http/Controllers/PickupRequestController.php:42
  * @route '/pickup-requests'
  */
         indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -141,7 +141,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\PickupRequestController::index
- * @see app/Http/Controllers/PickupRequestController.php:13
+ * @see app/Http/Controllers/PickupRequestController.php:42
  * @route '/pickup-requests'
  */
         indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -498,12 +498,91 @@ destroy.delete = (args: { pickup_request: string | number } | [pickup_request: s
         })
     
     destroy.form = destroyForm
+/**
+* @see \App\Http\Controllers\PickupRequestController::exportMethod
+ * @see app/Http/Controllers/PickupRequestController.php:103
+ * @route '/pickup-requests/export'
+ */
+export const exportMethod = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: exportMethod.url(options),
+    method: 'get',
+})
+
+exportMethod.definition = {
+    methods: ["get","head"],
+    url: '/pickup-requests/export',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\PickupRequestController::exportMethod
+ * @see app/Http/Controllers/PickupRequestController.php:103
+ * @route '/pickup-requests/export'
+ */
+exportMethod.url = (options?: RouteQueryOptions) => {
+    return exportMethod.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\PickupRequestController::exportMethod
+ * @see app/Http/Controllers/PickupRequestController.php:103
+ * @route '/pickup-requests/export'
+ */
+exportMethod.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: exportMethod.url(options),
+    method: 'get',
+})
+/**
+* @see \App\Http\Controllers\PickupRequestController::exportMethod
+ * @see app/Http/Controllers/PickupRequestController.php:103
+ * @route '/pickup-requests/export'
+ */
+exportMethod.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: exportMethod.url(options),
+    method: 'head',
+})
+
+    /**
+* @see \App\Http\Controllers\PickupRequestController::exportMethod
+ * @see app/Http/Controllers/PickupRequestController.php:103
+ * @route '/pickup-requests/export'
+ */
+    const exportMethodForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: exportMethod.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\PickupRequestController::exportMethod
+ * @see app/Http/Controllers/PickupRequestController.php:103
+ * @route '/pickup-requests/export'
+ */
+        exportMethodForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: exportMethod.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\PickupRequestController::exportMethod
+ * @see app/Http/Controllers/PickupRequestController.php:103
+ * @route '/pickup-requests/export'
+ */
+        exportMethodForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: exportMethod.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    exportMethod.form = exportMethodForm
 const pickupRequests = {
     index: Object.assign(index, index),
 store: Object.assign(store, store),
 show: Object.assign(show, show),
 update: Object.assign(update, update),
 destroy: Object.assign(destroy, destroy),
+export: Object.assign(exportMethod, exportMethod),
 }
 
 export default pickupRequests

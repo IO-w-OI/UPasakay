@@ -18,7 +18,8 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 interface DriverItem {
     id: number; employee_id: string; full_name: string; email: string;
-    license_number: string; status: string; route: string; route_id: number | null;
+    license_number: string; status: string; is_suspended: boolean;
+    route: string; route_id: number | null;
     shuttle: string; shuttle_id: number | null; last_active: string;
     is_online: boolean; total_pickups: number;
 }
@@ -99,16 +100,19 @@ const showEditDrawer = ref(false);
 const editingDriverId = ref<number | null>(null);
 const editForm = useForm({
     full_name: '', license_number: '', email: '',
-    driver_status: 'active' as string,
+    is_suspended: false,
     shuttle_id: null as number | null,
 });
+// The driver's own live duty status, shown read-only in the drawer.
+const editingDriverStatus = ref<string>('offline');
 
 const openEdit = (d: DriverItem) => {
     editingDriverId.value = d.id;
     editForm.full_name = d.full_name;
     editForm.license_number = d.license_number;
     editForm.email = d.email;
-    editForm.driver_status = d.status;
+    editForm.is_suspended = d.is_suspended;
+    editingDriverStatus.value = d.status;
     editForm.shuttle_id = d.shuttle_id;
     showEditDrawer.value = true;
     openMenu.value = null;
@@ -497,7 +501,6 @@ const lastActiveClass = (d: DriverItem) => d.is_online ? 'text-green-600 dark:te
                         class="rounded-lg border border-border/70 bg-card px-3 py-2 text-sm text-foreground focus:outline-none">
                         <option value="All">Status: All</option>
                         <option value="active">Active</option>
-                        <option value="idle">Idle</option>
                         <option value="offline">Offline</option>
                         <option value="suspended">Suspended</option>
                     </select>
@@ -991,16 +994,40 @@ const lastActiveClass = (d: DriverItem) => d.is_online ? 'text-green-600 dark:te
 
                     <hr class="border-border/50" />
 
-                    <!-- Status -->
+                    <!-- Account -->
                     <div>
-                        <p class="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Status</p>
-                        <select v-model="editForm.driver_status"
-                            class="w-full rounded-lg border border-border/70 bg-card px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-[#8B0000]">
-                            <option value="active">Active (On Duty)</option>
-                            <option value="idle">Idle (Logged in, no trip)</option>
-                            <option value="offline">Offline</option>
-                            <option value="suspended">Suspended</option>
-                        </select>
+                        <p class="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Account</p>
+
+                        <!-- Duty status — read-only, owned by the driver app -->
+                        <div class="mb-3 flex items-center justify-between rounded-lg border border-border/70 px-3 py-2.5">
+                            <div>
+                                <p class="text-sm font-medium text-foreground">Duty status</p>
+                                <p class="text-xs text-muted-foreground">Set by the driver in the mobile app</p>
+                            </div>
+                            <span class="flex items-center gap-1.5">
+                                <span :class="['h-2 w-2 rounded-full', statusDot(editingDriverStatus)]" />
+                                <span class="rounded-full px-2 py-0.5 text-xs font-medium capitalize" :class="statusBadge(editingDriverStatus)">{{ editingDriverStatus }}</span>
+                            </span>
+                        </div>
+
+                        <!-- Suspension — admin-controlled -->
+                        <div class="flex items-center justify-between rounded-lg border px-3 py-2.5"
+                            :class="editForm.is_suspended ? 'border-red-500/40 bg-red-500/5' : 'border-border/70'">
+                            <div class="pr-3">
+                                <p class="text-sm font-medium" :class="editForm.is_suspended ? 'text-red-600 dark:text-red-400' : 'text-foreground'">Suspend driver</p>
+                                <p class="text-xs text-muted-foreground">Forces them off duty and out of dispatch</p>
+                            </div>
+                            <button type="button" role="switch" :aria-checked="editForm.is_suspended"
+                                @click="editForm.is_suspended = !editForm.is_suspended"
+                                :class="['relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-red-500/40',
+                                         editForm.is_suspended ? 'bg-red-600' : 'bg-muted']">
+                                <span :class="['inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform',
+                                               editForm.is_suspended ? 'translate-x-5' : 'translate-x-0.5']" />
+                            </button>
+                        </div>
+                        <p v-if="editForm.is_suspended" class="mt-2 text-xs text-red-600 dark:text-red-400">
+                            This driver cannot go back on duty until you un-suspend them.
+                        </p>
                     </div>
 
                     <hr class="border-border/50" />

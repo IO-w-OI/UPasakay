@@ -51,6 +51,12 @@ class DriverApiController extends Controller
             return response()->json(['message' => 'No driver profile found.'], 404);
         }
 
+        if ($driver->is_suspended) {
+            return response()->json([
+                'message' => 'Your account is suspended. Contact the administrator.',
+            ], 403);
+        }
+
         $validated = $request->validate([
             'on_duty' => 'required|boolean',
         ]);
@@ -94,7 +100,7 @@ class DriverApiController extends Controller
 
         if (! $route) {
             return response()->json([
-                'driver' => ['id' => $driver->id, 'name' => $driver->full_name, 'on_duty' => (bool) $driver->is_available],
+                'driver' => $this->driverPayload($driver),
                 'shuttle' => $shuttle ? $this->shuttlePayload($shuttle) : null,
                 'route' => null,
                 'stops' => [],
@@ -120,7 +126,7 @@ class DriverApiController extends Controller
         ])->values();
 
         return response()->json([
-            'driver' => ['id' => $driver->id, 'name' => $driver->full_name],
+            'driver' => $this->driverPayload($driver),
             'shuttle' => $this->shuttlePayload($shuttle),
             'route' => [
                 'id' => $route->id,
@@ -149,6 +155,22 @@ class DriverApiController extends Controller
                 'capacity' => (int) ($shuttle->capacity ?? 0),
             ],
         ]);
+    }
+
+    /**
+     * Uniform driver block for the mobile app: duty toggle state, the
+     * admin suspension flag, and the same status string the web admin
+     * dashboard shows.
+     */
+    private function driverPayload(Driver $driver): array
+    {
+        return [
+            'id' => $driver->id,
+            'name' => $driver->full_name,
+            'on_duty' => (bool) $driver->is_available,
+            'suspended' => (bool) $driver->is_suspended,
+            'status' => $driver->displayStatus(),
+        ];
     }
 
     private function shuttlePayload($shuttle): array

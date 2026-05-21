@@ -54,6 +54,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('shuttles/{shuttle}', [ShuttleWebController::class, 'destroy'])->name('shuttles.destroy');
 
     // Pickup Requests
+    Route::get('pickup-requests/export', [PickupRequestController::class, 'export'])->name('pickup-requests.export');
     Route::get('pickup-requests', [PickupRequestController::class, 'index'])->name('pickup-requests.index');
 
     // Passenger approvals

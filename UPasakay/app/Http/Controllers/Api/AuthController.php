@@ -378,8 +378,9 @@ class AuthController extends Controller
             'user_id' => $driver->user_id,
             'full_name' => $driver->full_name,
             'license_number' => $driver->license_number,
-            'driver_status' => $driver->driver_status,
+            'driver_status' => $driver->displayStatus(),
             'is_available' => (bool) $driver->is_available,
+            'is_suspended' => (bool) $driver->is_suspended,
             'shuttle' => $shuttle ? [
                 'id' => $shuttle->id,
                 'shuttle_code' => $shuttle->shuttle_code,

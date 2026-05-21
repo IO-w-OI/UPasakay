@@ -9,7 +9,26 @@ class Driver extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['user_id', 'full_name', 'license_number', 'is_available', 'driver_status'];
+    protected $fillable = ['user_id', 'full_name', 'license_number', 'is_available', 'driver_status', 'is_suspended'];
+
+    protected $casts = [
+        'is_available' => 'boolean',
+        'is_suspended' => 'boolean',
+    ];
+
+    /**
+     * The status surfaced to admin (web) and driver (mobile) alike.
+     * Suspension is an admin override; otherwise it's the driver's own
+     * duty state. Keeps the value uniform across both apps.
+     */
+    public function displayStatus(): string
+    {
+        if ($this->is_suspended) {
+            return 'suspended';
+        }
+
+        return $this->driver_status ?? ($this->is_available ? 'active' : 'offline');
+    }
 
     public function user()
     {
