@@ -106,7 +106,7 @@ class DriverApiController extends Controller
         $queue = $this->pickupRequests->queueForRoute($route->id);
 
         $waitingByStop = $queue
-            ->where('status', 'pending')
+            ->whereIn('status', ['pending', 'accepted'])
             ->groupBy('pickup_stop_id')
             ->map->count();
 
@@ -134,7 +134,10 @@ class DriverApiController extends Controller
                 'passenger' => $r->user?->full_name ?? $r->user?->name ?? 'Passenger',
                 'pickup_stop_id' => $r->pickup_stop_id,
                 'pickup_stop' => $r->pickupStop?->name,
+                'dropoff_stop_id' => $r->dropoff_stop_id,
                 'dropoff_stop' => $r->dropoffStop?->name,
+                'dropoff_lat' => $r->dropoffStop?->latitude !== null ? (float) $r->dropoffStop->latitude : null,
+                'dropoff_lng' => $r->dropoffStop?->longitude !== null ? (float) $r->dropoffStop->longitude : null,
                 'status' => $r->status,
                 'eta_minutes' => $r->eta_minutes,
                 'queue_position' => $r->queue_position,
@@ -172,7 +175,7 @@ class DriverApiController extends Controller
 
         $routeId = $driver->shuttle?->route_id;
 
-        $notifications = Notification::where('audience', 'drivers')
+        $notifications = Notification::whereIn('audience', ['drivers', 'all'])
             ->when($routeId, fn ($q) => $q->where(function ($q) use ($routeId) {
                 $q->where('route_id', $routeId)->orWhereNull('route_id');
             }))

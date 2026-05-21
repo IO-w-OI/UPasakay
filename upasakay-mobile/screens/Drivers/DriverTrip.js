@@ -1,5 +1,6 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
+import * as Notifications from 'expo-notifications';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -22,6 +23,22 @@ import { useDriverLocationShare } from '../../hooks/useDriverLocationShare';
 
 const PUSHER_KEY = process.env.EXPO_PUBLIC_PUSHER_KEY ?? 'f21efd02988d084b7b35';
 const PUSHER_CLUSTER = process.env.EXPO_PUBLIC_PUSHER_CLUSTER ?? 'ap1';
+
+// Distance (metres) at which the driver gets a heads-up notification that a
+// boarded passenger's dropoff stop is approaching.
+const DROPOFF_PROMPT_M = 100;
+
+const haversineM = (lat1, lng1, lat2, lng2) => {
+    const R = 6_371_000;
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLng = ((lng2 - lng1) * Math.PI) / 180;
+    const a =
+        Math.sin(dLat / 2) ** 2 +
+        Math.cos((lat1 * Math.PI) / 180) *
+            Math.cos((lat2 * Math.PI) / 180) *
+            Math.sin(dLng / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+};
 
 const STATUS_BAR_H = Constants.statusBarHeight;
 const MAP_HEIGHT = Math.round(Dimensions.get('window').height * 0.6);
@@ -213,6 +230,10 @@ const DriverTrip = () => {
 
     const { start: startSharing, stop: stopSharing, coords } = useDriverLocationShare();
 
+    // Tracks which in-progress request IDs have already triggered a prompt so
+    // we don't fire the same notification on every GPS tick within 100 m.
+    const promptedRef = useRef(new Set());
+
     const loadFeed = useCallback(async () => {
         setError(null);
         const res = await apiGet('/driver/queue');
@@ -242,6 +263,8 @@ const DriverTrip = () => {
             bookingCh.bind('passenger.booked', () => loadFeed());
             const adminCh = pusher.subscribe('admin-rides');
             adminCh.bind('ride.accepted', () => loadFeed());
+            // Fires for both manual "Arrived at Stop" and server auto-complete.
+            adminCh.bind('ride.completed', () => loadFeed());
         } catch (e) {
             console.warn('[Pusher] init error', e);
         }
@@ -273,6 +296,30 @@ const DriverTrip = () => {
             `window.setDriverLocation(${coords.latitude}, ${coords.longitude}, false); true;`
         );
     }, [mapLoaded, coords]);
+
+    // Proximity prompt — fire once per ride when the driver is within
+    // DROPOFF_PROMPT_M of a boarded passenger's dropoff stop.
+    // The server auto-completes at 10 m; this is just the early heads-up.
+    useEffect(() => {
+        if (!coords) return;
+        const inProgress = queue.filter(
+            (p) => p.status === 'in_progress' && p.dropoff_lat != null && p.dropoff_lng != null
+        );
+        for (const p of inProgress) {
+            if (promptedRef.current.has(p.id)) continue;
+            const dist = haversineM(coords.latitude, coords.longitude, p.dropoff_lat, p.dropoff_lng);
+            if (dist > DROPOFF_PROMPT_M) continue;
+            promptedRef.current.add(p.id);
+            Notifications.scheduleNotificationAsync({
+                content: {
+                    title: `Approaching ${p.dropoff_stop ?? 'drop-off stop'}`,
+                    body: `${p.passenger} needs to be dropped off here.`,
+                    sound: true,
+                },
+                trigger: null,
+            });
+        }
+    }, [coords, queue]);
 
     const onRefresh = useCallback(() => {
         setRefreshing(true);

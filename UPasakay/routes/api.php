@@ -80,6 +80,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // the user into the waiting screen until they cancel or the ride ends.
     Route::get('passenger/active-pickup-request', [PickupRequestController::class, 'activeForPassenger'])
         ->middleware('ensure.passenger.approved');
+    Route::get('passenger/trips', [PickupRequestController::class, 'passengerTrips'])
+        ->middleware('ensure.passenger.approved');
     Route::apiResource('pickup-requests', PickupRequestController::class)
         ->middleware('ensure.passenger.approved');
     // Passenger self-confirms boarding by scanning/typing the code on the

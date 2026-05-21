@@ -32,7 +32,7 @@ import {
 import { apiGet } from '../../services/apiClient';
 import { moderateScale, NAV_CLEARANCE } from '../../utils/responsive';
 
-const TripItem = ({ status, route, destination, date }) => {
+const TripItem = ({ status, route, pickup_stop, dropoff_stop, date }) => {
   const isCompleted = status === 'Completed';
 
   return (
@@ -47,7 +47,7 @@ const TripItem = ({ status, route, destination, date }) => {
 
         <TripInfo>
           <TripTitle style={{ fontFamily: 'Nunito-Bold', fontSize: moderateScale(14) }}>{route}</TripTitle>
-          <TripTitle style={{ fontFamily: 'Nunito-Bold', fontSize: moderateScale(14) }}>{destination}</TripTitle>
+          <TripTitle style={{ fontFamily: 'Nunito-Bold', fontSize: moderateScale(14) }}>{pickup_stop} → {dropoff_stop}</TripTitle>
           <TripDate>{date}</TripDate>
         </TripInfo>
 
@@ -114,9 +114,21 @@ const TabButton = ({ active, label, badge, onPress }) => (
 
 const UserRecents = () => {
   const [tab, setTab] = useState('trips');
+  const [trips, setTrips] = useState([]);
+  const [tripsLoading, setTripsLoading] = useState(false);
+  const [tripsRefreshing, setTripsRefreshing] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [notifLoading, setNotifLoading] = useState(false);
   const [notifRefreshing, setNotifRefreshing] = useState(false);
+
+  const fetchTrips = useCallback(async (isPull = false) => {
+    if (isPull) setTripsRefreshing(true);
+    else setTripsLoading(true);
+    const { ok, data } = await apiGet('passenger/trips');
+    if (ok) setTrips(Array.isArray(data?.data) ? data.data : []);
+    setTripsLoading(false);
+    setTripsRefreshing(false);
+  }, []);
 
   const fetchNotifications = useCallback(async (isPull = false) => {
     if (isPull) setNotifRefreshing(true);
@@ -127,28 +139,15 @@ const UserRecents = () => {
     setNotifRefreshing(false);
   }, []);
 
-  // Lazy-load notifications the first time the tab is selected; subsequent
-  // visits show the cached list immediately and pull-to-refresh updates it.
+  useEffect(() => {
+    fetchTrips();
+  }, [fetchTrips]);
+
   useEffect(() => {
     if (tab === 'notifications' && notifications.length === 0 && !notifLoading) {
       fetchNotifications();
     }
   }, [tab, notifications.length, notifLoading, fetchNotifications]);
-
-  // Trip history — still mocked. Wiring it to a real endpoint is a separate
-  // task; the tabs let real notifications co-exist with the mock trips in
-  // the meantime.
-  const tripsData = [
-    { id: 1, status: 'Completed', route: 'Cebu City Bus Route',     destination: 'UP Cebu, RD Talamban',     date: '10 Apr 2026, 06:05 PM' },
-    { id: 2, status: 'Completed', route: 'Cebu City Bus Route',     destination: 'RD Talamban, UP Cebu',     date: '11 Apr 2026, 06:05 AM' },
-    { id: 3, status: 'Completed', route: 'UP Cebu North Bus Route', destination: 'Pacific Mall, UP Cebu',    date: '12 Apr 2026, 06:05 AM' },
-    { id: 4, status: 'Cancelled', route: 'UP Cebu North Bus Route', destination: 'UP Cebu, SM Consolacion',  date: '13 Apr 2026, 06:05 PM' },
-    { id: 5, status: 'Completed', route: 'UP Cebu South Bus Route', destination: "UP Cebu, Winzen's Cafe",   date: '14 Apr 2026, 06:05 PM' },
-    { id: 6, status: 'Completed', route: 'UP Cebu South Bus Route', destination: "Winzen's Cafe, UP Cebu",   date: '15 Apr 2026, 06:05 AM' },
-    { id: 7, status: 'Cancelled', route: 'Cebu City Bus Route',     destination: 'UP Cebu, RD Talamban',     date: '16 Apr 2026, 06:05 PM' },
-    { id: 8, status: 'Completed', route: 'UP Cebu North Bus Route', destination: 'Pacific Mall, UP Cebu',    date: '17 Apr 2026, 06:05 AM' },
-    { id: 9, status: 'Completed', route: 'UP Cebu South Bus Route', destination: "Winzen's Cafe, UP Cebu",   date: '18 Apr 2026, 06:05 AM' },
-  ];
 
   return (
     <StyledContainer style={{ padding: 0, paddingTop: 0 }} colors={[Colors.base_page, Colors.base_page]}>
@@ -178,13 +177,21 @@ const UserRecents = () => {
               showsVerticalScrollIndicator={false}
               style={{ width: '100%' }}
               contentContainerStyle={{ alignItems: 'center', paddingTop: 12, paddingBottom: NAV_CLEARANCE }}
+              refreshControl={
+                <RefreshControl
+                  refreshing={tripsRefreshing}
+                  onRefresh={() => fetchTrips(true)}
+                  tintColor={Colors.golden_brown}
+                  colors={[Colors.golden_brown]}
+                />
+              }
             >
-              {tripsData.map((trip) => (
-                <TripItem key={trip.id} {...trip} />
-              ))}
-
-              {tripsData.length === 0 && (
+              {tripsLoading ? (
+                <ActivityIndicator size="large" color={Colors.golden_brown} style={{ marginTop: 40 }} />
+              ) : trips.length === 0 ? (
                 <TripDate style={{ marginTop: 20 }}>No recent trips found.</TripDate>
+              ) : (
+                trips.map((trip) => <TripItem key={trip.id} {...trip} />)
               )}
             </ScrollView>
           ) : (

@@ -270,6 +270,15 @@ const UserMap = () => {
     phaseRef.current = phase;
   }, [phase]);
 
+  const pickupRequestIdRef = useRef(null);
+  useEffect(() => {
+    pickupRequestIdRef.current = pickupRequestId;
+  }, [pickupRequestId]);
+
+  // Set to true just before navigating to /Feedback so the beforeRemove
+  // guard knows to allow that one navigation even while locked=true.
+  const completingRef = useRef(false);
+
   // Mirrors for pollShuttles (which is memoised on routeId only) so we don't
   // need to recreate the 8s polling interval whenever stops or shuttle change.
   const assignedShuttleIdRef = useRef(null);
@@ -304,6 +313,7 @@ const UserMap = () => {
   useEffect(() => {
     if (!locked) return;
     const unsub = navigation.addListener('beforeRemove', (e) => {
+      if (completingRef.current) return;
       e.preventDefault();
     });
     return unsub;
@@ -600,12 +610,18 @@ const UserMap = () => {
         paxCh.bind('passenger.boarded', () => setPhase('onboard'));
 
         paxCh.bind('ride.completed', () => {
+          const completedRequestId = pickupRequestIdRef.current;
           setPhase('book');
           setDriverInfo(null);
           setPickupRequestId(null);
           setAssignedShuttleId(null);
           setShuttleDistanceM(null);
           assignedShuttleLocRef.current = null;
+          completingRef.current = true;
+          router.replace({
+            pathname: '/Feedback',
+            params: { pickup_request_id: String(completedRequestId ?? '') },
+          });
         });
       }
     } catch (e) {

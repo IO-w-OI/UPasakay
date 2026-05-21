@@ -204,6 +204,37 @@ class PickupRequestController extends Controller
     }
 
     /**
+     * Authenticated passenger's trip history — completed and cancelled rides,
+     * newest first. Used by the Recents tab in the mobile app.
+     */
+    public function passengerTrips(Request $request)
+    {
+        $principal = $request->user();
+        if (! $principal) {
+            return response()->json(['message' => 'Unauthenticated'], 401);
+        }
+
+        $userId = $principal instanceof Passenger ? $principal->user_id : $principal->id;
+
+        $trips = PickupRequest::with(['route', 'pickupStop', 'dropoffStop'])
+            ->where('user_id', $userId)
+            ->whereIn('status', ['completed', 'cancelled'])
+            ->latest('id')
+            ->limit(50)
+            ->get()
+            ->map(fn ($r) => [
+                'id'           => $r->id,
+                'status'       => ucfirst($r->status),
+                'route'        => $r->route?->name ?? 'Unknown Route',
+                'pickup_stop'  => $r->pickupStop?->name ?? '—',
+                'dropoff_stop' => $r->dropoffStop?->name ?? '—',
+                'date'         => $r->updated_at?->format('d M Y, h:i A') ?? $r->created_at?->format('d M Y, h:i A'),
+            ]);
+
+        return response()->json(['data' => $trips]);
+    }
+
+    /**
      * Passenger self-confirms boarding by scanning/typing the code printed
      * on the shuttle. Verifies the code matches the assigned shuttle AND the
      * passenger is physically near the shuttle's latest GPS position.
