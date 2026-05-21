@@ -223,12 +223,20 @@ class PickupRequestController extends Controller
             ->limit(50)
             ->get()
             ->map(fn ($r) => [
-                'id'           => $r->id,
-                'status'       => ucfirst($r->status),
-                'route'        => $r->route?->name ?? 'Unknown Route',
-                'pickup_stop'  => $r->pickupStop?->name ?? '—',
-                'dropoff_stop' => $r->dropoffStop?->name ?? '—',
-                'date'         => $r->updated_at?->format('d M Y, h:i A') ?? $r->created_at?->format('d M Y, h:i A'),
+                'id'            => $r->id,
+                'status'        => ucfirst($r->status),
+                'route'         => $r->route?->name ?? 'Unknown Route',
+                'route_id'      => $r->route_id,
+                'pickup_stop'   => $r->pickupStop?->name ?? '—',
+                'dropoff_stop'  => $r->dropoffStop?->name ?? '—',
+                'date'          => $r->updated_at?->format('d M Y, h:i A') ?? $r->created_at?->format('d M Y, h:i A'),
+                // ISO timestamp for client-side date-range filtering.
+                'iso'           => ($r->updated_at ?? $r->created_at)?->toIso8601String(),
+                // Feedback the passenger left on this trip — surfaced in the
+                // Recents detail view.
+                'rating'        => $r->rating !== null ? (int) $r->rating : null,
+                'comment'       => $r->comment,
+                'cancel_reason' => $r->cancel_reason,
             ]);
 
         return response()->json(['data' => $trips]);
