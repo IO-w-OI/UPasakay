@@ -298,9 +298,13 @@ class PickupRequestController extends Controller
     }
 
     /**
-     * Passenger rates a completed ride. One rating per ride — a request that
-     * already has a rating is rejected so a driver's average can't be inflated
-     * by replaying this endpoint.
+     * Passenger rates their ride. Allowed once the passenger has boarded
+     * (status in_progress) or after the ride is completed — the mobile app
+     * shows the rating prompt right after boarding. Submitting a rating from
+     * the in_progress state also finalises the ride (marks it completed) so
+     * the request stops counting as active. One rating per ride — a request
+     * that already has a rating is rejected so a driver's average can't be
+     * inflated by replaying this endpoint.
      */
     public function feedback(Request $request, PickupRequest $pickupRequest)
     {
@@ -317,8 +321,8 @@ class PickupRequestController extends Controller
             return response()->json(['message' => 'This is not your ride.'], 403);
         }
 
-        if ($pickupRequest->status !== 'completed') {
-            return response()->json(['message' => 'You can only rate a completed ride.'], 422);
+        if (! in_array($pickupRequest->status, ['in_progress', 'completed'], true)) {
+            return response()->json(['message' => 'You can only rate a ride you have boarded.'], 422);
         }
 
         if (! is_null($pickupRequest->rating)) {
@@ -333,6 +337,8 @@ class PickupRequestController extends Controller
         $pickupRequest->update([
             'rating' => $validated['rating'],
             'comment' => $validated['comment'] ?? null,
+            'status' => 'completed',
+            'completed_at' => $pickupRequest->completed_at ?? now(),
         ]);
 
         return response()->json($pickupRequest->fresh());

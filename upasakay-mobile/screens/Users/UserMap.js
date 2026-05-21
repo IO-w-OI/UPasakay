@@ -258,6 +258,13 @@ const UserMap = () => {
   const [cancelReason, setCancelReason] = useState('');
   const [cancelOtherText, setCancelOtherText] = useState('');
 
+  // Feedback modal — shown once the passenger has boarded so they can rate
+  // the ride and exit (boarding is the natural end of the locked flow).
+  const [feedbackVisible, setFeedbackVisible] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [feedbackComment, setFeedbackComment] = useState('');
+  const [submittingFeedback, setSubmittingFeedback] = useState(false);
+
   const phaseRef = useRef('book');
   useEffect(() => {
     phaseRef.current = phase;
@@ -276,16 +283,17 @@ const UserMap = () => {
 
   const passengerId = currentUser?.passenger_id ?? currentUser?.id ?? null;
 
-  // ── Lock the screen while a booking is in flight ──────────────────────────
+  // ── Lock the screen while WAITING for the driver ──────────────────────────
   // Three layers of protection so the passenger can't accidentally leave the
-  // waiting/onboard view:
+  // waiting view:
   //   1. Consume Android hardware back (gesture + button).
   //   2. Veto any React Navigation removal event (catches router.back(),
   //      router.replace() from anywhere, and the in-app back arrow tap).
   //   3. Disable iOS swipe-back via Stack.Screen options below.
-  // The only intended exit is Cancel (subject to the 200m proximity guard)
-  // or ride completion.
-  const locked = phase === 'waiting' || phase === 'onboard';
+  // The only intended exit while waiting is Cancel (subject to the 200m
+  // proximity guard). Once the passenger has boarded ('onboard') the screen
+  // is NOT locked — they rate the ride in the feedback modal and leave.
+  const locked = phase === 'waiting';
 
   useEffect(() => {
     if (!locked) return;
@@ -806,6 +814,60 @@ const UserMap = () => {
     }
   };
 
+  // ── Feedback (shown after boarding) ───────────────────────────────────────
+  // Once the passenger boards, surface the rating prompt so they can finish
+  // and leave. Submitting also finalises the ride server-side.
+  useEffect(() => {
+    if (phase === 'onboard') setFeedbackVisible(true);
+  }, [phase]);
+
+  // Clear all booking state and return to the route list.
+  const finishRide = () => {
+    setFeedbackVisible(false);
+    setRating(0);
+    setFeedbackComment('');
+    setPhase('book');
+    setDriverInfo(null);
+    setPickupRequestId(null);
+    setAssignedShuttleId(null);
+    setShuttleDistanceM(null);
+    assignedShuttleLocRef.current = null;
+    refreshActiveBooking();
+    router.replace('/(tabs)/Users/UserHome');
+  };
+
+  const submitFeedback = async () => {
+    if (rating === 0) {
+      Alert.alert('Add a rating', 'Tap a star to rate your ride before submitting.');
+      return;
+    }
+    setSubmittingFeedback(true);
+    let failed = false;
+    if (pickupRequestId) {
+      const { ok, data } = await apiPost(`pickup-requests/${pickupRequestId}/feedback`, {
+        rating,
+        comment: feedbackComment.trim() || null,
+      });
+      if (!ok) {
+        failed = true;
+        Alert.alert('Could not submit', data?.message ?? 'Please try again.');
+      }
+    }
+    setSubmittingFeedback(false);
+    if (!failed) finishRide();
+  };
+
+  // Skipping still finalises the ride so the request stops counting as active
+  // (otherwise the active-booking guard would route the passenger back here).
+  const skipFeedback = async () => {
+    if (pickupRequestId) {
+      await apiPatch(`pickup-requests/${pickupRequestId}`, { status: 'completed' }).catch(
+        () => {}
+      );
+    }
+    finishRide();
+  };
+
   const canBook =
     pickupStop &&
     dropoffStop &&
@@ -1059,6 +1121,65 @@ const UserMap = () => {
               activeOpacity={0.85}
             >
               <Text style={styles.cancelModalBackText}>Keep my booking</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
+      {feedbackVisible && (
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalDim} />
+          <View style={styles.feedbackModal}>
+            <Ionicons name="checkmark-circle" size={44} color="#1A7F37" />
+            <Text style={styles.feedbackTitle}>{"You're on board!"}</Text>
+            <Text style={styles.feedbackSub}>How was your ride? Rate your trip.</Text>
+
+            <View style={styles.starsRow}>
+              {[1, 2, 3, 4, 5].map((star) => (
+                <TouchableOpacity
+                  key={star}
+                  onPress={() => setRating(star)}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons
+                    name={star <= rating ? 'star' : 'star-outline'}
+                    size={38}
+                    color={star <= rating ? '#FFB82E' : '#c9c9c9'}
+                    style={{ marginHorizontal: 3 }}
+                  />
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <TextInput
+              style={styles.feedbackInput}
+              placeholder="Leave a comment (optional)…"
+              placeholderTextColor="#999"
+              value={feedbackComment}
+              onChangeText={setFeedbackComment}
+              multiline
+              maxLength={500}
+            />
+
+            <TouchableOpacity
+              style={[styles.feedbackSubmitBtn, submittingFeedback && { opacity: 0.6 }]}
+              onPress={submitFeedback}
+              disabled={submittingFeedback}
+              activeOpacity={0.85}
+            >
+              {submittingFeedback ? (
+                <ActivityIndicator color="#1A2E1A" />
+              ) : (
+                <Text style={styles.feedbackSubmitText}>Submit Rating</Text>
+              )}
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.feedbackSkip}
+              onPress={skipFeedback}
+              disabled={submittingFeedback}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.feedbackSkipText}>Skip</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -1437,6 +1558,72 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   cancelModalBackText: {
+    fontSize: moderateScale(13),
+    color: '#555',
+    fontFamily: 'Nunito-Regular',
+    textDecorationLine: 'underline',
+  },
+
+  // Feedback modal
+  feedbackModal: {
+    width: '88%',
+    backgroundColor: '#F4F7F4',
+    borderRadius: 28,
+    padding: 24,
+    borderWidth: 1.5,
+    borderColor: '#3e5141',
+    alignItems: 'center',
+  },
+  feedbackTitle: {
+    fontSize: moderateScale(20),
+    color: '#1A2E1A',
+    fontFamily: 'Nunito-Bold',
+    marginTop: 8,
+  },
+  feedbackSub: {
+    fontSize: moderateScale(13),
+    color: '#666',
+    fontFamily: 'Nunito-Regular',
+    marginTop: 2,
+    marginBottom: 14,
+  },
+  starsRow: {
+    flexDirection: 'row',
+    marginBottom: 16,
+  },
+  feedbackInput: {
+    width: '100%',
+    borderWidth: 1,
+    borderColor: '#3e5141',
+    borderRadius: 14,
+    padding: 12,
+    fontSize: moderateScale(13),
+    fontFamily: 'Nunito-Regular',
+    color: '#1A2E1A',
+    backgroundColor: '#fff',
+    minHeight: moderateScale(70),
+    textAlignVertical: 'top',
+    marginBottom: 14,
+  },
+  feedbackSubmitBtn: {
+    width: '100%',
+    backgroundColor: '#FFB82E',
+    height: moderateScale(50),
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  feedbackSubmitText: {
+    fontSize: moderateScale(16),
+    color: '#1A2E1A',
+    fontFamily: 'Nunito-Black',
+  },
+  feedbackSkip: {
+    alignItems: 'center',
+    paddingVertical: 8,
+    marginTop: 4,
+  },
+  feedbackSkipText: {
     fontSize: moderateScale(13),
     color: '#555',
     fontFamily: 'Nunito-Regular',
