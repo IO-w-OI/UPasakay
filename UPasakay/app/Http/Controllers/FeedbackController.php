@@ -146,10 +146,21 @@ class FeedbackController extends Controller
                         return null;
                     }
 
+                    // "Juan Dela Cruz" → "J. Dela". Guard the surname index:
+                    // single-word names have no [1], which previously threw
+                    // "Undefined array key 1" (the ?? bound to the whole concat).
+                    $driverName = $shuttle->driver?->full_name;
+                    if ($driverName) {
+                        $parts = explode(' ', $driverName);
+                        $driverLabel = mb_substr($driverName, 0, 1).'. '.($parts[1] ?? '');
+                    } else {
+                        $driverLabel = '—';
+                    }
+
                     return [
                         'date' => $date->format('M j'),
                         'shuttle' => $shuttle->shuttle_code,
-                        'driver' => $shuttle->driver?->full_name ? mb_substr($shuttle->driver->full_name, 0, 1).'. '.explode(' ', $shuttle->driver->full_name)[1] ?? '' : '—',
+                        'driver' => $driverLabel,
                         'route' => $shuttle->route?->name ?? '—',
                         'start' => '05:30',
                         'end' => $date->isToday() ? '—' : '17:00',
