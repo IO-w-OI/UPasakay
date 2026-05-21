@@ -57,22 +57,6 @@ const viewDetails = (log: any) => {
     isViewModalOpen.value = true;
 };
 
-const formatDateDisplay = (dateStr: string | Date): string => {
-    if (!dateStr) return '';
-    if (typeof dateStr === 'string') {
-        const trimmed = dateStr.trim();
-        if (trimmed === 'Today' || trimmed === 'Yesterday') return trimmed;
-        const parsed = Date.parse(trimmed);
-        if (!isNaN(parsed)) {
-            const d = new Date(parsed);
-            return d.toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-        }
-        return trimmed;
-    } else {
-        return dateStr.toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-    }
-};
-
 // ── Schedule Modal ─────────────────────────────────────────────────────────
 type ScheduleRow = typeof props.scheduledNotifications[0];
 
