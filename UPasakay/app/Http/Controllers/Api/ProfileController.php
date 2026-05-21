@@ -95,6 +95,7 @@ class ProfileController extends Controller
         }
         if (!empty($validated['password'])) {
             $user->update(['password_hash' => $validated['password']]);
+            $passenger?->update(['password_hash' => $validated['password']]);
         }
 
         return response()->json([
