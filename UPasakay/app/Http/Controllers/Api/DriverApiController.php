@@ -175,7 +175,7 @@ class DriverApiController extends Controller
 
         $routeId = $driver->shuttle?->route_id;
 
-        $notifications = Notification::where('audience', 'drivers')
+        $notifications = Notification::whereIn('audience', ['drivers', 'all'])
             ->when($routeId, fn ($q) => $q->where(function ($q) use ($routeId) {
                 $q->where('route_id', $routeId)->orWhereNull('route_id');
             }))
