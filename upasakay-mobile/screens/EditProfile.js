@@ -128,12 +128,14 @@ const EditProfile = () => {
 
             <KeyboardAvoidingView
                 style={{ flex: 1 }}
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 80}
             >
                 <ScrollView
                     showsVerticalScrollIndicator={false}
                     contentContainerStyle={styles.body}
                     keyboardShouldPersistTaps="handled"
+                    keyboardDismissMode="interactive"
                 >
                     {/* Avatar */}
                     <View style={styles.avatarWrap}>
@@ -225,7 +227,9 @@ const styles = StyleSheet.create({
     },
     body: {
         paddingHorizontal: 24,
-        paddingBottom: 40,
+        // Generous bottom space so the password fields + Save button can
+        // scroll clear of the on-screen keyboard.
+        paddingBottom: 160,
     },
     avatarWrap: {
         alignSelf: 'center',

@@ -4,6 +4,7 @@ import * as L from 'leaflet';
 import { Search, Download, ChevronRight, MapPin, Eye, Check, X, Map } from 'lucide-vue-next';
 import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { echo } from '@/echo';
 import { dashboard } from '@/routes';
 import { type BreadcrumbItem } from '@/types';
 import 'leaflet/dist/leaflet.css';
@@ -43,18 +44,28 @@ const liveUpdatesActive = ref(true);
 const lastUpdated = ref(new Date());
 let refreshTimer: ReturnType<typeof setInterval> | null = null;
 
+const reloadRequests = () => {
+    router.reload({
+        only: ['requests', 'stats'],
+        preserveScroll: true,
+        onFinish: () => { lastUpdated.value = new Date(); },
+    } as any);
+};
+
 onMounted(() => {
+    // Polling fallback.
     refreshTimer = setInterval(() => {
         if (!liveUpdatesActive.value) return;
-
-        router.reload({
-            only: ['requests', 'stats'],
-            preserveScroll: true,
-            onFinish: () => {
-                lastUpdated.value = new Date();
-            },
-        } as any);
+        reloadRequests();
     }, 25000);
+
+    // Real-time: refresh the table the moment a ride is accepted or
+    // completed, so the admin sees driver-side changes without the poll lag.
+    if (echo) {
+        const adminRides = echo.channel('admin-rides');
+        adminRides.listen('.ride.accepted', () => { if (liveUpdatesActive.value) reloadRequests(); });
+        adminRides.listen('.ride.completed', () => { if (liveUpdatesActive.value) reloadRequests(); });
+    }
 });
 
 const apply = () => {
@@ -99,6 +110,8 @@ onUnmounted(() => {
         clearInterval(refreshTimer);
         refreshTimer = null;
     }
+
+    try { echo?.leave('admin-rides'); } catch { /* noop */ }
 });
 
 // ── Locate: expand row and scroll to the map ──────────────────────────────

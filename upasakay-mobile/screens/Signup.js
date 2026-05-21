@@ -331,9 +331,13 @@ const Signup = () => {
                                     </View>
 
                                     {/* COLLEGE / OFFICE */}
+                                    {/* No `key` here — re-mounting the list whenever the role
+                                        changed swallowed the user's first tap (the "press twice"
+                                        bug). The role's onChange already clears department_office,
+                                        and `data` below is reactive, so the options refresh in
+                                        place without a remount. */}
                                     <View style={{ marginBottom: 12 }}>
                                         <SelectList
-                                            key={values.role || 'no-role'}
                                             setSelected={(val) => {
                                                 setFieldValue('department_office', val);
                                                 setFieldTouched('department_office', true);

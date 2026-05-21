@@ -340,11 +340,12 @@ class PickupRequestController extends Controller
     /**
      * Passenger rates their ride. Allowed once the passenger has boarded
      * (status in_progress) or after the ride is completed — the mobile app
-     * shows the rating prompt right after boarding. Submitting a rating from
-     * the in_progress state also finalises the ride (marks it completed) so
-     * the request stops counting as active. One rating per ride — a request
-     * that already has a rating is rejected so a driver's average can't be
-     * inflated by replaying this endpoint.
+     * shows the rating prompt right after boarding. This only stores the
+     * rating/comment; it does NOT complete the ride. The driver remains the
+     * single source of completion truth (DriverApiController::complete),
+     * which keeps the DriverAssignment, queue, and admin/driver views in
+     * sync. One rating per ride — a request that already has a rating is
+     * rejected so a driver's average can't be inflated by replaying this.
      */
     public function feedback(Request $request, PickupRequest $pickupRequest)
     {
@@ -374,11 +375,12 @@ class PickupRequestController extends Controller
             'comment' => 'nullable|string|max:1000',
         ]);
 
+        // Rating only — the ride's lifecycle stays owned by the driver's
+        // complete() endpoint so the DriverAssignment, queue, and admin/
+        // driver views stay in sync.
         $pickupRequest->update([
             'rating' => $validated['rating'],
             'comment' => $validated['comment'] ?? null,
-            'status' => 'completed',
-            'completed_at' => $pickupRequest->completed_at ?? now(),
         ]);
 
         return response()->json($pickupRequest->fresh());

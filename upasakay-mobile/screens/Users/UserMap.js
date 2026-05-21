@@ -146,14 +146,30 @@ const leafletHTML = `
 
     // ── Route stop markers ────────────────────────────────────────────────────
     var stopMarkers = {};
+    var routeLine = null;
 
     window.renderRouteStops = function(stops, color) {
       Object.keys(stopMarkers).forEach(function(k) { map.removeLayer(stopMarkers[k]); });
       stopMarkers = {};
+      if (routeLine) { map.removeLayer(routeLine); routeLine = null; }
 
       var valid = stops.filter(function(s) {
         return s.is_active && s.latitude && s.longitude;
       });
+
+      // Draw the route path connecting the stops in sequence order so the
+      // passenger can see where the shuttle travels.
+      var ordered = valid.slice().sort(function(a, b) {
+        return (a.sequence || 0) - (b.sequence || 0);
+      });
+      if (ordered.length > 1) {
+        var latlngs = ordered.map(function(s) {
+          return [parseFloat(s.latitude), parseFloat(s.longitude)];
+        });
+        routeLine = L.polyline(latlngs, {
+          color: color, weight: 4, opacity: 0.45, dashArray: '8,6', lineJoin: 'round',
+        }).addTo(map);
+      }
 
       valid.forEach(function(stop) {
         var marker = L.circleMarker(
@@ -221,7 +237,7 @@ const leafletHTML = `
 
 const UserMap = () => {
   const { routeId, busName } = useLocalSearchParams();
-  const { activeBooking, refreshActiveBooking } = useTrip();
+  const { activeBooking, refreshActiveBooking, setActiveBooking } = useTrip();
   const navigation = useNavigation();
   const webRef = useRef(null);
   const pusherRef = useRef(null);
@@ -237,6 +253,7 @@ const UserMap = () => {
   const [pickupStop, setPickupStop] = useState(null); // { id, name, lat, lng, sequence }
   const [dropoffStop, setDropoffStop] = useState(null);
   const [selecting, setSelecting] = useState('pickup'); // 'pickup' | 'dropoff'
+  const [searchQuery, setSearchQuery] = useState(''); // stop search box text
   const [paraLoading, setParaLoading] = useState(false);
   const [shuttleOnline, setShuttleOnline] = useState(false);
 
@@ -333,6 +350,15 @@ const UserMap = () => {
   useEffect(() => {
     const pr = activeBooking?.pickup_request;
     if (!pr) return;
+
+    // Only hydrate when the in-flight request belongs to the route the user
+    // actually opened. Otherwise a leftover booking on another route would
+    // make this freshly-opened route falsely appear "already booked"
+    // (the Cebu City "auto-picked a request" bug). UserHome's focus guard
+    // handles redirecting the user to the correct route instead.
+    if (routeId && pr.route_id != null && String(pr.route_id) !== String(routeId)) {
+      return;
+    }
 
     setPickupRequestId(pr.id);
 
@@ -617,6 +643,9 @@ const UserMap = () => {
           setAssignedShuttleId(null);
           setShuttleDistanceM(null);
           assignedShuttleLocRef.current = null;
+          // Clear the in-flight booking so the active-booking guard doesn't
+          // bounce the passenger back here once the ride is over.
+          setActiveBooking(null);
           completingRef.current = true;
           router.replace({
             pathname: '/Feedback',
@@ -649,65 +678,101 @@ const UserMap = () => {
     : null;
   const isPickupUPC = Boolean(pickupStop && upcStopObj && pickupStop.id === upcStopObj.id);
 
+  // Apply a stop selection to a slot — the single path used by map taps,
+  // the search bar, and the prev/next steppers. Enforces the "one side must
+  // be UP Cebu" rule and keeps the map markers/centre in sync.
+  const selectStop = (rawStop, slot) => {
+    const stop = {
+      id: rawStop.id,
+      name: rawStop.name,
+      lat: parseFloat(rawStop.lat ?? rawStop.latitude),
+      lng: parseFloat(rawStop.lng ?? rawStop.longitude),
+      sequence: rawStop.sequence,
+    };
+    const stopIsUPC = upcStopObj && stop.id === upcStopObj.id;
+
+    let nextPickup = pickupStop;
+    let nextDropoff = dropoffStop;
+
+    if (slot === 'pickup') {
+      nextPickup = stop;
+      setPickupStop(stop);
+
+      if (upcStopObj) {
+        if (!stopIsUPC) {
+          // Non-UPC pickup → drop-off is automatically UPC.
+          nextDropoff = upcStopObj;
+          setDropoffStop(upcStopObj);
+        } else {
+          // UPC pickup → clear drop-off so the passenger can choose.
+          nextDropoff = null;
+          setDropoffStop(null);
+          setSelecting('dropoff');
+        }
+      } else if (!dropoffStop) {
+        setSelecting('dropoff');
+      }
+    } else {
+      if (upcStopObj && !isPickupUPC && pickupStop) {
+        Alert.alert(
+          'Drop-off Locked',
+          "When you're not coming from UP Cebu, your drop-off is automatically UP Cebu."
+        );
+        return;
+      }
+      if (upcStopObj && stopIsUPC) {
+        Alert.alert('Same Stop', 'Drop-off cannot also be UP Cebu. Tap another stop.');
+        return;
+      }
+      nextDropoff = stop;
+      setDropoffStop(stop);
+    }
+
+    webRef.current?.injectJavaScript(
+      `window.highlightStop(${stop.lat}, ${stop.lng}); ` +
+        `window.markStops(${nextPickup?.id ?? 'null'}, ${nextDropoff?.id ?? 'null'}, '${routeColor}'); true;`
+    );
+  };
+
   // ── 5. Handle messages from Leaflet ───────────────────────────────────────
   const handleMessage = (event) => {
     try {
       const msg = JSON.parse(event.nativeEvent.data);
       if (msg.type !== 'STOP_TAPPED') return;
-
-      const stop = { id: msg.id, name: msg.name, lat: msg.lat, lng: msg.lng, sequence: msg.sequence };
-      const tappedIsUPC = upcStopObj && stop.id === upcStopObj.id;
-
-      let nextPickup = pickupStop;
-      let nextDropoff = dropoffStop;
-
-      if (selecting === 'pickup') {
-        nextPickup = stop;
-        setPickupStop(stop);
-
-        if (upcStopObj) {
-          if (!tappedIsUPC) {
-            // Non-UPC pickup → drop-off is automatically UPC.
-            nextDropoff = upcStopObj;
-            setDropoffStop(upcStopObj);
-          } else {
-            // UPC pickup → clear drop-off so the passenger can choose, and
-            // jump the selector to drop-off as a UX cue.
-            nextDropoff = null;
-            setDropoffStop(null);
-            setSelecting('dropoff');
-          }
-        } else if (!dropoffStop) {
-          setSelecting('dropoff');
-        }
-      } else {
-        // Drop-off slot tap: only meaningful when pickup is UPC. Otherwise
-        // tell the passenger why the drop-off is locked instead of silently
-        // ignoring the tap.
-        if (upcStopObj && !isPickupUPC && pickupStop) {
-          Alert.alert(
-            'Drop-off Locked',
-            "When you're not coming from UP Cebu, your drop-off is automatically UP Cebu."
-          );
-          return;
-        }
-        if (upcStopObj && tappedIsUPC) {
-          Alert.alert(
-            'Same Stop',
-            'Drop-off cannot also be UP Cebu. Tap another stop.'
-          );
-          return;
-        }
-        nextDropoff = stop;
-        setDropoffStop(stop);
-      }
-
-      webRef.current?.injectJavaScript(
-        `window.highlightStop(${msg.lat}, ${msg.lng}); ` +
-          `window.markStops(${nextPickup?.id ?? 'null'}, ${nextDropoff?.id ?? 'null'}, '${routeColor}'); true;`
+      selectStop(
+        { id: msg.id, name: msg.name, lat: msg.lat, lng: msg.lng, sequence: msg.sequence },
+        selecting
       );
     } catch (_) {}
   };
+
+  // Step through the route's stops in sequence order for the active slot —
+  // the ◀ / ▶ controls. Skips the UPC stop for the drop-off slot so the
+  // route rule isn't violated.
+  const stepStop = (slot, dir) => {
+    const ordered = [...routeStops]
+      .filter((s) => s.latitude != null && s.longitude != null)
+      .sort((a, b) => (a.sequence || 0) - (b.sequence || 0));
+    if (ordered.length === 0) return;
+
+    const current = slot === 'pickup' ? pickupStop : dropoffStop;
+    let idx = current ? ordered.findIndex((s) => s.id === current.id) : -1;
+    // Walk in the requested direction to the next eligible stop.
+    for (let n = 0; n < ordered.length; n++) {
+      idx = (idx + dir + ordered.length) % ordered.length;
+      const candidate = ordered[idx];
+      if (slot === 'dropoff' && upcStopObj && candidate.id === upcStopObj.id) continue;
+      selectStop(candidate, slot);
+      return;
+    }
+  };
+
+  // Stops matching the search box, for the active slot.
+  const searchMatches = searchQuery.trim()
+    ? routeStops.filter((s) =>
+        s.name?.toLowerCase().includes(searchQuery.trim().toLowerCase())
+      )
+    : [];
 
   const selectSlot = (slot) => {
     setSelecting(slot);
@@ -950,50 +1015,116 @@ const UserMap = () => {
             <Text style={styles.routeLabel}>{busName ?? 'Bus Route'}</Text>
             <Text style={styles.cardTitle}>Book a Ride</Text>
 
+            {/* Stop search — type a stop name instead of hunting the map */}
+            <View style={styles.searchRow}>
+              <Ionicons name="search" size={16} color="#888" />
+              <TextInput
+                style={styles.searchInput}
+                placeholder={`Search ${selecting === 'pickup' ? 'pick-up' : 'drop-off'} stop…`}
+                placeholderTextColor="#aaa"
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+              />
+              {searchQuery.length > 0 && (
+                <TouchableOpacity onPress={() => setSearchQuery('')}>
+                  <Ionicons name="close-circle" size={18} color="#bbb" />
+                </TouchableOpacity>
+              )}
+            </View>
+            {searchMatches.length > 0 && (
+              <View style={styles.searchResults}>
+                {searchMatches.slice(0, 5).map((s) => (
+                  <TouchableOpacity
+                    key={s.id}
+                    style={styles.searchResultRow}
+                    activeOpacity={0.7}
+                    onPress={() => {
+                      selectStop(s, selecting);
+                      setSearchQuery('');
+                    }}
+                  >
+                    <Ionicons name="location-outline" size={15} color={routeColor} />
+                    <Text style={styles.searchResultText} numberOfLines={1}>{s.name}</Text>
+                    <Text style={styles.stopSeq}>#{s.sequence}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+
             {/* Pick-up slot */}
-            <TouchableOpacity
-              activeOpacity={0.85}
-              onPress={() => selectSlot('pickup')}
-              style={[styles.stopRow, selecting === 'pickup' && styles.stopRowActive]}
-            >
+            <View style={[styles.stopRow, selecting === 'pickup' && styles.stopRowActive]}>
               <View style={[styles.stopDot, { backgroundColor: pickupStop ? '#22c55e' : '#ccc' }]} />
-              <View style={{ flex: 1 }}>
+              <TouchableOpacity
+                style={{ flex: 1 }}
+                activeOpacity={0.85}
+                onPress={() => selectSlot('pickup')}
+              >
                 <Text style={styles.slotLabel}>PICK-UP</Text>
                 <Text
                   style={[styles.stopName, !pickupStop && styles.stopPlaceholder]}
                   numberOfLines={1}
                 >
-                  {pickupStop ? pickupStop.name : 'Tap a stop on the map'}
+                  {pickupStop ? pickupStop.name : 'Tap a stop, search, or use ◀ ▶'}
                 </Text>
+              </TouchableOpacity>
+              <View style={styles.stepperGroup}>
+                <TouchableOpacity
+                  style={styles.stepperBtn}
+                  onPress={() => stepStop('pickup', -1)}
+                  disabled={routeStops.length === 0}
+                >
+                  <Ionicons name="chevron-back" size={18} color="#1A2E1A" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.stepperBtn}
+                  onPress={() => stepStop('pickup', 1)}
+                  disabled={routeStops.length === 0}
+                >
+                  <Ionicons name="chevron-forward" size={18} color="#1A2E1A" />
+                </TouchableOpacity>
               </View>
-              {pickupStop && <Text style={styles.stopSeq}>#{pickupStop.sequence}</Text>}
-            </TouchableOpacity>
+            </View>
 
             {/* Drop-off slot. When pickup is set but is NOT UP Cebu, the
                 drop-off is locked to UPC (auto). When pickup is UPC the
                 passenger picks. */}
-            <TouchableOpacity
-              activeOpacity={0.85}
-              onPress={() => selectSlot('dropoff')}
-              disabled={Boolean(pickupStop && !isPickupUPC && upcStopObj)}
-              style={[styles.stopRow, selecting === 'dropoff' && styles.stopRowActive]}
-            >
+            <View style={[styles.stopRow, selecting === 'dropoff' && styles.stopRowActive]}>
               <View style={[styles.stopDot, { backgroundColor: dropoffStop ? '#ef4444' : '#ccc' }]} />
-              <View style={{ flex: 1 }}>
+              <TouchableOpacity
+                style={{ flex: 1 }}
+                activeOpacity={0.85}
+                onPress={() => selectSlot('dropoff')}
+                disabled={Boolean(pickupStop && !isPickupUPC && upcStopObj)}
+              >
                 <Text style={styles.slotLabel}>DROP-OFF</Text>
                 <Text
                   style={[styles.stopName, !dropoffStop && styles.stopPlaceholder]}
                   numberOfLines={1}
                 >
-                  {dropoffStop ? dropoffStop.name : 'Tap a stop on the map'}
+                  {dropoffStop ? dropoffStop.name : 'Tap a stop, search, or use ◀ ▶'}
                 </Text>
-              </View>
+              </TouchableOpacity>
               {pickupStop && !isPickupUPC && upcStopObj ? (
                 <Text style={styles.autoBadge}>auto</Text>
-              ) : dropoffStop ? (
-                <Text style={styles.stopSeq}>#{dropoffStop.sequence}</Text>
-              ) : null}
-            </TouchableOpacity>
+              ) : (
+                <View style={styles.stepperGroup}>
+                  <TouchableOpacity
+                    style={styles.stepperBtn}
+                    onPress={() => stepStop('dropoff', -1)}
+                    disabled={routeStops.length === 0}
+                  >
+                    <Ionicons name="chevron-back" size={18} color="#1A2E1A" />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.stepperBtn}
+                    onPress={() => stepStop('dropoff', 1)}
+                    disabled={routeStops.length === 0}
+                  >
+                    <Ionicons name="chevron-forward" size={18} color="#1A2E1A" />
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
 
             {routeStops.length > 0 && !upcStopObj && (
               <Text style={styles.upcWarning}>
@@ -1316,6 +1447,61 @@ const styles = StyleSheet.create({
   },
   stopRowActive: {
     borderColor: '#3e5141',
+  },
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#fff',
+    borderWidth: 1.5,
+    borderColor: '#E2E8E2',
+    borderRadius: 14,
+    paddingHorizontal: moderateScale(12),
+    paddingVertical: moderateScale(8),
+    marginBottom: moderateScale(8),
+  },
+  searchInput: {
+    flex: 1,
+    fontFamily: 'Nunito-Regular',
+    fontSize: moderateScale(14),
+    color: '#1A2E1A',
+    padding: 0,
+  },
+  searchResults: {
+    backgroundColor: '#fff',
+    borderWidth: 1.5,
+    borderColor: '#E2E8E2',
+    borderRadius: 14,
+    marginBottom: moderateScale(8),
+    overflow: 'hidden',
+  },
+  searchResultRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: moderateScale(12),
+    paddingVertical: moderateScale(10),
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F2F0',
+  },
+  searchResultText: {
+    flex: 1,
+    fontFamily: 'Nunito-SemiBold',
+    fontSize: moderateScale(13),
+    color: '#1A2E1A',
+  },
+  stepperGroup: {
+    flexDirection: 'row',
+    gap: 4,
+    marginLeft: 6,
+  },
+  stepperBtn: {
+    width: moderateScale(30),
+    height: moderateScale(30),
+    borderRadius: moderateScale(15),
+    backgroundColor: '#EEF2EE',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   stopDot: {
     width: 12,
