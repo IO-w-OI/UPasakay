@@ -263,6 +263,11 @@ const UserMap = () => {
     phaseRef.current = phase;
   }, [phase]);
 
+  const pickupRequestIdRef = useRef(null);
+  useEffect(() => {
+    pickupRequestIdRef.current = pickupRequestId;
+  }, [pickupRequestId]);
+
   // Mirrors for pollShuttles (which is memoised on routeId only) so we don't
   // need to recreate the 8s polling interval whenever stops or shuttle change.
   const assignedShuttleIdRef = useRef(null);
@@ -592,12 +597,17 @@ const UserMap = () => {
         paxCh.bind('passenger.boarded', () => setPhase('onboard'));
 
         paxCh.bind('ride.completed', () => {
+          const completedRequestId = pickupRequestIdRef.current;
           setPhase('book');
           setDriverInfo(null);
           setPickupRequestId(null);
           setAssignedShuttleId(null);
           setShuttleDistanceM(null);
           assignedShuttleLocRef.current = null;
+          router.replace({
+            pathname: '/Feedback',
+            params: { pickup_request_id: String(completedRequestId ?? '') },
+          });
         });
       }
     } catch (e) {
