@@ -5,11 +5,11 @@ namespace App\Events;
 use App\Models\PickupRequest;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class PassengerBooked implements ShouldBroadcast
+class PassengerBooked implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
@@ -38,13 +38,13 @@ class PassengerBooked implements ShouldBroadcast
     {
         return [
             'pickup_request_id' => $this->pickupRequest->id,
-            'passenger_id' => $this->pickupRequest->passenger_id,
-            'passenger_name' => $this->pickupRequest->passenger?->user?->name,
-            'passenger_phone' => $this->pickupRequest->passenger?->user?->phone_number,
-            'pickup_latitude' => $this->pickupRequest->pickup_latitude,
-            'pickup_longitude' => $this->pickupRequest->pickup_longitude,
-            'dropoff_latitude' => $this->pickupRequest->dropoff_latitude,
-            'dropoff_longitude' => $this->pickupRequest->dropoff_longitude,
+            'passenger_id' => data_get($this->pickupRequest, 'user.passenger.id'),
+            'passenger_name' => data_get($this->pickupRequest, 'user.name'),
+            'passenger_phone' => data_get($this->pickupRequest, 'user.phone_number'),
+            'pickup_latitude' => data_get($this->pickupRequest, 'pickupStop.latitude'),
+            'pickup_longitude' => data_get($this->pickupRequest, 'pickupStop.longitude'),
+            'dropoff_latitude' => data_get($this->pickupRequest, 'dropoffStop.latitude'),
+            'dropoff_longitude' => data_get($this->pickupRequest, 'dropoffStop.longitude'),
             'status' => 'pending',
             'created_at' => $this->pickupRequest->created_at,
         ];

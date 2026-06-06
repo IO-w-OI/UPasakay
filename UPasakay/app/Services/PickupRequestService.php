@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Events\PassengerBooked;
 use App\Events\RideCompleted;
 use App\Models\DeviceToken;
 use App\Models\Driver;
@@ -159,6 +160,16 @@ class PickupRequestService
                 $this->logDriverNotification($pickupRequest, $notificationMessage);
             } catch (\Throwable $e) {
                 \Log::error('logDriverNotification failed: ' . $e->getMessage());
+            }
+
+            // Notify drivers' live request feed (mobile listens on the
+            // 'driver-requests' channel for 'passenger.booked') so a new
+            // booking appears without waiting for the next poll.
+            try {
+                $pickupRequest->load('user.passenger', 'pickupStop', 'dropoffStop');
+                broadcast(new PassengerBooked($pickupRequest));
+            } catch (\Throwable $e) {
+                \Log::error('PassengerBooked broadcast failed: ' . $e->getMessage());
             }
         });
 

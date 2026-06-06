@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Events\PassengerBooked;
 use App\Models\Driver;
 use App\Models\Passenger;
 use App\Models\PickupRequest;
@@ -10,6 +11,7 @@ use App\Models\Shuttle;
 use App\Models\Stop;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
 use Tests\TestCase;
 
 class PickupRequestApiTest extends TestCase
@@ -234,6 +236,28 @@ class PickupRequestApiTest extends TestCase
             'route_id' => $testData['route']->id,
             'status' => 'pending',
         ]);
+    }
+
+    public function test_create_booking_broadcasts_passenger_booked(): void
+    {
+        Event::fake([PassengerBooked::class]);
+
+        $user = $this->createAuthenticatedUser();
+        $testData = $this->setupTestRoute();
+
+        $this->withHeaders($this->getAuthHeaders($user))
+            ->postJson('/api/pickup-requests', [
+                'route_id' => $testData['route']->id,
+                'pickup_stop_id' => $testData['pickup_stop']->id,
+                'dropoff_stop_id' => $testData['dropoff_stop']->id,
+            ])
+            ->assertStatus(201);
+
+        Event::assertDispatched(PassengerBooked::class, function (PassengerBooked $event) use ($testData) {
+            return $event->pickupRequest->route_id === $testData['route']->id
+                && $event->broadcastOn()[0]->name === 'driver-requests'
+                && $event->broadcastAs() === 'passenger.booked';
+        });
     }
 
     public function test_duplicate_booking_blocked_for_pending_status(): void
